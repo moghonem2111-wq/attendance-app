@@ -161,6 +161,9 @@ if "users_df" not in st.session_state:
     st.session_state.exams_df = e_df
     st.session_state.essays_df = es_df
 
+if "auth_mode" not in st.session_state:
+    st.session_state.auth_mode = "login"
+
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
     st.session_state.users_df = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
@@ -227,11 +230,6 @@ st.markdown("""
         color: #64748b !important;
         font-size: 12px !important;
         font-weight: 800 !important;
-    }
-    .navbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
     }
 
     .exam-builder-header {
@@ -448,10 +446,10 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    # شريط التنقل العلوي الاحترافي بالاسم المطلوب وأزرار تسجيل الدخول وإنشاء حساب
+    # شريط التنقل العلوي الاحترافي مع أزرار الانتقال الفوري للتسجيل أو إنشاء الحساب
     nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
-    col_nav1, col_nav2 = st.columns([2, 1])
+    col_nav1, col_nav2 = st.columns([2, 1.5])
     with col_nav1:
         st.markdown(f"""
         <div class="darssly-navbar" dir="rtl" style="margin-bottom: 0px;">
@@ -468,11 +466,13 @@ if is_student_mode:
         st.write("")
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
-            if st.button("👤 تسجيل الدخول"):
-                st.session_state.auth_view = "login"
+            if st.button("👤 تسجيل الدخول", key="nav_btn_login"):
+                st.session_state.auth_mode = "login"
+                st.rerun()
         with c_btn2:
-            if st.button("✨ إنشاء حساب"):
-                st.session_state.auth_view = "register"
+            if st.button("✨ إنشاء حساب", key="nav_btn_reg"):
+                st.session_state.auth_mode = "register"
+                st.rerun()
 
     st.write("---")
 
@@ -530,10 +530,9 @@ if is_student_mode:
         st.session_state.logged_student = None
 
     if not st.session_state.logged_student:
-        auth_tab1, auth_tab2 = st.tabs(["🔐 تسجيل دخول الطالب", "✨ إنشاء حساب طالب جديد"])
-
-        with auth_tab1:
-            st.subheader("سجل دخولك لمتابعة اختباراتك وحضورك:")
+        # عرض التبويب بحسب زر الـ Navbar العلوي
+        if st.session_state.auth_mode == "login":
+            st.subheader("🔐 تسجيل دخول الطالب:")
             with st.form("student_login_form"):
                 login_name = st.text_input("اسم الطالب المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
@@ -552,9 +551,8 @@ if is_student_mode:
                             st.rerun()
                     else:
                         st.error("اسم الطالب أو الرقم السري غير صحيح.")
-
-        with auth_tab2:
-            st.subheader("إنشاء حساب لأول مرة:")
+        else:
+            st.subheader("✨ إنشاء حساب طالب جديد:")
             with st.form("student_register_form"):
                 reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
@@ -1360,7 +1358,7 @@ with tab_cards:
                 with col_c4:
                     if st.button("حذف نهائي 🗑️", key=f"del_card_btn_{idx}"):
                         delete_student_completely(st_name)
-                        st.success(f"✓ تم حذف الطالب ({st_name}) نهائياً!")
+                        st.success(f"✓ تم مسح الطالب ({st_name}) نهائياً!")
                         st.rerun()
                 st.write("---")
 
