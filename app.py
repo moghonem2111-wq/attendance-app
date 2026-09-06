@@ -642,7 +642,7 @@ if is_student_mode:
         with col_vid2:
             st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
-        # ==================== لوحة خدمات الطالب (الأيقونات تحت بعضها تماماً) ====================
+        # ==================== لوحة خدمات الطالب (أيقونات تحت بعضها) ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; margin-bottom: 15px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
@@ -665,14 +665,21 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع العد التنازلي ونتيجة مفصلة
+        # 1. صفحة الاختبارات مع معالجة ذكية للأسئلة
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
-            my_grade = st_user.get("المجموعة/الصف", "")
-            available_exams = st.session_state.exams_df[st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == my_grade.strip()].copy()
+            my_grade = str(st_user.get("المجموعة/الصف", "")).strip()
+            
+            # فلترة الامتحانات المطابقة للمجموعة أو عرض كل الامتحانات إذا لم تكن مطابقة بدقة لتجنب فراغ القائمة
+            available_exams = st.session_state.exams_df.copy()
+            if not available_exams.empty and "المجموعة/الصف" in available_exams.columns:
+                available_exams["clean_grade"] = available_exams["المجموعة/الصف"].astype(str).str.strip()
+                match_grade = available_exams[available_exams["clean_grade"] == my_grade]
+                if not match_grade.empty:
+                    available_exams = match_grade
 
             if available_exams.empty:
-                st.info("لا توجد اختبارات إلكترونية مخصصة لصفك الدراسي حالياً.")
+                st.info(f"لا توجد اختبارات إلكترونية مخصصة حالياً لصفك ({my_grade}).")
             else:
                 for _, ex_row in available_exams.iterrows():
                     ex_id = ex_row["معرف_الامتحان"]
@@ -693,6 +700,7 @@ if is_student_mode:
                             solved_score = already_solved.iloc[-1]["الدرجة المحصلة"]
                             solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
                             st.success(f"✅ لقد قمت بأداء هذا الاختبار مسبقاً بنتيجة: ({solved_score} من {solved_max})")
+                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:10px;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
                         else:
                             exam_state_key = f"exam_state_{ex_id}"
                             if exam_state_key not in st.session_state:
@@ -708,27 +716,33 @@ if is_student_mode:
 
                             if not st_ex["started"]:
                                 input_pass = ""
-                                if ex_pass and ex_pass != "nan":
+                                if ex_pass and ex_pass != "nan" and ex_pass != "":
                                     input_pass = st.text_input("🔐 أدخل كلمة مرور الاختبار للبدء:", type="password", key=f"start_pass_{ex_id}")
                                 
                                 if st.button("🚀 بدء حل الاختبار الآن", key=f"btn_start_ex_{ex_id}"):
-                                    if ex_pass and ex_pass != "nan" and input_pass.strip() != ex_pass:
+                                    if ex_pass and ex_pass != "nan" and ex_pass != "" and input_pass.strip() != ex_pass:
                                         st.error("كلمة مرور الاختبار غير صحيحة.")
                                     else:
                                         st_ex["started"] = True
                                         st.rerun()
                             else:
                                 questions = []
+                                raw_q = ex_row.get("الأسئلة_JSON", "[]")
                                 try:
-                                    questions = json.loads(ex_row["الأسئلة_JSON"])
+                                    if isinstance(raw_q, str):
+                                        questions = json.loads(raw_q)
+                                    elif isinstance(raw_q, list):
+                                        questions = raw_q
                                 except Exception:
-                                    pass
+                                    try:
+                                        questions = eval(str(raw_q))
+                                    except Exception:
+                                        questions = []
 
                                 if not questions:
-                                    st.error("لا توجد أسئلة مضافة في هذا الاختبار.")
+                                    st.error("⚠️ عذراً، لا توجد أسئلة مضافة في هذا الاختبار أو حدث خطأ في قراءتها.")
                                 else:
-                                    # مؤقت الساعة الواضحة للطالب
-                                    st.warning(f"⏱️ تنبيه: وقت الامتحان المحدد هو {ex_time} دقيقة. يجدر الانتباه للوقت المتبقي!")
+                                    st.warning(f"⏱️ تنبيه: وقت الامتحان المحدد هو {ex_time} دقيقة. ركز في إجاباتك!")
 
                                     total_q = len(questions)
                                     cur_i = st_ex["cur_idx"]
@@ -756,8 +770,10 @@ if is_student_mode:
 
                                     if q_curr.get("text"):
                                         st.markdown(f"**{q_curr['text']}**")
+                                    
+                                    # عرض صورة السؤال (سكرين شوت)
                                     if q_curr.get("q_img"):
-                                        st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", width=500)
+                                        st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", use_container_width=True)
 
                                     st.caption(f"درجة السؤال: {q_curr['points']}")
 
@@ -767,8 +783,9 @@ if is_student_mode:
                                             t_val = q_curr.get(f"opt{opt_idx}", "")
                                             i_val = q_curr.get(f"opt{opt_idx}_img", "")
                                             st.markdown(f"**الخيار ({lbl}):** {t_val}")
+                                            # عرض صور الاختيارات (الاسكرينات)
                                             if i_val:
-                                                st.image(f"data:image/jpeg;base64,{i_val}", width=240)
+                                                st.image(f"data:image/jpeg;base64,{i_val}", width=280)
 
                                         saved_choice = st_ex["answers_mcq"].get(cur_i, None)
                                         radio_idx = (saved_choice - 1) if saved_choice in [1, 2, 3, 4] else None
@@ -834,7 +851,7 @@ if is_student_mode:
                                                         mcq_score += q_pts
                                                         detailed_report += f"<br>سؤال {q_idx+1}: إجابة صحيحة ✅"
                                                     else:
-                                                        detailed_report += f"<br>سؤال {q_idx+1}: إجابة خاطئة ❌ (الإجابة الصحيحة: {['أ', 'ب', 'ج', 'د'][correct_ans-1]})"
+                                                        detailed_report += f"<br>سؤال {q_idx+1}: إجابة خاطئة ❌ (الإجابة الصحيحة: الخيار {['أ', 'ب', 'ج', 'د'][correct_ans-1]})"
                                                 else:
                                                     new_essay_sub = {
                                                         "معرف_الحل": f"ANS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{q_idx}",
@@ -853,7 +870,7 @@ if is_student_mode:
                                                     }
                                                     st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_essay_sub])], ignore_index=True)
 
-                                            note_msg = f"الدرجة الموضوعية: {mcq_score}/{total_max}. التفاصيل: {detailed_report}"
+                                            note_msg = f"الدرجة الموضوعية: {mcq_score}/{total_max}. تفاصيل الإجابات: {detailed_report}"
 
                                             new_ass = {
                                                 "التاريخ": str(date.today()),
@@ -869,7 +886,7 @@ if is_student_mode:
                                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                                             st.session_state.pop(exam_state_key, None)
                                             st.success(f"🎉 تم تسليم إجاباتك بنجاح! درجتك: ({mcq_score} من {total_max})")
-                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px;'>{note_msg}</div>", unsafe_allow_html=True)
+                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px;'><b>نتيجة التفصيلية:</b><br>{note_msg}</div>", unsafe_allow_html=True)
                                             st.rerun()
 
         # 2. صفحة الحضور
@@ -977,7 +994,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم (مع إمكانية طباعة وتصدير تفاصيل الاختبارات PDF)
+# 2. لوحة تحكم المعلم
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -1255,7 +1272,7 @@ with tab_exam_maker:
             st.rerun()
 
     st.write("---")
-    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيار طباعة الأسئلة PDF):")
+    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع طباعة صور الأسئلة والخيارات في PDF):")
     if st.session_state.exams_df.empty:
         st.info("لا توجد امتحانات منشورة بعد.")
     else:
@@ -1264,7 +1281,6 @@ with tab_exam_maker:
             with c_e1:
                 st.markdown(f"**{ex_r['عنوان الامتحان']}** — الصف: {ex_r['المجموعة/الصف']}")
             with c_e2:
-                # زر طباعة الأسئلة PDF
                 try:
                     q_list = json.loads(ex_r["الأسئلة_JSON"])
                 except Exception:
@@ -1281,8 +1297,16 @@ with tab_exam_maker:
                 for q_idx, q_item in enumerate(q_list):
                     pdf_html += f"<h3>سؤال {q_idx+1} ({q_item['type']}) - الدرجة: {q_item['points']}</h3>"
                     if q_item.get("text"): pdf_html += f"<p>{q_item['text']}</p>"
+                    if q_item.get("q_img"):
+                        pdf_html += f'<div style="margin: 10px 0;"><img src="data:image/jpeg;base64,{q_item["q_img"]}" style="max-width: 450px; border: 1px solid #ccc;"/></div>'
                     if q_item.get("type", "موضوعي") == "موضوعي":
-                        pdf_html += f"<p>أ) {q_item.get('opt1','')}<br>ب) {q_item.get('opt2','')}<br>ج) {q_item.get('opt3','')}<br>د) {q_item.get('opt4','')}</p>"
+                        opts_arr = [("أ", "opt1", "opt1_img"), ("ب", "opt2", "opt2_img"), ("ج", "opt3", "opt3_img"), ("د", "opt4", "opt4_img")]
+                        for o_lbl, o_t_key, o_i_key in opts_arr:
+                            t_val = q_item.get(o_t_key, "")
+                            i_val = q_item.get(o_i_key, "")
+                            pdf_html += f"<p><b>({o_lbl})</b> {t_val}</p>"
+                            if i_val:
+                                pdf_html += f'<div style="margin: 5px 0;"><img src="data:image/jpeg;base64,{i_val}" style="max-width: 200px; border: 1px solid #ddd;"/></div>'
                 pdf_html += "</body></html>"
 
                 st.download_button(
@@ -1292,8 +1316,6 @@ with tab_exam_maker:
                     mime="application/octet-stream",
                     key=f"print_ex_{ex_i}"
                 )
-            with c_e2:
-                pass
             with c_e3:
                 if st.button("حذف 🗑️", key=f"del_ex_btn_{ex_i}"):
                     st.session_state.exams_df = st.session_state.exams_df.drop(ex_i).reset_index(drop=True)
