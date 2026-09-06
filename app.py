@@ -1,4 +1,46 @@
-import base64
+import streamlit as st
+
+# ضبط دعم الوضعين الفاتح والداكن تلقائياً
+st.markdown(
+    """
+    <style>
+    /* 1. جعل النصوص الافتراضية تتبع لون السمة التلقائي الخاص بـ Streamlit */
+    html, body, [class*="css"], .stMarkdown, p, span, label {
+        color: var(--text-color) !important;
+        font-weight: 600; /* خط عريض وواضح */
+    }
+
+    /* 2. ضبط الألوان تلقائياً بحسب وضع متصفح وجهاز المستخدم */
+    @media (prefers-color-scheme: light) {
+        /* الوضع الفاتح: نصوص سوداء عريضة وخلفية واضحة */
+        body, .stApp {
+            color: #111111 !important;
+        }
+        p, span, label, div, h1, h2, h3, h4, h5, h6 {
+            color: #111111 !important;
+            font-weight: 700 !important;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        /* الوضع الداكن: نصوص ناصعة البياض وعريضة ومقروءة */
+        body, .stApp {
+            color: #FFFFFF !important;
+        }
+        p, span, label, div, h1, h2, h3, h4, h5, h6 {
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+        /* توضيح حقول الإدخال في الوضع الليلي */
+        input, select, textarea {
+            color: #FFFFFF !important;
+            background-color: #262730 !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)import base64
 import io
 import os
 from datetime import date, datetime
