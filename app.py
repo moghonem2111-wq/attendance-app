@@ -248,9 +248,9 @@ st.markdown("""
         gap: 10px;
     }
     
-    /* تصميم الأزرار باللون الأحمر والنص الأبيض العريض */
+    /* تصميم الأزرار باللون الأخضر الفاتح والنص الأبيض العريض */
     .stButton>button {
-        background: #dc2626 !important;
+        background: #10b981 !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
         border: none !important;
@@ -258,10 +258,10 @@ st.markdown("""
         font-weight: 900 !important;
         font-size: 17px !important;
         padding: 12px 26px;
-        box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
     }
     .stButton>button:hover { 
-        background: #b91c1c !important; 
+        background: #059669 !important; 
     }
     
     .chat-bubble-student {
@@ -293,7 +293,7 @@ st.markdown("""
         direction: ltr !important;
         text-align: center;
         background: #f8fafc;
-        border: 2px dashed #dc2626;
+        border: 2px dashed #10b981;
         padding: 15px;
         border-radius: 10px;
         margin: 15px 0;
@@ -308,7 +308,6 @@ st.markdown("""
         border: 2px solid rgba(255, 255, 255, 0.25);
     }
 
-    /* تصميم بطاقات الكورسات النظيفة بدون تفاصيل ومميزة بلون زر الاشتراك */
     .course-card {
         background: #ffffff;
         border: 2px solid #e2e8f0;
@@ -385,7 +384,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         gap: 12px;
-        background: linear-gradient(135deg, #dc2626, #ef4444);
+        background: linear-gradient(135deg, #059669, #10b981);
         color: #ffffff !important;
         padding: 14px 28px;
         border-radius: 50px;
@@ -409,16 +408,16 @@ st.markdown("""
     @media (prefers-color-scheme: light) {
         body, .stApp { background-color: #ffffff !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] { background: #f8fafc !important; border: 2px solid #dc2626 !important; border-radius: 12px; padding: 14px 18px; }
+        div[data-testid="stMetric"] { background: #f8fafc !important; border: 2px solid #10b981 !important; border-radius: 12px; padding: 14px 18px; }
         div[data-testid="stMetric"] label { color: #1e293b !important; font-size: 16px !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #dc2626 !important; font-weight: 900 !important; font-size: 26px !important; }
+        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #10b981 !important; font-weight: 900 !important; font-size: 26px !important; }
     }
     @media (prefers-color-scheme: dark) {
         body, .stApp { background-color: #0e1117 !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] { background: #1e232d !important; border: 2px solid #ef4444 !important; border-radius: 12px; padding: 14px 18px; }
+        div[data-testid="stMetric"] { background: #1e232d !important; border: 2px solid #059669 !important; border-radius: 12px; padding: 14px 18px; }
         div[data-testid="stMetric"] label { color: #e2e8f0 !important; font-size: 16px !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #f87171 !important; font-weight: 900 !important; font-size: 26px !important; }
+        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #34d399 !important; font-weight: 900 !important; font-size: 26px !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
@@ -451,7 +450,6 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # قسم كورسات درسلي (بدون تفاصيل محاضرات، وزر أحمر بارز للنص الأبيض العريض)
     st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
     st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
