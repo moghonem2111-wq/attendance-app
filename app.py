@@ -161,8 +161,8 @@ if "users_df" not in st.session_state:
     st.session_state.exams_df = e_df
     st.session_state.essays_df = es_df
 
-if "auth_mode" not in st.session_state:
-    st.session_state.auth_mode = "login"
+if "page_view" not in st.session_state:
+    st.session_state.page_view = "home" # "home", "login", "register"
 
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
@@ -446,7 +446,7 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    # شريط التنقل العلوي الاحترافي مع أزرار الانتقال الفوري للتسجيل أو إنشاء الحساب
+    # شريط التنقل العلوي مع أزرار التنقل بين الصفحات المستقلة
     nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
     col_nav1, col_nav2 = st.columns([2, 1.5])
@@ -464,79 +464,100 @@ if is_student_mode:
         """, unsafe_allow_html=True)
     with col_nav2:
         st.write("")
-        c_btn1, c_btn2 = st.columns(2)
+        c_btn0, c_btn1, c_btn2 = st.columns(3)
+        with c_btn0:
+            if st.button("🏠 الرئيسية"):
+                st.session_state.page_view = "home"
+                st.rerun()
         with c_btn1:
-            if st.button("👤 تسجيل الدخول", key="nav_btn_login"):
-                st.session_state.auth_mode = "login"
+            if st.button("👤 دخول"):
+                st.session_state.page_view = "login"
                 st.rerun()
         with c_btn2:
-            if st.button("✨ إنشاء حساب", key="nav_btn_reg"):
-                st.session_state.auth_mode = "register"
+            if st.button("✨ حساب"):
+                st.session_state.page_view = "register"
                 st.rerun()
 
     st.write("---")
-
-    # قسم الترحيب الرئيسي الاحترافي (Hero Section)
-    col_hero_txt, col_hero_img = st.columns([1.3, 1])
-    with col_hero_txt:
-        st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-        st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
-
-    with col_hero_img:
-        if img_b64:
-            st.markdown(f"""
-                <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                    <div style="position: absolute; width: 240px; height: 240px; background: #d1fae5; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
-                    <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("قم برفع صورة المعلم (teacher.jpg) من لوحة التحكم لتظهر هنا.")
-
-    st.write("---")
-
-    # كورسات درسلي
-    st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
-
-    courses_grid = [
-        ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-        ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww"),
-        ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw"),
-        ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw")
-    ]
-
-    c_cols = st.columns(2)
-    for idx, (icon, title, desc, link) in enumerate(courses_grid):
-        col_target = c_cols[idx % 2]
-        with col_target:
-            st.markdown(f"""
-                <div class="course-card">
-                    <div>
-                        <div class="course-icon-box">{icon}</div>
-                        <div class="course-title">{title}</div>
-                        <div class="course-desc">{desc}</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
-            st.write("")
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
     if "logged_student" not in st.session_state:
         st.session_state.logged_student = None
 
     if not st.session_state.logged_student:
-        # عرض التبويب بحسب زر الـ Navbar العلوي
-        if st.session_state.auth_mode == "login":
-            st.subheader("🔐 تسجيل دخول الطالب:")
+        # إذا كان في الصفحة الرئيسية (Home)
+        if st.session_state.page_view == "home":
+            col_hero_txt, col_hero_img = st.columns([1.3, 1])
+            with col_hero_txt:
+                st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+                st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                
+                c_home_b1, c_home_b2 = st.columns(2)
+                with c_home_b1:
+                    if st.button("🔐 تسجيل الدخول الآن"):
+                        st.session_state.page_view = "login"
+                        st.rerun()
+                with c_home_b2:
+                    if st.button("✨ إنشاء حساب جديد"):
+                        st.session_state.page_view = "register"
+                        st.rerun()
+
+            with col_hero_img:
+                if img_b64:
+                    st.markdown(f"""
+                        <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
+                            <div style="position: absolute; width: 240px; height: 240px; background: #d1fae5; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
+                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                        </div>
+                    """, unsafe_allow_html=True)
+
+            st.write("---")
+
+            # كورسات درسلي
+            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
+
+            courses_grid = [
+                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
+                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww"),
+                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw"),
+                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw")
+            ]
+
+            c_cols = st.columns(2)
+            for idx, (icon, title, desc, link) in enumerate(courses_grid):
+                col_target = c_cols[idx % 2]
+                with col_target:
+                    st.markdown(f"""
+                        <div class="course-card">
+                            <div>
+                                <div class="course-icon-box">{icon}</div>
+                                <div class="course-title">{title}</div>
+                                <div class="course-desc">{desc}</div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
+                    st.write("")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # صفحة مستقلة لتسجيل الدخول
+        elif st.session_state.page_view == "login":
+            st.markdown("### 🔐 تسجيل دخول الطالب:")
             with st.form("student_login_form"):
                 login_name = st.text_input("اسم الطالب المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
-                if st.form_submit_button("دخول إلى حسابي"):
+                c_l1, c_l2 = st.columns(2)
+                with c_l1:
+                    submit_login = st.form_submit_button("دخول إلى حسابي")
+                with c_l2:
+                    if st.form_submit_button("العودة للرئيسية"):
+                        st.session_state.page_view = "home"
+                        st.rerun()
+
+                if submit_login:
                     users_match = st.session_state.users_df[
                         (st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == login_name.strip())
                         & (st.session_state.users_df["كلمة المرور"].astype(str).str.strip() == login_pass.strip())
@@ -551,14 +572,24 @@ if is_student_mode:
                             st.rerun()
                     else:
                         st.error("اسم الطالب أو الرقم السري غير صحيح.")
-        else:
-            st.subheader("✨ إنشاء حساب طالب جديد:")
+
+        # صفحة مستقلة لإنشاء حساب جديد
+        elif st.session_state.page_view == "register":
+            st.markdown("### ✨ إنشاء حساب طالب جديد:")
             with st.form("student_register_form"):
                 reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
                 reg_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[reg_curr])
                 reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك:", type="password")
-                if st.form_submit_button("تأكيد إنشاء الحساب"):
+                c_r1, c_r2 = st.columns(2)
+                with c_r1:
+                    submit_reg = st.form_submit_button("تأكيد إنشاء الحساب")
+                with c_r2:
+                    if st.form_submit_button("العودة للرئيسية"):
+                        st.session_state.page_view = "home"
+                        st.rerun()
+
+                if submit_reg:
                     if not reg_name.strip() or not reg_pass.strip():
                         st.error("يرجى كتابة اسمك والرقم السري.")
                     else:
@@ -577,7 +608,7 @@ if is_student_mode:
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
-        # فيديو الترحيب هنا قبل صندوق التواصل مباشرة
+        # فيديو الترحيب هنا قبل صندوق التواصل مباشرة في صفحات الدخول والتسجيل والرئيسية
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
@@ -603,6 +634,7 @@ if is_student_mode:
             st.write("")
             if st.button("🚪 خروج"):
                 st.session_state.logged_student = None
+                st.session_state.page_view = "home"
                 st.rerun()
 
         # فيديو الترحيب هنا أيضاً بعد تسجيل الدخول بنجاح
@@ -1294,7 +1326,7 @@ with tab_chat:
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_rep])], ignore_index=True)
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                        st.success("تم إرسال الرد للطالب فوراً!")
+                        st.success("تم إرسال الرد للطالب بنجاح!")
                         st.rerun()
 
 # ----------------- تبويب بطاقات الطلاب -----------------
@@ -1358,7 +1390,7 @@ with tab_cards:
                 with col_c4:
                     if st.button("حذف نهائي 🗑️", key=f"del_card_btn_{idx}"):
                         delete_student_completely(st_name)
-                        st.success(f"✓ تم مسح الطالب ({st_name}) نهائياً!")
+                        st.success(f"✓ تم حذف الطالب ({st_name}) نهائياً!")
                         st.rerun()
                 st.write("---")
 
