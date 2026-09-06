@@ -247,17 +247,22 @@ st.markdown("""
         align-items: center;
         gap: 10px;
     }
+    
+    /* تصميم الأزرار باللون الأحمر والنص الأبيض العريض */
     .stButton>button {
-        background: #0052cc !important;
+        background: #dc2626 !important;
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
         border: none !important;
         border-radius: 10px;
         font-weight: 900 !important;
         font-size: 17px !important;
         padding: 12px 26px;
-        box-shadow: 0 4px 10px rgba(0, 82, 204, 0.25);
+        box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
     }
-    .stButton>button:hover { background: #003d99 !important; }
+    .stButton>button:hover { 
+        background: #b91c1c !important; 
+    }
     
     .chat-bubble-student {
         background-color: #e0f2fe;
@@ -288,20 +293,59 @@ st.markdown("""
         direction: ltr !important;
         text-align: center;
         background: #f8fafc;
-        border: 2px dashed #0052cc;
+        border: 2px dashed #dc2626;
         padding: 15px;
         border-radius: 10px;
         margin: 15px 0;
     }
 
-    /* بنر كورسات منصة درسلي بخلفية خضراء فاتحة ومتجاوبة تماماً مع الهواتف */
-    .darssly-box {
-        background: linear-gradient(135deg, #059669, #10b981);
+    /* تصميم بطاقات الكورسات الاحترافية بجانب بعضها (مطابق للصورة المطلوبة) */
+    .course-card {
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
         border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.25);
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+    .course-icon-box {
+        font-size: 45px;
+        background: #f0fdf4;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto 15px auto;
+        border: 2px solid #10b981;
+    }
+    .course-title {
+        color: #064e3b !important;
+        font-size: 20px !important;
+        font-weight: 900 !important;
+        margin-bottom: 8px !important;
+    }
+    .course-desc {
+        color: #4b5563 !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        margin-bottom: 15px !important;
+    }
+    .course-features {
+        text-align: right;
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        font-size: 13px;
+        font-weight: 800;
+        color: #1e293b;
     }
 
     .social-top-container {
@@ -342,7 +386,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         gap: 12px;
-        background: linear-gradient(135deg, #059669, #10b981);
+        background: linear-gradient(135deg, #dc2626, #ef4444);
         color: #ffffff !important;
         padding: 14px 28px;
         border-radius: 50px;
@@ -366,18 +410,22 @@ st.markdown("""
     @media (prefers-color-scheme: light) {
         body, .stApp { background-color: #ffffff !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] { background: #f8fafc !important; border: 2px solid #0052cc !important; border-radius: 12px; padding: 14px 18px; }
+        div[data-testid="stMetric"] { background: #f8fafc !important; border: 2px solid #dc2626 !important; border-radius: 12px; padding: 14px 18px; }
         div[data-testid="stMetric"] label { color: #1e293b !important; font-size: 16px !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #0052cc !important; font-weight: 900 !important; font-size: 26px !important; }
+        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #dc2626 !important; font-weight: 900 !important; font-size: 26px !important; }
     }
     @media (prefers-color-scheme: dark) {
         body, .stApp { background-color: #0e1117 !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] { background: #1e232d !important; border: 2px solid #3b82f6 !important; border-radius: 12px; padding: 14px 18px; }
+        div[data-testid="stMetric"] { background: #1e232d !important; border: 2px solid #ef4444 !important; border-radius: 12px; padding: 14px 18px; }
         div[data-testid="stMetric"] label { color: #e2e8f0 !important; font-size: 16px !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 900 !important; font-size: 26px !important; }
+        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #f87171 !important; font-weight: 900 !important; font-size: 26px !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
+        .course-card { background: #1e232d; border-color: #334155; }
+        .course-title { color: #34d399 !important; }
+        .course-desc { color: #9ca3af !important; }
+        .course-features { background: #0f172a; color: #f8fafc; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -405,30 +453,34 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # بنر كورسات منصة درسلي باستخدام عناصر Streamlit لتظهر كاملة وواضحة على الموبايل والكمبيوتر بدون قص
-    st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 20px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
+    # قسم كورسات درسلي بتصميم بطاقات رأسية بجانب بعضها (مطابق للصورة الاحترافية)
+    st.markdown("<h2 style='text-align: center; margin-bottom: 5px;'>إه أفضل الباقات والعروض على المنصة؟ 🎓</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 25px; font-weight: 800;'>اختر الكورس أو الباقة المناسبة لمرحلتك الدراسية:</p>", unsafe_allow_html=True)
 
-    courses_list = [
-        ("📊", "إحصاء الصف الثالث الثانوي", "شرح مبسط، تمارين شاملة، وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-        ("📖", "رياضيات الصف الأول الإعدادي", "شرح كامل، تمارين، واختبارات دورية مع البشمهندس محمد غنيم", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww"),
-        ("📘", "رياضيات الصف الثاني الإعدادي", "متابعة شاملة، تبسيط المناهج، وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw"),
-        ("📐", "رياضيات الصف الثالث الإعدادي (الشهادة الإعدادية)", "تأسيس قوي، مراجعات نهائية، وضمان الدرجة النهائية بإذن الله", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw")
+    courses_grid = [
+        ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", ["✔️ المحاضرة (01): التوزيع الطبيعي", "✔️ المحاضرة (02): المتغير العشوائي", "✔️ المحاضرة (03): الإحصاء التطبيقي", "✔️ مراجعات واختبارات شاملة"], "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
+        ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", ["✔️ الجبر ووحداته الكاملة", "✔️ الهندسة والقياس", "✔️ اختبارات دورية على كل درس", "✔️ متابعة مستمرة وتأسيس قوي"], "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww"),
+        ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", ["✔️ الجبر وتحليل المقادير", "✔️ مثلث الإحصاء والتحليل", "✔️ تدريبات على أفكار الامتحانات", "✔️ امتحانات إلكترونية فورية"], "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw"),
+        ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", ["✔️ الهندسة التحليلية وحساب المثلثات", "✔️ الجبر والدوال الحقيقية", "✔️ مراجعات نهائية مكثفة", "✔️ حل مسائل المحافظات السابقة"], "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw")
     ]
 
-    for c_icon, c_title, c_desc, c_link in courses_list:
-        with st.container():
-            col_ci, col_ct, col_cb = st.columns([1, 6, 3])
-            with col_ci:
-                st.markdown(f"<div style='font-size: 32px; text-align: center; background: #d1fae5; padding: 10px; border-radius: 10px;'>{c_icon}</div>", unsafe_allow_html=True)
-            with col_ct:
-                st.markdown(f"<h4 style='color: #064e3b; margin: 0; font-size: 16px;'>{c_title}</h4><p style='color: #374151; font-size: 12px; margin: 2px 0 0 0;'>{c_desc}</p>", unsafe_allow_html=True)
-            with col_cb:
-                st.link_button("معرفة تفاصيل الاشتراك 👈", c_link, use_container_width=True)
-            st.write("---")
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    c_cols = st.columns(2)
+    for idx, (icon, title, desc, features, link) in enumerate(courses_grid):
+        col_target = c_cols[idx % 2]
+        with col_target:
+            feat_html = "".join([f"<div style='margin-bottom: 5px;'>{f}</div>" for f in features])
+            st.markdown(f"""
+                <div class="course-card">
+                    <div>
+                        <div class="course-icon-box">{icon}</div>
+                        <div class="course-title">{title}</div>
+                        <div class="course-desc">{desc}</div>
+                        <div class="course-features">{feat_html}</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
+            st.write("")
 
     if "logged_student" not in st.session_state:
         st.session_state.logged_student = None
