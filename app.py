@@ -269,35 +269,12 @@ st.markdown("""
         border-radius: 10px;
         font-weight: 900 !important;
         font-size: 16px !important;
-        padding: 10px 22px;
+        padding: 12px 22px;
         box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        width: 100% !important;
     }
     .stButton>button:hover { 
         background: #059669 !important; 
-    }
-    
-    .menu-icon-card {
-        background: #ffffff;
-        border: 2px solid #10b981;
-        border-radius: 16px;
-        padding: 24px;
-        text-align: center;
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.15);
-        margin-bottom: 15px;
-        transition: transform 0.2s ease;
-    }
-    .menu-icon-card:hover {
-        transform: translateY(-4px);
-    }
-    .menu-icon-emoji {
-        font-size: 45px;
-        margin-bottom: 12px;
-    }
-    .menu-icon-title {
-        color: #064e3b;
-        font-size: 18px;
-        font-weight: 900;
-        margin: 0;
     }
 
     .chat-bubble-student {
@@ -454,8 +431,6 @@ st.markdown("""
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
-        .menu-icon-card { background: #1e232d; border-color: #059669; }
-        .menu-icon-title { color: #34d399 !important; }
         .course-title { color: #34d399 !important; }
         .course-desc { color: #9ca3af !important; }
     }
@@ -475,7 +450,6 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    # شريط التنقل العلوي المستقل
     nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
     col_nav1, col_nav2 = st.columns([2, 1.5])
@@ -514,7 +488,6 @@ if is_student_mode:
         st.session_state.logged_student = None
 
     if not st.session_state.logged_student:
-        # 1. الرئيسية
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
@@ -573,7 +546,6 @@ if is_student_mode:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # 2. صفحة تسجيل الدخول المستقلة
         elif st.session_state.page_view == "login":
             st.markdown("### 🔐 تسجيل دخول الطالب:")
             with st.form("student_login_form"):
@@ -603,7 +575,6 @@ if is_student_mode:
                     else:
                         st.error("اسم الطالب أو الرقم السري غير صحيح.")
 
-        # 3. صفحة إنشاء حساب مستقلة
         elif st.session_state.page_view == "register":
             st.markdown("### ✨ إنشاء حساب طالب جديد:")
             with st.form("student_register_form"):
@@ -638,7 +609,6 @@ if is_student_mode:
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
-        # فيديو الترحيب قبل صندوق التواصل في الصفحات العامة
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
@@ -667,41 +637,31 @@ if is_student_mode:
                 st.session_state.page_view = "home"
                 st.rerun()
 
-        # فيديو الترحيب بعد تسجيل الدخول بنجاح
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
             st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
-        # ==================== الأيقونات الرئيسية المعبرة والمنتقلة لصفحات مستقلة ====================
+        # ==================== لوحة خدمات الطالب (الأيقونات تحت بعضها تماماً للموبايل والكمبيوتر) ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
-        
-        ic1, ic2, ic3, ic4, ic5 = st.columns(5)
-        
-        with ic1:
-            if st.button("✍️ الاختبارات الإلكترونية", use_container_width=True):
-                st.session_state.student_sub_page = "exams"
-                st.rerun()
-        with ic2:
-            if st.button("📝 تسجيل الحضور", use_container_width=True):
-                st.session_state.student_sub_page = "attendance"
-                st.rerun()
-        with ic3:
-            if st.button("📊 درجات الواجبات", use_container_width=True):
-                st.session_state.student_sub_page = "hw_grades"
-                st.rerun()
-        with ic4:
-            if st.button("📈 درجات الاختبارات", use_container_width=True):
-                st.session_state.student_sub_page = "exam_grades"
-                st.rerun()
-        with ic5:
-            if st.button("💬 الدردشة والدعم", use_container_width=True):
-                st.session_state.student_sub_page = "chat"
-                st.rerun()
+        st.markdown("<p style='text-align: center; margin-bottom: 15px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
+
+        if st.button("✍️ الاختبارات الإلكترونية التفاعلية", use_container_width=True):
+            st.session_state.student_sub_page = "exams"
+            st.rer0n = True
+        if st.button("📝 تسجيل حضور حصة اليوم", use_container_width=True):
+            st.session_state.student_sub_page = "attendance"
+        if st.button("📊 متابعة درجات الواجبات المنزلية", use_container_width=True):
+            st.session_state.student_sub_page = "hw_grades"
+        if st.button("📈 متابعة درجات الاختبارات والكويزات", use_container_width=True):
+            st.session_state.student_sub_page = "exam_grades"
+        if st.button("💬 مركز الدردشة والدعم المباشر", use_container_width=True):
+            st.session_state.student_sub_page = "chat"
 
         sub_page = st.session_state.student_sub_page
+        st.write("---")
 
-        # ----------------- 1. صفحة الاختبارات الإلكترونية -----------------
+        # 1. صفحة الاختبارات
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
             my_grade = st_user.get("المجموعة/الصف", "")
@@ -915,7 +875,7 @@ if is_student_mode:
                                             st.success(f"🎉 تم تسليم إجاباتك بنجاح! درجتك في الاختياري: ({mcq_score} من {total_max})")
                                             st.rerun()
 
-        # ----------------- 2. صفحة تسجيل الحضور -----------------
+        # 2. صفحة الحضور
         elif sub_page == "attendance":
             st.markdown("### 📝 تسجيل حضور حصة اليوم وتقييمها:")
             with st.form("logged_student_att_form", clear_on_submit=True):
@@ -935,9 +895,9 @@ if is_student_mode:
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                     st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
 
-        # ----------------- 3. صفحة متابعة درجات الواجبات -----------------
+        # 3. درجات الواجبات
         elif sub_page == "hw_grades":
-            st.markdown("### 📊 متابعة سجل درجات الواجبات المنزلية:")
+            st.markdown("### 📊 متابعة درجات الواجبات المنزلية:")
             my_assessments = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("واجب", na=False))
@@ -947,9 +907,9 @@ if is_student_mode:
             else:
                 st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
-        # ----------------- 4. صفحة متابعة درجات الاختبارات -----------------
+        # 4. درجات الاختبارات
         elif sub_page == "exam_grades":
-            st.markdown("### 📈 متابعة سجل درجات الاختبارات والكويزات:")
+            st.markdown("### 📈 متابعة درجات الاختبارات والكويزات:")
             my_exams = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("اختبار|كويز", na=False))
@@ -959,9 +919,9 @@ if is_student_mode:
             else:
                 st.dataframe(my_exams[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
-        # ----------------- 5. صفحة الدردشة والدعم -----------------
+        # 5. الدردشة
         elif sub_page == "chat":
-            st.markdown("### 💬 مركز الدردشة والتواصل المباشر مع البشمهندس:")
+            st.markdown("### 💬 مركز الدردشة والدعم المباشر:")
             student_name_key = st_user["اسم الطالب"].strip()
             chat_history = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key].copy()
 
@@ -1786,7 +1746,7 @@ with tab4:
                 </table>
                 <div class="section-title">1. تقرير الواجبات المنزلية والاختبارات الدورية:</div>
                 <table class="table-main">
-                    <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف / الاختبار</th><th>الدرجة المحصلة</th><th>حالة التسليم والالتزام</th><th>ملاحظات وتوجيهات</th></tr>
+                    <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف / الاختبار</th><th>الدرجة المحصلة</th><th>حالة التسليم والالتزام</th><th>ملاحظات المعلم وتوجيهاته</th></tr>
                     {ass_html_rows}
                 </table>
                 <div class="section-title">2. سجل الحضور وتفاصيل سعر كل حصة:</div>
