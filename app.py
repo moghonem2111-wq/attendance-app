@@ -7,6 +7,12 @@ import pandas as pd
 from PIL import Image
 import streamlit as st
 
+# استيراد أداة اللصق المباشر من الحافظة
+try:
+    from streamlit_paste_button import paste_image_button
+except ImportError:
+    paste_image_button = None
+
 FILE_NAME = "سجل_الغياب_والحصص.xlsx"
 IMG_NAME = "teacher.jpg"
 
@@ -71,6 +77,13 @@ def get_image_base64(path):
         except Exception:
             return ""
     return ""
+
+def pil_to_base64(pil_img):
+    if pil_img is None:
+        return ""
+    buf = io.BytesIO()
+    pil_img.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
 
 img_b64 = get_image_base64(found_img_path)
 
@@ -186,18 +199,6 @@ st.markdown("""
         align-items: center;
         gap: 12px;
     }
-    .editor-toolbar {
-        background: #f1f5f9;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px 8px 0 0;
-        padding: 8px 12px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-        font-size: 14px;
-        font-weight: 800;
-    }
     .vertical-section-header {
         background: linear-gradient(135deg, #0284c7, #0369a1);
         color: #ffffff !important;
@@ -272,28 +273,6 @@ st.markdown("""
         justify-content: center;
         width: 100%;
     }
-    .social-icons-container {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-    .social-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        text-decoration: none !important;
-    }
-    .social-btn svg { width: 24px; height: 24px; }
-    .facebook-bg { background-color: #1877F2; }
-    .whatsapp-bg { background-color: #25D366; }
-    .telegram-bg { background-color: #229ED9; }
-    .tiktok-bg   { background-color: #000000; border: 1px solid #444; }
-    .youtube-bg  { background-color: #FF0000; }
     .rights-text { font-size: 15px; font-weight: 900; margin-top: 10px; text-align: center; }
     @media (prefers-color-scheme: light) {
         body, .stApp { background-color: #ffffff !important; }
@@ -302,7 +281,6 @@ st.markdown("""
         div[data-testid="stMetric"] label { color: #1e293b !important; font-size: 15px !important; font-weight: 800 !important; }
         div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #0052cc !important; font-weight: 900 !important; }
         input, select, textarea { color: #000000 !important; background-color: #ffffff !important; border: 2px solid #94a3b8 !important; font-weight: 700 !important; }
-        .editor-toolbar { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
     }
     @media (prefers-color-scheme: dark) {
         body, .stApp { background-color: #0e1117 !important; }
@@ -311,7 +289,6 @@ st.markdown("""
         div[data-testid="stMetric"] label { color: #e2e8f0 !important; font-size: 15px !important; font-weight: 800 !important; }
         div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 900 !important; }
         input, select, textarea { color: #ffffff !important; background-color: #262730 !important; border: 2px solid #475569 !important; font-weight: 700 !important; }
-        .editor-toolbar { background: #1e293b; border-color: #475569; color: #f8fafc; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
     }
@@ -322,7 +299,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (حل الأسئلة بالصور أو النصوص)
+# 1. واجهة الطالب
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -388,12 +365,9 @@ if is_student_mode:
                             st.warning("هذا الاسم مسجل بالفعل! يرجى تسجيل الدخول مباشرة.")
                         else:
                             new_user = {
-                                "اسم الطالب": reg_name.strip(),
-                                "كلمة المرور": reg_pass.strip(),
-                                "المنهج/الدولة": reg_curr,
-                                "المجموعة/الصف": reg_grade,
-                                "تاريخ التسجيل": str(date.today()),
-                                "الحالة_حظر": "نشط",
+                                "اسم الطالب": reg_name.strip(), "كلمة المرور": reg_pass.strip(),
+                                "المنهج/الدولة": reg_curr, "المجموعة/الصف": reg_grade,
+                                "تاريخ التسجيل": str(date.today()), "الحالة_حظر": "نشط",
                             }
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
@@ -472,18 +446,15 @@ if is_student_mode:
                                     q_type = q.get("type", "موضوعي")
                                     st.markdown(f"### **س {q_idx + 1}:**")
                                     
-                                    # عرض نص السؤال إن وجد
                                     if q.get("text"):
                                         st.markdown(f"**{q['text']}**")
                                     
-                                    # عرض صورة السؤال إن وجدت
                                     if q.get("q_img"):
                                         st.image(f"data:image/jpeg;base64,{q['q_img']}", width=480)
 
                                     st.caption(f"الدرجة: {q['points']}")
 
                                     if q_type == "موضوعي":
-                                        # الخيارات (نصوص أو صور)
                                         opts_labels = ["أ", "ب", "ج", "د"]
                                         for opt_i, lbl in enumerate(opts_labels, 1):
                                             txt_val = q.get(f"opt{opt_i}", "")
@@ -642,7 +613,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم (دعم لقطات الشاشة والصور للأسئلة والخيارات)
+# 2. لوحة تحكم المعلم (مع دعم زر اللصق المباشر من الحافظة Paste Image)
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -688,12 +659,19 @@ tab_exam_maker, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, 
     "🖨️ تقرير ولي الأمر للطباعة",
 ])
 
-# ----------------- تبويب صانع الامتحانات المصورة (سكرين شوت ولصق مباشر) -----------------
+# ----------------- تبويب صانع الامتحانات مع اللصق المباشر -----------------
 with tab_exam_maker:
-    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / إدخال بنك الأسئلة بالصور</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / إدخال بنك الأسئلة بالصور أو اللصق السريع</div>", unsafe_allow_html=True)
 
     if "temp_questions" not in st.session_state:
         st.session_state.temp_questions = []
+
+    # حالات حفظ الصور الملصوقة في الجلسة
+    if "pasted_q_img" not in st.session_state: st.session_state.pasted_q_img = ""
+    if "pasted_opt1_img" not in st.session_state: st.session_state.pasted_opt1_img = ""
+    if "pasted_opt2_img" not in st.session_state: st.session_state.pasted_opt2_img = ""
+    if "pasted_opt3_img" not in st.session_state: st.session_state.pasted_opt3_img = ""
+    if "pasted_opt4_img" not in st.session_state: st.session_state.pasted_opt4_img = ""
 
     with st.expander("⚙️ 1. الإعدادات الرئيسية للامتحان", expanded=True):
         c_ex1, c_ex2 = st.columns(2)
@@ -708,79 +686,124 @@ with tab_exam_maker:
             ex_term_input = st.selectbox("اختر الفصل الدراسي:*", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني", "مراجعة نهائية"])
             ex_time_input = st.number_input("مدة الامتحان (بالدقائق):", min_value=5, max_value=180, value=45, step=5)
 
-    with st.expander("📐 2. إدخال الأسئلة بالصور أو النصوص (لصق Screenshot)", expanded=True):
+    with st.expander("📐 2. إدخال وتجهيز الأسئلة (لصق مباشر من الحافظة)", expanded=True):
         q_count = len(st.session_state.temp_questions) + 1
         st.markdown(f"#### إضافة سؤال رقم {q_count}")
 
         q_type_choice = st.selectbox("نوع السؤال:", ["سؤال موضوعي (اختيار من متعدد)", "سؤال مقالي (خطوات حل ورفع صورة)"])
         is_mcq = "موضوعي" in q_type_choice
 
-        with st.form(f"add_question_form_{q_count}", clear_on_submit=True):
-            st.markdown("##### 📌 نص أو صورة السؤال:")
-            q_text = st.text_area("نص السؤال (اختياري إذا أرفقت صورة مسألة):", placeholder="مثال: أوجد مجموعة الحل للمعادلة الموضحة بالصورة:")
-            q_img_file = st.file_uploader("📷 ارفع أو الصق صورة السؤال (Screenshot) هنا:", type=["jpg", "png", "jpeg"], key=f"q_img_{q_count}")
+        st.markdown("##### 📌 أ) صورة السؤال أو نصه:")
+        col_qp1, col_qp2 = st.columns([1, 1])
+        with col_qp1:
+            if paste_image_button:
+                paste_res = paste_image_button("📋 اضغط للصق صورة السؤال المنسوخة (Paste)", key=f"paste_q_{q_count}")
+                if paste_res.image_data is not None:
+                    st.session_state.pasted_q_img = pil_to_base64(paste_res.image_data)
+                    st.success("✓ تم التقاط صورة السؤال من الحافظة بنجاح!")
+            else:
+                st.info("أضف `streamlit-paste-button` في requirements.txt لتفعيل زر اللصق.")
+        with col_qp2:
+            q_file_up = st.file_uploader("أو اسحب وأفلت صورة السؤال هنا:", type=["jpg", "png", "jpeg"], key=f"upload_q_{q_count}")
+            if q_file_up is not None:
+                st.session_state.pasted_q_img = base64.b64encode(q_file_up.read()).decode()
 
-            opt1_img_file, opt2_img_file, opt3_img_file, opt4_img_file = None, None, None, None
-            opt1, opt2, opt3, opt4 = "", "", "", ""
-            correct_num = 1
+        if st.session_state.pasted_q_img:
+            st.image(f"data:image/jpeg;base64,{st.session_state.pasted_q_img}", width=350)
 
-            if is_mcq:
-                st.write("---")
-                st.markdown("##### 🎯 خيارات الإجابة الأربعة (يمكن كتابة نص أو رفع لقطة شاشة لكل خيار):")
+        q_text_input = st.text_area("نص السؤال المكتوب (اختياري إذا كانت الصورة كافية):", placeholder="مثال: أوجد قيمة س الموضحة بالرسم:")
 
-                # الخيار 1
-                c1_a, c1_b = st.columns([3, 2])
-                with c1_a: opt1 = st.text_input("نص الخيار الأول (أ):", placeholder="الخيار أ")
-                with c1_b: opt1_img_file = st.file_uploader("📷 صورة الخيار (أ):", type=["jpg", "png", "jpeg"], key=f"opt1_img_{q_count}")
+        opt1_txt, opt2_txt, opt3_txt, opt4_txt = "", "", "", ""
+        correct_num = 1
 
-                # الخيار 2
-                c2_a, c2_b = st.columns([3, 2])
-                with c2_a: opt2 = st.text_input("نص الخيار الثاني (ب):", placeholder="الخيار ب")
-                with c2_b: opt2_img_file = st.file_uploader("📷 صورة الخيار (ب):", type=["jpg", "png", "jpeg"], key=f"opt2_img_{q_count}")
+        if is_mcq:
+            st.write("---")
+            st.markdown("##### 🎯 ب) خيارات الإجابة الأربعة (يمكن كتابة نص أو لصق لقطة شاشة لكل خيار):")
 
-                # الخيار 3
-                c3_a, c3_b = st.columns([3, 2])
-                with c3_a: opt3 = st.text_input("نص الخيار الثالث (ج):", placeholder="الخيار ج")
-                with c3_b: opt3_img_file = st.file_uploader("📷 صورة الخيار (ج):", type=["jpg", "png", "jpeg"], key=f"opt3_img_{q_count}")
+            # الخيار 1
+            st.markdown("**الخيار الأول (أ):**")
+            co1_a, co1_b = st.columns([2, 2])
+            with co1_a: opt1_txt = st.text_input("نص الخيار (أ):", placeholder="الخيار أ", key=f"t_opt1_{q_count}")
+            with co1_b:
+                if paste_image_button:
+                    p1 = paste_image_button("📋 لصق صورة الخيار (أ)", key=f"p_opt1_{q_count}")
+                    if p1.image_data is not None:
+                        st.session_state.pasted_opt1_img = pil_to_base64(p1.image_data)
+                f1 = st.file_uploader("أو ارفع صورة (أ):", type=["jpg", "png", "jpeg"], key=f"u_opt1_{q_count}")
+                if f1 is not None: st.session_state.pasted_opt1_img = base64.b64encode(f1.read()).decode()
+            if st.session_state.pasted_opt1_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt1_img}", width=200)
 
-                # الخيار 4
-                c4_a, c4_b = st.columns([3, 2])
-                with c4_a: opt4 = st.text_input("نص الخيار الرابع (د):", placeholder="الخيار د")
-                with c4_b: opt4_img_file = st.file_uploader("📷 صورة الخيار (د):", type=["jpg", "png", "jpeg"], key=f"opt4_img_{q_count}")
+            # الخيار 2
+            st.markdown("**الخيار الثاني (ب):**")
+            co2_a, co2_b = st.columns([2, 2])
+            with co2_a: opt2_txt = st.text_input("نص الخيار (ب):", placeholder="الخيار ب", key=f"t_opt2_{q_count}")
+            with co2_b:
+                if paste_image_button:
+                    p2 = paste_image_button("📋 لصق صورة الخيار (ب)", key=f"p_opt2_{q_count}")
+                    if p2.image_data is not None:
+                        st.session_state.pasted_opt2_img = pil_to_base64(p2.image_data)
+                f2 = st.file_uploader("أو ارفع صورة (ب):", type=["jpg", "png", "jpeg"], key=f"u_opt2_{q_count}")
+                if f2 is not None: st.session_state.pasted_opt2_img = base64.b64encode(f2.read()).decode()
+            if st.session_state.pasted_opt2_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt2_img}", width=200)
 
-                st.write("---")
-                correct_num = st.selectbox("الإجابة الصحيحة هي:*", [1, 2, 3, 4], format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})")
+            # الخيار 3
+            st.markdown("**الخيار الثالث (ج):**")
+            co3_a, co3_b = st.columns([2, 2])
+            with co3_a: opt3_txt = st.text_input("نص الخيار (ج):", placeholder="الخيار ج", key=f"t_opt3_{q_count}")
+            with co3_b:
+                if paste_image_button:
+                    p3 = paste_image_button("📋 لصق صورة الخيار (ج)", key=f"p_opt3_{q_count}")
+                    if p3.image_data is not None:
+                        st.session_state.pasted_opt3_img = pil_to_base64(p3.image_data)
+                f3 = st.file_uploader("أو ارفع صورة (ج):", type=["jpg", "png", "jpeg"], key=f"u_opt3_{q_count}")
+                if f3 is not None: st.session_state.pasted_opt3_img = base64.b64encode(f3.read()).decode()
+            if st.session_state.pasted_opt3_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt3_img}", width=200)
+
+            # الخيار 4
+            st.markdown("**الخيار الرابع (د):**")
+            co4_a, co4_b = st.columns([2, 2])
+            with co4_a: opt4_txt = st.text_input("نص الخيار (د):", placeholder="الخيار د", key=f"t_opt4_{q_count}")
+            with co4_b:
+                if paste_image_button:
+                    p4 = paste_image_button("📋 لصق صورة الخيار (د)", key=f"p_opt4_{q_count}")
+                    if p4.image_data is not None:
+                        st.session_state.pasted_opt4_img = pil_to_base64(p4.image_data)
+                f4 = st.file_uploader("أو ارفع صورة (د):", type=["jpg", "png", "jpeg"], key=f"u_opt4_{q_count}")
+                if f4 is not None: st.session_state.pasted_opt4_img = base64.b64encode(f4.read()).decode()
+            if st.session_state.pasted_opt4_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt4_img}", width=200)
 
             st.write("---")
-            q_points = st.selectbox("علامة السؤال (الدرجة):*", [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0], index=1)
-            add_q_submit = st.form_submit_button("➕ حفظ وإضافة السؤال إلى الامتحان")
+            correct_num = st.selectbox("الإجابة الصحيحة هي:*", [1, 2, 3, 4], format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})", key=f"cor_{q_count}")
 
-            if add_q_submit:
-                if not q_text.strip() and q_img_file is None:
-                    st.error("يرجى كتابة نص للسؤال أو إرفاق صورة للسؤال (Screenshot).")
-                else:
-                    q_img_b64 = base64.b64encode(q_img_file.read()).decode() if q_img_file is not None else ""
-                    opt1_b64 = base64.b64encode(opt1_img_file.read()).decode() if opt1_img_file is not None else ""
-                    opt2_b64 = base64.b64encode(opt2_img_file.read()).decode() if opt2_img_file is not None else ""
-                    opt3_b64 = base64.b64encode(opt3_img_file.read()).decode() if opt3_img_file is not None else ""
-                    opt4_b64 = base64.b64encode(opt4_img_file.read()).decode() if opt4_img_file is not None else ""
+        st.write("---")
+        q_pts_val = st.selectbox("علامة هذا السؤال (الدرجة):*", [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0], index=1, key=f"pts_{q_count}")
 
-                    st.session_state.temp_questions.append({
-                        "type": "موضوعي" if is_mcq else "مقالي",
-                        "text": q_text.strip(),
-                        "q_img": q_img_b64,
-                        "opt1": opt1.strip(), "opt1_img": opt1_b64,
-                        "opt2": opt2.strip(), "opt2_img": opt2_b64,
-                        "opt3": opt3.strip(), "opt3_img": opt3_b64,
-                        "opt4": opt4.strip(), "opt4_img": opt4_b64,
-                        "correct": correct_num,
-                        "points": q_points,
-                    })
-                    st.success(f"✓ تم إضافة السؤال رقم {q_count} بنجاح!")
-                    st.rerun()
+        if st.button(f"➕ حفظ وإضافة السؤال رقم {q_count} إلى الامتحان"):
+            if not q_text_input.strip() and not st.session_state.pasted_q_img:
+                st.error("يرجى كتابة نص السؤال أو لصق صورة للسؤال أولاً.")
+            else:
+                st.session_state.temp_questions.append({
+                    "type": "موضوعي" if is_mcq else "مقالي",
+                    "text": q_text_input.strip(),
+                    "q_img": st.session_state.pasted_q_img,
+                    "opt1": opt1_txt.strip(), "opt1_img": st.session_state.pasted_opt1_img,
+                    "opt2": opt2_txt.strip(), "opt2_img": st.session_state.pasted_opt2_img,
+                    "opt3": opt3_txt.strip(), "opt3_img": st.session_state.pasted_opt3_img,
+                    "opt4": opt4_txt.strip(), "opt4_img": st.session_state.pasted_opt4_img,
+                    "correct": correct_num,
+                    "points": q_pts_val,
+                })
+                # تصفير الصور المجهزة للسؤال القادم
+                st.session_state.pasted_q_img = ""
+                st.session_state.pasted_opt1_img = ""
+                st.session_state.pasted_opt2_img = ""
+                st.session_state.pasted_opt3_img = ""
+                st.session_state.pasted_opt4_img = ""
+                st.success(f"✓ تم حفظ وإدراج السؤال رقم {q_count} بنجاح!")
+                st.rerun()
 
         if st.session_state.temp_questions:
-            st.write(f"**الأسئلة المجهزة: ({len(st.session_state.temp_questions)}) سؤال**")
+            st.write(f"**الأسئلة الجاهزة في هذا الاختبار: ({len(st.session_state.temp_questions)}) سؤال**")
             for idx_q, q_item in enumerate(st.session_state.temp_questions):
                 st.markdown(f"- **س {idx_q+1} ({q_item['type']}):** {q_item['text'] if q_item['text'] else '[سؤال مصور]'} — *(الدرجة: {q_item['points']})*")
             if st.button("🗑️ مسح الأسئلة والبدء من جديد"):
@@ -829,7 +852,7 @@ with tab_exam_maker:
                     st.warning("تم حذف الامتحان.")
                     st.rerun()
 
-# ----------------- تبويب تصحيح المقالي بالصور -----------------
+# ----------------- تبويب تصحيح المقالي والصور -----------------
 with tab_essay_grade:
     st.subheader("📝 كنترول تصحيح إجابات الطلاب المقالية وصور الحل:")
     essays = st.session_state.essays_df
@@ -1026,7 +1049,7 @@ with tab1:
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
 
-# ----------------- تبويب رصد الواجبات يدوياً -----------------
+# ----------------- تبويب رصد الواجبات يدوي -----------------
 with tab_hw:
     st.subheader("إضافة درجات الواجبات المنزلية والاختبارات يدوياً")
     all_registered_names = sorted(list(set(
