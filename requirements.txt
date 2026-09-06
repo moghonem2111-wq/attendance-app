@@ -2,3 +2,9 @@ streamlit
 pandas
 openpyxl
 streamlit-paste-button
+streamlit
+pandas
+openpyxl
+Pillow
+streamlit-paste-button
+streamlit-cropper
