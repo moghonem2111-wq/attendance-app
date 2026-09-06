@@ -164,9 +164,45 @@ st.markdown(
         background: #003d99 !important;
     }
 
+    /* زر الاتصال الهاتفي */
+    .call-btn-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    .call-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        padding: 14px 28px;
+        border-radius: 50px;
+        font-size: 18px;
+        font-weight: 900;
+        text-decoration: none !important;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+        transition: all 0.25s ease;
+        border: 2px solid #ffffff;
+    }
+    .call-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(16, 185, 129, 0.45);
+        background: linear-gradient(135deg, #047857, #059669);
+    }
+    .call-btn svg {
+        width: 24px;
+        height: 24px;
+        fill: #ffffff;
+    }
+
     /* صندوق التواصل وحفظ الحقوق */
     .social-footer-box {
-        margin-top: 35px;
+        margin-top: 20px;
         padding: 20px 0;
         border-top: 1px solid rgba(150, 150, 150, 0.3);
         display: flex;
@@ -405,6 +441,21 @@ if is_student_mode:
                     f"🎉 شكراً لك {st_name}! تم تسجيل حضورك وتقييمك بنجاح."
                 )
 
+    # زر الاتصال المباشر بالموبايل
+    st.markdown(
+        """
+        <div class="call-btn-container">
+            <a href="tel:01016361440" class="call-btn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                </svg>
+                <span>للتواصل مع م / محمد غنيم: 01016361440</span>
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     # شريط التواصل وحفظ الحقوق في واجهة الطالب
     st.markdown(
         """
@@ -442,7 +493,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية
+# 2. لوحة تحكم المعلم الرئيسية (يظهر فيها الشريط الجانبي فقط)
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader(
