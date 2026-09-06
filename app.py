@@ -449,7 +449,7 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. كورسات درسلي أولاً
+    # كورسات درسلي
     st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
     st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -532,12 +532,6 @@ if is_student_mode:
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
-        # 2. ظهور الفيديو هنا بعد تسجيل الدخول / إنشاء الحساب وقبل صندوق التواصل (كما طلبت في الصورة)
-        st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
-        col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
-        with col_vid2:
-            st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
-
     else:
         st_user = st.session_state.logged_student
         fresh_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()]
@@ -567,6 +561,12 @@ if is_student_mode:
             if st.button("🚪 خروج"):
                 st.session_state.logged_student = None
                 st.rerun()
+
+        # ظهور الفيديو هنا بعد تسجيل الدخول بنجاح وفي مكانه الصحيح قبل صندوق التواصل
+        st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
+        col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
+        with col_vid2:
+            st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
         # ==================== قسم الاختبارات التفاعلية ====================
         st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية التفاعلية المتاحة</div>", unsafe_allow_html=True)
