@@ -449,15 +449,7 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. ظهور فيديو الترحيب والتعريف بالمنهج في الأعلى قبل تسجيل الدخول
-    st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
-    col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
-    with col_vid2:
-        st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
-
-    st.write("")
-
-    # 2. ظهور كورسات وباقات درسلي
+    # كورسات درسلي تظهر في الواجهة الرئيسية
     st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
     st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -547,6 +539,12 @@ if is_student_mode:
             st.error("🚫 عذراً، تم حظر حسابك.")
             st.session_state.logged_student = None
             st.stop()
+
+        # ظهور فيديو الترحيب والتعريف بعد تسجيل الدخول بنجاح
+        st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
+        col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
+        with col_vid2:
+            st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
@@ -895,7 +893,7 @@ st.markdown(f"""
         <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
         <p class="brand-subtitle">صانع الامتحانات التفاعلية • قص ومسح الصور • تصحيح المقالي • تقارير أولياء الأمور</p>
     </div>
-    {'<img src="data:image/jpeg;base64,{img_b64}" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
+    {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
 </div>
 """, unsafe_allow_html=True)
 
