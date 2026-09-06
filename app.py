@@ -395,59 +395,65 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # بنر كورسات منصة درسلي (بما في ذلك إحصاء الصف الثالث الثانوي)
+    # بنر كورسات منصة درسلي بخلفية خضراء فاتحة وتصميم متجاوب للهواتف (Responsive)
     st.components.v1.html("""
     <div dir="rtl" style="font-family: 'Cairo', sans-serif;">
-        <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3); border: 2px solid rgba(255, 255, 255, 0.25);">
-            <h3 style="color: #ffffff; font-size: 24px; font-weight: 900; margin: 0 0 8px 0; text-align: center;">📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>
-            <p style="color: #e0e7ff; font-size: 16px; font-weight: 800; margin-bottom: 20px; text-align: center;">اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>
+        <div style="background: linear-gradient(135deg, #059669, #10b981); border-radius: 16px; padding: 20px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3); border: 2px solid rgba(255, 255, 255, 0.25);">
+            <h3 style="color: #ffffff; font-size: 22px; font-weight: 900; margin: 0 0 6px 0; text-align: center;">📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>
+            <p style="color: #ecfdf5; font-size: 15px; font-weight: 800; margin-bottom: 18px; text-align: center;">اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>
             
-            <div style="background: #ffffff; border-radius: 14px; padding: 16px 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #4f46e5;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 28px; background: #e0e7ff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📊</div>
-                    <div>
-                        <h4 style="color: #1e1b4b; font-size: 17px; font-weight: 900; margin: 0;">إحصاء الصف الثالث الثانوي</h4>
-                        <p style="color: #64748b; font-size: 13px; font-weight: 800; margin: 3px 0 0 0;">شرح مبسط، تمارين شاملة، وتدريبات متقدمة لامتحان العزم مع البشمهندس محمد غنيم</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- بطاقة 1 -->
+                <div style="background: #ffffff; border-radius: 12px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-right: 6px solid #047857;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px;">
+                        <div style="font-size: 26px; background: #d1fae5; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📊</div>
+                        <div>
+                            <h4 style="color: #064e3b; font-size: 16px; font-weight: 900; margin: 0;">إحصاء الصف الثالث الثانوي</h4>
+                            <p style="color: #4b5563; font-size: 12px; font-weight: 800; margin: 2px 0 0 0;">شرح مبسط، تمارين شاملة، وتدريبات متقدمة لامتحان العزم</p>
+                        </div>
                     </div>
+                    <a href="https://darssly.com/courses/mohamed-ghoneim-statistics/plans" target="_blank" style="background: #059669; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 900; text-decoration: none; text-align: center; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
                 </div>
-                <a href="https://darssly.com/courses/mohamed-ghoneim-statistics/plans" target="_blank" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 900; text-decoration: none; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
-            </div>
 
-            <div style="background: #ffffff; border-radius: 14px; padding: 16px 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #4f46e5;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 28px; background: #e0e7ff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📖</div>
-                    <div>
-                        <h4 style="color: #1e1b4b; font-size: 17px; font-weight: 900; margin: 0;">رياضيات الصف الأول الإعدادي</h4>
-                        <p style="color: #64748b; font-size: 13px; font-weight: 800; margin: 3px 0 0 0;">شرح كامل، تمارين، واختبارات دورية مع البشمهندس محمد غنيم</p>
+                <!-- بطاقة 2 -->
+                <div style="background: #ffffff; border-radius: 12px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-right: 6px solid #047857;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px;">
+                        <div style="font-size: 26px; background: #d1fae5; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📖</div>
+                        <div>
+                            <h4 style="color: #064e3b; font-size: 16px; font-weight: 900; margin: 0;">رياضيات الصف الأول الإعدادي</h4>
+                            <p style="color: #4b5563; font-size: 12px; font-weight: 800; margin: 2px 0 0 0;">شرح كامل، تمارين، واختبارات دورية مع البشمهندس محمد غنيم</p>
+                        </div>
                     </div>
+                    <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww" target="_blank" style="background: #059669; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 900; text-decoration: none; text-align: center; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
                 </div>
-                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww" target="_blank" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 900; text-decoration: none; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
-            </div>
 
-            <div style="background: #ffffff; border-radius: 14px; padding: 16px 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #4f46e5;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 28px; background: #e0e7ff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📘</div>
-                    <div>
-                        <h4 style="color: #1e1b4b; font-size: 17px; font-weight: 900; margin: 0;">رياضيات الصف الثاني الإعدادي</h4>
-                        <p style="color: #64748b; font-size: 13px; font-weight: 800; margin: 3px 0 0 0;">متابعة شاملة، تبسيط المناهج، وأسئلة تفاعلية مميزة</p>
+                <!-- بطاقة 3 -->
+                <div style="background: #ffffff; border-radius: 12px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-right: 6px solid #047857;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px;">
+                        <div style="font-size: 26px; background: #d1fae5; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📘</div>
+                        <div>
+                            <h4 style="color: #064e3b; font-size: 16px; font-weight: 900; margin: 0;">رياضيات الصف الثاني الإعدادي</h4>
+                            <p style="color: #4b5563; font-size: 12px; font-weight: 800; margin: 2px 0 0 0;">متابعة شاملة، تبسيط المناهج، وأسئلة تفاعلية مميزة</p>
+                        </div>
                     </div>
+                    <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw" target="_blank" style="background: #059669; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 900; text-decoration: none; text-align: center; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
                 </div>
-                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw" target="_blank" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 900; text-decoration: none; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
-            </div>
 
-            <div style="background: #ffffff; border-radius: 14px; padding: 16px 20px; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #4f46e5;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 28px; background: #e0e7ff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📐</div>
-                    <div>
-                        <h4 style="color: #1e1b4b; font-size: 17px; font-weight: 900; margin: 0;">رياضيات الصف الثالث الإعدادي (الشهادة الإعدادية)</h4>
-                        <p style="color: #64748b; font-size: 13px; font-weight: 800; margin: 3px 0 0 0;">تأسيس قوي، مراجعات نهائية، وضمان الدرجة النهائية بإذن الله</p>
+                <!-- بطاقة 4 -->
+                <div style="background: #ffffff; border-radius: 12px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-right: 6px solid #047857;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px;">
+                        <div style="font-size: 26px; background: #d1fae5; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📐</div>
+                        <div>
+                            <h4 style="color: #064e3b; font-size: 16px; font-weight: 900; margin: 0;">رياضيات الصف الثالث الإعدادي (الشهادة الإعدادية)</h4>
+                            <p style="color: #4b5563; font-size: 12px; font-weight: 800; margin: 2px 0 0 0;">تأسيس قوي، مراجعات نهائية، وضمان الدرجة النهائية بإذن الله</p>
+                        </div>
                     </div>
+                    <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw" target="_blank" style="background: #059669; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 900; text-decoration: none; text-align: center; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
                 </div>
-                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw" target="_blank" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 900; text-decoration: none; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
             </div>
         </div>
     </div>
-    """, height=530)
+    """, height=560)
 
     if "logged_student" not in st.session_state:
         st.session_state.logged_student = None
