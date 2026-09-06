@@ -150,6 +150,63 @@ st.markdown(
         margin-top: 6px !important;
     }
 
+    /* بنر إعلان منصة درسلي */
+    .darssly-banner {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border-radius: 16px;
+        padding: 22px 20px;
+        margin-bottom: 25px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .darssly-title {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        font-size: 22px !important;
+        font-weight: 900 !important;
+        margin: 0 0 6px 0 !important;
+        text-align: center !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .darssly-sub {
+        color: #e0e7ff !important;
+        -webkit-text-fill-color: #e0e7ff !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        margin-bottom: 16px !important;
+        text-align: center !important;
+    }
+    .darssly-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+    }
+    .darssly-btn {
+        background-color: #ffffff;
+        color: #4338ca !important;
+        -webkit-text-fill-color: #4338ca !important;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        text-decoration: none !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .darssly-btn:hover {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        background-color: #f8fafc;
+        color: #3730a3 !important;
+        -webkit-text-fill-color: #3730a3 !important;
+    }
+
     .stButton>button {
         background: #0052cc !important;
         color: #ffffff !important;
@@ -164,7 +221,7 @@ st.markdown(
         background: #003d99 !important;
     }
 
-    /* زر الاتصال المباشر بالموبايل */
+    /* زر الاتصال الهاتفي */
     .call-btn-container {
         display: flex;
         justify-content: center;
@@ -387,6 +444,28 @@ if is_student_mode:
         unsafe_allow_html=True,
     )
 
+    # بنر إعلان الاشتراك على منصة درسلي
+    st.markdown(
+        """
+        <div class="darssly-banner" dir="rtl">
+            <h3 class="darssly-title">📢 اشترك الآن في كورسات الرياضيات على منصة درسلي (Darssly)</h3>
+            <p class="darssly-sub">اختر مرحلتك الدراسية للاطلاع على خطط الاشتراك والشرح الكامل:</p>
+            <div class="darssly-buttons">
+                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww" target="_blank" class="darssly-btn">
+                    📚 الصف الأول الإعدادي
+                </a>
+                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw" target="_blank" class="darssly-btn">
+                    📚 الصف الثاني الإعدادي
+                </a>
+                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw" target="_blank" class="darssly-btn">
+                    📚 الصف الثالث الإعدادي
+                </a>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.subheader("سجل بيانات حضورك للحصة:")
 
     selected_curriculum = st.selectbox(
@@ -456,7 +535,7 @@ if is_student_mode:
         unsafe_allow_html=True,
     )
 
-    # شريط التواصل وحفظ الحقوق في واجهة الطالب (رابط الواتساب العادي المباشر)
+    # شريط التواصل وحفظ الحقوق في واجهة الطالب
     st.markdown(
         """
         <div class="social-footer-box">
