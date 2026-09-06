@@ -562,12 +562,6 @@ if is_student_mode:
                 st.session_state.logged_student = None
                 st.rerun()
 
-        # ظهور الفيديو هنا بعد تسجيل الدخول بنجاح وفي مكانه الصحيح قبل صندوق التواصل
-        st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
-        col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
-        with col_vid2:
-            st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
-
         # ==================== قسم الاختبارات التفاعلية ====================
         st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية التفاعلية المتاحة</div>", unsafe_allow_html=True)
         my_grade = st_user.get("المجموعة/الصف", "")
