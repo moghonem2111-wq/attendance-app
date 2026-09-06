@@ -174,14 +174,12 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
     
-    /* تطبيق الخط العريض والواضح على النصوص العامة والعناوين والأزرار */
     html, body, [class*="css"], p, span, label, div, button, h1, h2, h3, h4, h5, h6 {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 900 !important;
         letter-spacing: 0.3px !important;
     }
 
-    /* استثناء حقول الإدخال لتجنب تشوه أزرار إظهار وإخفاء كلمة المرور */
     input, textarea, select {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
@@ -301,6 +299,53 @@ st.markdown("""
         margin: 15px 0;
     }
 
+    /* بنر كورسات منصة درسلي */
+    .darssly-banner {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border-radius: 16px;
+        padding: 22px 20px;
+        margin-bottom: 25px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .darssly-title {
+        color: #ffffff !important;
+        font-size: 22px !important;
+        font-weight: 900 !important;
+        margin: 0 0 6px 0 !important;
+        text-align: center !important;
+    }
+    .darssly-sub {
+        color: #e0e7ff !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        margin-bottom: 16px !important;
+        text-align: center !important;
+    }
+    .darssly-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+    }
+    .darssly-btn {
+        background-color: #ffffff;
+        color: #4338ca !important;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 900;
+        text-decoration: none !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .darssly-btn:hover { background-color: #f8fafc; transform: translateY(-2px); }
+
+    /* أيقونات السوشيال ميديا في الأعلى والأسفل */
     .social-top-container {
         display: flex;
         gap: 12px;
@@ -349,7 +394,7 @@ st.markdown("""
         border: 2px solid #ffffff;
     }
     .social-footer-box {
-        margin-top: 20px;
+        margin-top: 25px;
         padding: 20px 0;
         border-top: 1px solid rgba(150, 150, 150, 0.3);
         display: flex;
@@ -358,7 +403,7 @@ st.markdown("""
         justify-content: center;
         width: 100%;
     }
-    .rights-text { font-size: 16px; font-weight: 900; margin-top: 10px; text-align: center; }
+    .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; }
 
     @media (prefers-color-scheme: light) {
         body, .stApp { background-color: #ffffff !important; }
@@ -383,7 +428,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب
+# 1. واجهة الطالب (شاملة بنر درسلي + أيقونات السوشيال ميديا في الأعلى والأسفل)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -400,6 +445,19 @@ if is_student_mode:
         </div>
         {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
     </div>
+    """, unsafe_allow_html=True)
+
+    # بنر كورسات منصة درسلي (Darssly)
+    st.markdown("""
+        <div class="darssly-banner" dir="rtl">
+            <h3 class="darssly-title">📢 اشترك الآن في كورسات الرياضيات على منصة درسلي (Darssly)</h3>
+            <p class="darssly-sub">اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>
+            <div class="darssly-buttons">
+                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww" target="_blank" class="darssly-btn">📚 الصف الأول الإعدادي</a>
+                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw" target="_blank" class="darssly-btn">📚 الصف الثاني الإعدادي</a>
+                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw" target="_blank" class="darssly-btn">📚 الصف الثالث الإعدادي</a>
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
     if "logged_student" not in st.session_state:
@@ -470,6 +528,7 @@ if is_student_mode:
                     <h3 style="margin: 0; color: #0052cc;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
                     <p style="margin: 4px 0 10px 0; font-weight: 900;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                     
+                    <!-- أيقونات السوشيال ميديا في الأعلى -->
                     <div class="social-top-container">
                         <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
                         <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
@@ -759,6 +818,7 @@ if is_student_mode:
                     st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                     st.rerun()
 
+    # زر الاتصال وأيقونات السوشيال ميديا في أسفل شاشة الطالب أيضاً
     st.markdown("""
         <div class="call-btn-container">
             <a href="tel:01016361440" class="call-btn">
@@ -767,6 +827,13 @@ if is_student_mode:
             </a>
         </div>
         <div class="social-footer-box">
+            <div class="social-icons-container">
+                <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
+                <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-top telegram-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
+                <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-top tiktok-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
+                <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+            </div>
             <div class="rights-text">جميع الحقوق محفوظة لدي م / محمد غنيم 2026</div>
         </div>
     """, unsafe_allow_html=True)
