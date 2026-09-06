@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import os
 from datetime import date, datetime
 import pandas as pd
@@ -10,7 +11,7 @@ FILE_NAME = "سجل_الغياب_والحصص.xlsx"
 IMG_NAME = "teacher.jpg"
 
 st.set_page_config(
-    page_title="البشمهندس X الرياضة | متابعة الطلاب",
+    page_title="البشمهندس X الرياضة | متابعة الطلاب والامتحانات",
     page_icon="📐",
     layout="wide",
 )
@@ -110,7 +111,7 @@ def get_image_base64(path):
 
 img_b64 = get_image_base64(found_img_path)
 
-# ==================== إدارة قواعد البيانات (Excel Sheets) ====================
+# ==================== قواعد البيانات والجداول ====================
 COL_SESSIONS = [
     "التاريخ",
     "اسم الطالب",
@@ -145,12 +146,27 @@ COL_MESSAGES = [
     "الصورة_base64",
 ]
 
+COL_EXAMS = [
+    "معرف_الامتحان",
+    "عنوان الامتحان",
+    "وصف الامتحان",
+    "كلمة المرور",
+    "المنهج/الدولة",
+    "المجموعة/الصف",
+    "المادة",
+    "الفصل الدراسي",
+    "مدة الامتحان بالدقائق",
+    "الأسئلة_JSON",
+    "تاريخ الإنشاء",
+]
+
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
     sessions_df = pd.DataFrame(columns=COL_SESSIONS)
     assessments_df = pd.DataFrame(columns=COL_ASSESSMENTS)
     messages_df = pd.DataFrame(columns=COL_MESSAGES)
+    exams_df = pd.DataFrame(columns=COL_EXAMS)
 
     if os.path.exists(FILE_NAME):
         try:
@@ -165,6 +181,8 @@ def load_all_data():
                     assessments_df = pd.read_excel(xls, "Assessments")
                 if "Messages" in xls.sheet_names:
                     messages_df = pd.read_excel(xls, "Messages")
+                if "Exams" in xls.sheet_names:
+                    exams_df = pd.read_excel(xls, "Exams")
         except Exception:
             pass
 
@@ -180,26 +198,30 @@ def load_all_data():
     for col in COL_MESSAGES:
         if col not in messages_df.columns:
             messages_df[col] = ""
+    for col in COL_EXAMS:
+        if col not in exams_df.columns:
+            exams_df[col] = ""
 
-    return users_df, sessions_df, assessments_df, messages_df
+    return users_df, sessions_df, assessments_df, messages_df, exams_df
 
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df):
     with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
         assessments_df.to_excel(writer, sheet_name="Assessments", index=False)
         messages_df.to_excel(writer, sheet_name="Messages", index=False)
+        exams_df.to_excel(writer, sheet_name="Exams", index=False)
 
 
 if "users_df" not in st.session_state:
-    u_df, s_df, a_df, m_df = load_all_data()
+    u_df, s_df, a_df, m_df, e_df = load_all_data()
     st.session_state.users_df = u_df
     st.session_state.sessions_df = s_df
     st.session_state.assessments_df = a_df
     st.session_state.messages_df = m_df
+    st.session_state.exams_df = e_df
 
-# دالة الحذف الشامل لأي طالب
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
     st.session_state.users_df = st.session_state.users_df[
@@ -222,10 +244,11 @@ def delete_student_completely(student_name_to_del):
         st.session_state.users_df,
         st.session_state.sessions_df,
         st.session_state.assessments_df,
-        st.session_state.messages_df
+        st.session_state.messages_df,
+        st.session_state.exams_df
     )
 
-# ==================== التنسيق والتصميم ====================
+# ==================== تنسيق CSS ====================
 st.markdown(
     """
     <style>
@@ -263,6 +286,37 @@ st.markdown(
         font-size: 16px !important;
         font-weight: 700 !important;
         margin-top: 6px !important;
+    }
+
+    /* رأس شاشة إضافة الامتحان البرتقالي المطابق للصورة */
+    .exam-builder-header {
+        background-color: #f59e0b;
+        color: #ffffff !important;
+        padding: 14px 20px;
+        border-radius: 10px 10px 0 0;
+        font-size: 20px;
+        font-weight: 900;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+    }
+
+    .exam-title-center {
+        text-align: center;
+        color: #1e3c72;
+        font-size: 26px;
+        font-weight: 900;
+        margin-top: 10px;
+        margin-bottom: 4px;
+    }
+    .exam-subtitle-center {
+        text-align: center;
+        color: #6366f1;
+        font-size: 15px;
+        font-weight: 800;
+        margin-bottom: 25px;
     }
 
     .darssly-banner {
@@ -459,7 +513,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (عمودي متتالي)
+# 1. واجهة الطالب (شاملة أداء الامتحانات التفاعلية)
 # ==============================================================================
 if is_student_mode:
     st.markdown(
@@ -478,7 +532,7 @@ if is_student_mode:
     <div class="brand-banner" dir="rtl">
         <div>
             <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
-            <p class="brand-subtitle">بوابة الطالب الذكية • الحضور والواجبات والمحادثة المباشرة مع البشمهندس</p>
+            <p class="brand-subtitle">بوابة الطالب الذكية • الحضور، الاختبارات الإلكترونية، والدردشة مع البشمهندس</p>
         </div>
         {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
     </div>
@@ -509,7 +563,7 @@ if is_student_mode:
         auth_tab1, auth_tab2 = st.tabs(["🔐 تسجيل دخول الطالب", "✨ إنشاء حساب طالب جديد"])
 
         with auth_tab1:
-            st.subheader("سجل دخولك لمتابعة درجاتك ومحادثة المعلم:")
+            st.subheader("سجل دخولك لمتابعة اختباراتك وحضورك:")
             with st.form("student_login_form"):
                 login_name = st.text_input("اسم الطالب المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
@@ -548,7 +602,7 @@ if is_student_mode:
                             st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == reg_name.strip()
                         ]
                         if not existing.empty:
-                            st.warning("هذا الاسم مسجل بالفعل! يرجى تسجيل الدخول أو كتابة الاسم ثلاثياً.")
+                            st.warning("هذا الاسم مسجل بالفعل! يرجى تسجيل الدخول مباشرة.")
                         else:
                             new_user = {
                                 "اسم الطالب": reg_name.strip(),
@@ -559,7 +613,7 @@ if is_student_mode:
                                 "الحالة_حظر": "نشط",
                             }
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                             st.session_state.logged_student = new_user
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
@@ -592,8 +646,97 @@ if is_student_mode:
                 st.session_state.logged_student = None
                 st.rerun()
 
-        # 1. تسجيل الحضور
-        st.markdown("<div class='vertical-section-header'>📝 أولاً: تسجيل حضور حصة اليوم وتقييمها</div>", unsafe_allow_html=True)
+        # ==========================================
+        # 1. قسم الاختبارات التفاعلية الإلكترونية
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية المتاحة لصفك</div>", unsafe_allow_html=True)
+        
+        my_grade = st_user.get("المجموعة/الصف", "")
+        available_exams = st.session_state.exams_df[
+            st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == my_grade.strip()
+        ].copy()
+
+        if available_exams.empty:
+            st.info("لا توجد اختبارات إلكترونية مخصصة لصفك الدراسي حالياً.")
+        else:
+            for _, ex_row in available_exams.iterrows():
+                ex_id = ex_row["معرف_الامتحان"]
+                ex_title = ex_row["عنوان الامتحان"]
+                ex_desc = ex_row["وصف الامتحان"]
+                ex_pass = str(ex_row.get("كلمة المرور", "")).strip()
+                ex_time = ex_row.get("مدة الامتحان بالدقائق", 30)
+
+                with st.expander(f"📝 {ex_title} (المدة: {ex_time} دقيقة)"):
+                    st.write(f"**الوصف:** {ex_desc}")
+
+                    # التحقق مما إذا كان الطالب حل هذا الامتحان من قبل
+                    already_solved = st.session_state.assessments_df[
+                        (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
+                        & (st.session_state.assessments_df["عنوان التكليف"].astype(str).str.contains(ex_title, na=False))
+                    ]
+
+                    if not already_solved.empty:
+                        solved_score = already_solved.iloc[-1]["الدرجة المحصلة"]
+                        solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
+                        st.success(f"✅ لقد قمت بأداء هذا الاختبار سابقاً وحصلت على: ({solved_score} من {solved_max})")
+                    else:
+                        with st.form(f"take_exam_{ex_id}"):
+                            input_pass = ""
+                            if ex_pass and ex_pass != "nan":
+                                input_pass = st.text_input("🔐 أدخل كلمة مرور الاختبار للبدء:", type="password", key=f"p_{ex_id}")
+
+                            questions = []
+                            try:
+                                questions = json.loads(ex_row["الأسئلة_JSON"])
+                            except Exception:
+                                pass
+
+                            answers = {}
+                            if questions:
+                                st.write("---")
+                                for q_idx, q in enumerate(questions):
+                                    st.markdown(f"**س {q_idx + 1}: {q['text']}** (الدرجة: {q['points']})")
+                                    opts = [q['opt1'], q['opt2'], q['opt3'], q['opt4']]
+                                    answers[q_idx] = st.radio(f"اختر الإجابة للسؤال {q_idx + 1}:", opts, key=f"q_{ex_id}_{q_idx}")
+                                    st.write("")
+
+                            submit_exam_btn = st.form_submit_button("🏁 إنهاء الاختبار وإرسال الإجابات")
+
+                            if submit_exam_btn:
+                                if ex_pass and ex_pass != "nan" and input_pass.strip() != ex_pass:
+                                    st.error("كلمة مرور الاختبار غير صحيحة.")
+                                elif not questions:
+                                    st.error("لا توجد أسئلة مضافة في هذا الاختبار.")
+                                else:
+                                    total_score = 0.0
+                                    total_max = 0.0
+                                    for q_idx, q in enumerate(questions):
+                                        q_pts = float(q.get("points", 1.0))
+                                        total_max += q_pts
+                                        correct_opt = q.get(f"opt{q['correct']}")
+                                        if answers.get(q_idx) == correct_opt:
+                                            total_score += q_pts
+
+                                    # رصد النتيجة مباشرة في جدول Assessments
+                                    new_ass = {
+                                        "التاريخ": str(date.today()),
+                                        "اسم الطالب": st_user["اسم الطالب"],
+                                        "النوع": "اختبار دوري إلكتروني",
+                                        "عنوان التكليف": ex_title,
+                                        "الدرجة المحصلة": total_score,
+                                        "الدرجة العظمى": total_max,
+                                        "حالة التسليم": "تم الحل إلكترونياً",
+                                        "ملاحظات وتوجيهات": f"تصحيح تلقائي بنسبة: {(total_score / total_max * 100):.1f}%",
+                                    }
+                                    st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
+                                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
+                                    st.success(f"🎉 ممتاز يا بطل! أنهيت الاختبار وحصلت على: ({total_score} من {total_max})")
+                                    st.rerun()
+
+        # ==========================================
+        # 2. قسم تسجيل حضور حصة اليوم
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>📝 ثانياً: تسجيل حضور حصة اليوم وتقييمها</div>", unsafe_allow_html=True)
         with st.form("logged_student_att_form", clear_on_submit=True):
             st_date = st.date_input("تاريخ الحصة:", value=date.today())
             rating_options = [
@@ -620,28 +763,31 @@ if is_student_mode:
                     "ملاحظات": f"تقييم الحصة: {selected_rating}",
                 }
                 st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
-                st.success(f"تم تسجيل حضورك وتقييمك بنجاح للحصة بتاريخ {st_date}!")
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
+                st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
 
-        # 2. الواجبات والاختبارات
-        st.markdown("<div class='vertical-section-header'>📊 ثانياً: متابعة سجل الواجبات والاختبارات</div>", unsafe_allow_html=True)
+        # ==========================================
+        # 3. قسم متابعة السجل والدرجات
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>📊 ثالثاً: متابعة سجل الواجبات والاختبارات</div>", unsafe_allow_html=True)
         my_assessments = st.session_state.assessments_df[
             st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()
         ].copy()
 
         if my_assessments.empty:
-            st.info("لا توجد درجات واجبات أو اختبارات مرصودة لك حتى الآن من قبل البشمهندس.")
+            st.info("لا توجد درجات مرصودة لك حتى الآن.")
         else:
             c1, c2 = st.columns(2)
             hw_count = len(my_assessments[my_assessments["النوع"].str.contains("واجب", na=False)])
             exam_count = len(my_assessments[my_assessments["النوع"].str.contains("اختبار", na=False)])
             c1.metric("عدد الواجبات المستلمة", hw_count)
-            c2.metric("عدد الاختبارات الدورية", exam_count)
-
+            c2.metric("عدد الاختبارات", exam_count)
             st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
-        # 3. الدردشة
-        st.markdown("<div class='vertical-section-header'>💬 ثالثاً: الدردشة والتواصل المباشر مع البشمهندس</div>", unsafe_allow_html=True)
+        # ==========================================
+        # 4. قسم الدردشة مع البشمهندس
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>💬 رابعاً: الدردشة والتواصل المباشر مع البشمهندس</div>", unsafe_allow_html=True)
         st.write("اطرح استفسارك أو مسألة رياضية تريد توضيحها، أو أرفق صورة المسألة:")
 
         student_name_key = st_user["اسم الطالب"].strip()
@@ -688,7 +834,7 @@ if is_student_mode:
                         "الصورة_base64": img_str,
                     }
                     st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                     st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                     st.rerun()
 
@@ -722,7 +868,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية
+# 2. لوحة تحكم المعلم الرئيسية (نظام صانع الامتحانات المتقدم)
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -756,7 +902,7 @@ st.markdown(
 <div class="brand-banner" dir="rtl">
     <div>
         <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
-        <p class="brand-subtitle">إدارة الحصص • الواجبات والاختبارات • مركز محادثات الطلاب • تقارير أولياء الأمور</p>
+        <p class="brand-subtitle">نظام صانع الامتحانات الإلكترونية • إدارة الحصص • المحادثات • بطاقات الطلاب</p>
     </div>
     {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
 </div>
@@ -764,15 +910,134 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
+tab_exam_maker, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
+    "⚙️ صانع الامتحانات الإلكترونية",
     "💬 مركز الدردشة والرسائل",
-    "👥 بطاقات الطلاب والتحكم (حذف / حظر)",
+    "👥 بطاقات الطلاب والتحكم",
     "📝 رصد حصة جديدة",
-    "📚 رصد واجب / اختبار",
+    "📚 رصد واجب يدوي",
     "✏️ تعديل السجلات",
     "📊 السجلات الشاملة",
     "🖨️ تقرير ولي الأمر للطباعة",
 ])
+
+# ----------------- تبويب صانع الامتحانات المتطور (المطابق للصورة) -----------------
+with tab_exam_maker:
+    st.markdown("<div class='exam-builder-header'>⚙️ إدخال وإعداد امتحان إلكتروني جديد</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exam-title-center'>إدخال معلومات الامتحان</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exam-subtitle-center'>عين معلومات وتفاصيل الامتحان والأسئلة للطلاب</div>", unsafe_allow_html=True)
+
+    if "temp_questions" not in st.session_state:
+        st.session_state.temp_questions = []
+
+    # 1. قسم الإعدادات الرئيسية
+    with st.expander("⚙️ الإعدادات الرئيسية (بيانات الاختبار والمرحلة)", expanded=True):
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            ex_title_input = st.text_input("عنوان الامتحان:*", placeholder="مثال: اختبار شهر أكتوبر في الجبر")
+            ex_desc_input = st.text_area("وصف الامتحان:*", placeholder="اكتب تعليمات وتوجيهات الامتحان للطالب...")
+            ex_pass_input = st.text_input("كلمة المرور (اختياري لبدء الامتحان):", placeholder="اتركه فارغاً إن كنت لا ترغب بكلمة مرور")
+
+        with col_ex2:
+            ex_curr_input = st.selectbox("اختر الدولة / المنهج:*", list(CURRICULUM_DATA.keys()), key="maker_curr")
+            ex_grade_input = st.selectbox("اختر الصف الدراسي:*", CURRICULUM_DATA[ex_curr_input], key="maker_grade")
+            ex_subject_input = st.selectbox("اختر مادة الامتحان:*", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا", "الرياضيات التطبيقية"])
+            ex_term_input = st.selectbox("اختر الفصل الدراسي:*", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني", "مراجعة نهائية"])
+
+    # 2. تخصيص الوقت والإعدادات المتقدمة
+    with st.expander("⏱️ إعدادات الوقت وتخصيص الامتحان", expanded=False):
+        ex_time_input = st.number_input("مدة الامتحان (بالدقائق):", min_value=5, max_value=180, value=30, step=5)
+
+    # 3. إدخال الأسئلة
+    with st.expander("📝 إدخال وتعديل أسئلة الامتحان", expanded=True):
+        st.markdown("#### أضف سؤالاً جديداً (اختيار من متعدد MCQ):")
+        
+        with st.form("add_question_form", clear_on_submit=True):
+            q_text = st.text_area("نص السؤال الرياضي:*", placeholder="مثال: إذا كان س + 3 = 7 فإن قيمة 2س تساوي...")
+            q_col1, q_col2 = st.columns(2)
+            with q_col1:
+                q_opt1 = st.text_input("الاختيار (أ):*")
+                q_opt2 = st.text_input("الاختيار (ب):*")
+            with q_col2:
+                q_opt3 = st.text_input("الاختيار (ج):*")
+                q_opt4 = st.text_input("الاختيار (د):*")
+
+            q_col3, q_col4 = st.columns(2)
+            with q_col3:
+                correct_ans = st.selectbox("الإجابة الصحيحة هي:*", [1, 2, 3, 4], format_func=lambda x: f"الاختيار ({['أ', 'ب', 'ج', 'د'][x-1]})")
+            with q_col4:
+                q_points = st.number_input("درجة السؤال:*", min_value=0.5, step=0.5, value=1.0)
+
+            add_q_btn = st.form_submit_button("➕ إضافة السؤال إلى الامتحان")
+
+            if add_q_btn:
+                if not q_text.strip() or not q_opt1.strip() or not q_opt2.strip():
+                    st.error("يرجى كتابة نص السؤال مع خيارين على الأقل.")
+                else:
+                    st.session_state.temp_questions.append({
+                        "text": q_text.strip(),
+                        "opt1": q_opt1.strip(),
+                        "opt2": q_opt2.strip(),
+                        "opt3": q_opt3.strip(),
+                        "opt4": q_opt4.strip(),
+                        "correct": correct_ans,
+                        "points": q_points,
+                    })
+                    st.success("✓ تم إضافة السؤال بنجاح!")
+
+        # عرض الأسئلة المضافة حالياً
+        if st.session_state.temp_questions:
+            st.write(f"**إجمالي الأسئلة المجهزة: ({len(st.session_state.temp_questions)}) سؤال**")
+            for idx_q, q_item in enumerate(st.session_state.temp_questions):
+                st.markdown(f"- **س {idx_q+1}:** {q_item['text']} (الإجابة: اختيار {['أ','ب','ج','د'][q_item['correct']-1]} | الدرجة: {q_item['points']})")
+            
+            if st.button("🗑️ مسح الأسئلة المجهزة والبدء من جديد"):
+                st.session_state.temp_questions = []
+                st.rerun()
+
+    # زر حفظ ونشر الامتحان
+    st.write("---")
+    if st.button("🚀 حفظ ونشر الامتحان للطلاب الآن"):
+        if not ex_title_input.strip():
+            st.error("يرجى كتابة عنوان الامتحان أولاً.")
+        elif not st.session_state.temp_questions:
+            st.error("يرجى إضافة سؤال واحد على الأقل قبل حفظ الامتحان.")
+        else:
+            new_exam_record = {
+                "معرف_الامتحان": f"EX_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "عنوان الامتحان": ex_title_input.strip(),
+                "وصف الامتحان": ex_desc_input.strip(),
+                "كلمة المرور": ex_pass_input.strip(),
+                "المنهج/الدولة": ex_curr_input,
+                "المجموعة/الصف": ex_grade_input,
+                "المادة": ex_subject_input,
+                "الفصل الدراسي": ex_term_input,
+                "مدة الامتحان بالدقائق": ex_time_input,
+                "الأسئلة_JSON": json.dumps(st.session_state.temp_questions, ensure_ascii=False),
+                "تاريخ الإنشاء": str(date.today()),
+            }
+            st.session_state.exams_df = pd.concat([st.session_state.exams_df, pd.DataFrame([new_exam_record])], ignore_index=True)
+            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
+            st.session_state.temp_questions = []
+            st.success(f"🎉 تم حفظ ونشر امتحان ({ex_title_input}) بنجاح لطلاب {ex_grade_input}!")
+            st.rerun()
+
+    # جدول الامتحانات المنشورة سابقاً
+    st.write("---")
+    st.markdown("### 📋 قائمة الامتحانات المنشورة مسبقاً:")
+    if st.session_state.exams_df.empty:
+        st.info("لم تقم بإنشاء امتحانات إلكترونية بعد.")
+    else:
+        for ex_i, ex_r in st.session_state.exams_df.iterrows():
+            c_ex1, c_ex2 = st.columns([5, 1])
+            with c_ex1:
+                st.markdown(f"**{ex_r['عنوان الامتحان']}** — الصف: {ex_r['المجموعة/الصف']} | تاريخ النشر: {ex_r['تاريخ الإنشاء']} | المدة: {ex_r['مدة الامتحان بالدقائق']} دقيقة")
+            with c_ex2:
+                if st.button("حذف الامتحان 🗑️", key=f"del_ex_{ex_i}"):
+                    st.session_state.exams_df = st.session_state.exams_df.drop(ex_i).reset_index(drop=True)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
+                    st.warning("تم حذف الامتحان.")
+                    st.rerun()
 
 # ----------------- تبويب الدردشة -----------------
 with tab_chat:
@@ -829,11 +1094,11 @@ with tab_chat:
                             "الصورة_base64": "",
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_rep])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                         st.success("تم إرسال الرد للطالب فوراً!")
                         st.rerun()
 
-# ----------------- تبويب بطاقات الطلاب (كود الحذف الشامل) -----------------
+# ----------------- تبويب بطاقات الطلاب -----------------
 with tab_cards:
     st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
 
@@ -843,13 +1108,12 @@ with tab_cards:
         + [s for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
 
-    # قسم الحذف المباشر بالاختيار
     if all_known_students:
-        with st.expander("🗑️ حذف طالب محدد نهائياً من كافة السجلات (سريع)"):
+        with st.expander("🗑️ حذف طالب محدد نهائياً من كافة السجلات"):
             del_selected_st = st.selectbox("اختر الطالب المراد حذفه نهائياً:", all_known_students, key="del_box_select")
             if st.button("🚨 تأكيد حذف هذا الطالب نهائياً", key="btn_confirm_del_box"):
                 delete_student_completely(del_selected_st)
-                st.success(f"✓ تم مسح الطالب ({del_selected_st}) وجميع بياناته نهائياً من قاعدة البيانات!")
+                st.success(f"✓ تم مسح الطالب ({del_selected_st}) وجميع بياناته نهائياً!")
                 st.rerun()
 
     st.write("---")
@@ -899,14 +1163,14 @@ with tab_cards:
                     if is_banned:
                         if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
                             st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                             st.success(f"تم فك حظر {st_name}!")
                             st.rerun()
                     else:
                         if st.button("حظر 🚫", key=f"ban_{idx}"):
                             if not u_row.empty:
                                 st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                                 st.warning(f"تم حظر {st_name}.")
                                 st.rerun()
 
@@ -958,12 +1222,12 @@ with tab1:
                     "ملاحظات": notes.strip(),
                 }
                 st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
 
-# ----------------- تبويب رصد الواجبات والاختبارات -----------------
+# ----------------- تبويب رصد الواجبات يدوي -----------------
 with tab_hw:
-    st.subheader("إضافة درجات الواجبات المنزلية والاختبارات الدورية")
+    st.subheader("إضافة درجات الواجبات المنزلية والاختبارات يدوياً")
 
     all_registered_names = sorted(list(set(
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -1001,7 +1265,7 @@ with tab_hw:
                     "ملاحظات وتوجيهات": ass_notes.strip(),
                 }
                 st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                 st.success(f"✓ تم رصد {ass_type} بنجاح للطالب ({ass_student}) بنتيجة ({ass_score} / {ass_max})!")
 
     st.write("---")
@@ -1077,14 +1341,14 @@ with tab2:
                 df.at[selected_idx, "ملاحظات"] = edit_notes.strip()
 
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                 st.success("✓ تم تحديث بيانات الحصة بنجاح!")
                 st.rerun()
 
             if delete_btn:
                 df = df.drop(selected_idx).reset_index(drop=True)
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df)
                 st.warning("⚠️ تم حذف السجل.")
                 st.rerun()
 
@@ -1129,9 +1393,10 @@ with tab3:
             st.session_state.sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
             st.session_state.assessments_df.to_excel(writer, sheet_name="Assessments", index=False)
             st.session_state.messages_df.to_excel(writer, sheet_name="Messages", index=False)
+            st.session_state.exams_df.to_excel(writer, sheet_name="Exams", index=False)
 
         st.download_button(
-            label="📥 تصدير ملف Excel الشامل (مستخدمين + حصص + واجبات + رسائل)",
+            label="📥 تصدير ملف Excel الشامل (مستخدمين + حصص + واجبات + رسائل + امتحانات)",
             data=buf.getvalue(),
             file_name=FILE_NAME,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
