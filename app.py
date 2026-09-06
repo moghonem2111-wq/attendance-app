@@ -322,7 +322,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (حل الاختبارات الموضوعية والمقالية مع رفع صور الحل)
+# 1. واجهة الطالب (حل الأسئلة بالصور أو النصوص)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -423,7 +423,7 @@ if is_student_mode:
                 st.session_state.logged_student = None
                 st.rerun()
 
-        # 1. الاختبارات الإلكترونية المتاحة
+        # 1. قسم الاختبارات
         st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية المتاحة لصفك</div>", unsafe_allow_html=True)
         my_grade = st_user.get("المجموعة/الصف", "")
         available_exams = st.session_state.exams_df[st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == my_grade.strip()].copy()
@@ -470,16 +470,40 @@ if is_student_mode:
                                 st.write("---")
                                 for q_idx, q in enumerate(questions):
                                     q_type = q.get("type", "موضوعي")
-                                    st.markdown(f"**س {q_idx + 1} ({'اختيار من متعدد' if q_type=='موضوعي' else 'سؤال مقالي'}):** {q['text']} — *(الدرجة: {q['points']})*")
+                                    st.markdown(f"### **س {q_idx + 1}:**")
+                                    
+                                    # عرض نص السؤال إن وجد
+                                    if q.get("text"):
+                                        st.markdown(f"**{q['text']}**")
+                                    
+                                    # عرض صورة السؤال إن وجدت
+                                    if q.get("q_img"):
+                                        st.image(f"data:image/jpeg;base64,{q['q_img']}", width=480)
+
+                                    st.caption(f"الدرجة: {q['points']}")
 
                                     if q_type == "موضوعي":
-                                        opts = [q['opt1'], q['opt2'], q['opt3'], q['opt4']]
-                                        answers_mcq[q_idx] = st.radio(f"إجابتك للسؤال {q_idx + 1}:", opts, key=f"q_{ex_id}_{q_idx}")
+                                        # الخيارات (نصوص أو صور)
+                                        opts_labels = ["أ", "ب", "ج", "د"]
+                                        for opt_i, lbl in enumerate(opts_labels, 1):
+                                            txt_val = q.get(f"opt{opt_i}", "")
+                                            img_val = q.get(f"opt{opt_i}_img", "")
+                                            
+                                            st.markdown(f"**الخيار ({lbl}):** {txt_val}")
+                                            if img_val:
+                                                st.image(f"data:image/jpeg;base64,{img_val}", width=240)
+
+                                        answers_mcq[q_idx] = st.radio(
+                                            f"اختر الإجابة الصحيحة للسؤال {q_idx + 1}:",
+                                            options=[1, 2, 3, 4],
+                                            format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})",
+                                            key=f"q_{ex_id}_{q_idx}"
+                                        )
                                     else:
-                                        st.info("✍️ يمكنك كتابة خطوات الحل في المربع أو إرفاق صورة لحلك من كشكولك:")
+                                        st.info("✍️ اكتب خطوات الحل أو أرفق صورة من كشكولك:")
                                         essay_texts[q_idx] = st.text_area(f"اكتب خطوات الحل هنا (س {q_idx + 1}):", key=f"essay_txt_{ex_id}_{q_idx}")
                                         essay_imgs[q_idx] = st.file_uploader(f"📷 إرفاق صورة خطوات الحل (س {q_idx + 1}):", type=["jpg", "png", "jpeg"], key=f"essay_img_{ex_id}_{q_idx}")
-                                    st.write("")
+                                    st.write("---")
 
                             submit_exam_btn = st.form_submit_button("🏁 إنهاء الاختبار وتسليم الإجابات")
 
@@ -498,8 +522,7 @@ if is_student_mode:
                                         total_max += q_pts
 
                                         if q.get("type", "موضوعي") == "موضوعي":
-                                            correct_opt = q.get(f"opt{q['correct']}")
-                                            if answers_mcq.get(q_idx) == correct_opt:
+                                            if answers_mcq.get(q_idx) == int(q.get("correct", 1)):
                                                 mcq_score += q_pts
                                         else:
                                             has_essay = True
@@ -514,7 +537,7 @@ if is_student_mode:
                                                 "عنوان الامتحان": ex_title,
                                                 "اسم الطالب": st_user["اسم الطالب"],
                                                 "رقم السؤال": q_idx + 1,
-                                                "نص السؤال": q["text"],
+                                                "نص السؤال": q.get("text", "سؤال مصور"),
                                                 "إجابة الطالب النصية": essay_texts.get(q_idx, ""),
                                                 "صورة الحل_base64": img_str,
                                                 "درجة السؤال": q_pts,
@@ -527,7 +550,7 @@ if is_student_mode:
 
                                     note_msg = f"الأسئلة الموضوعية: {mcq_score} درجة"
                                     if has_essay:
-                                        note_msg += " + الأسئلة المقالية قيد المراجعة والتصحيح"
+                                        note_msg += " + الأسئلة المقالية قيد التصحيح"
 
                                     new_ass = {
                                         "التاريخ": str(date.today()),
@@ -541,10 +564,10 @@ if is_student_mode:
                                     }
                                     st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
                                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                                    st.success(f"🎉 تم تسليم إجاباتك بنجاح! نتيجتك في الاختياري: ({mcq_score} من {total_max}) وسيتم تصحيح المقالي قريباً.")
+                                    st.success(f"🎉 تم تسليم إجاباتك بنجاح! درجتك المبدئية: ({mcq_score} من {total_max})")
                                     st.rerun()
 
-        # 2. تسجيل حضور الحصة
+        # 2. تسجيل الحضور
         st.markdown("<div class='vertical-section-header'>📝 ثانياً: تسجيل حضور حصة اليوم وتقييمها</div>", unsafe_allow_html=True)
         with st.form("logged_student_att_form", clear_on_submit=True):
             st_date = st.date_input("تاريخ الحصة:", value=date.today())
@@ -619,7 +642,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية
+# 2. لوحة تحكم المعلم (دعم لقطات الشاشة والصور للأسئلة والخيارات)
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -647,15 +670,15 @@ st.markdown(f"""
 <div class="brand-banner" dir="rtl">
     <div>
         <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
-        <p class="brand-subtitle">نظام صانع الامتحانات التفاعلي • تصحيح المقالي بالصور • إدارة الحصص والمحادثات</p>
+        <p class="brand-subtitle">نظام صانع الامتحانات المصورة • تصحيح المقالي بالصور • إدارة الحصص والمحادثات</p>
     </div>
     {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
 </div>
 """, unsafe_allow_html=True)
 
 tab_exam_maker, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
-    "⚙️ صانع الامتحانات والأسئلة",
-    "📝 تصحيح الأسئلة المقالية والصور",
+    "⚙️ صانع الامتحانات المصورة",
+    "📝 تصحيح المقالي والصور",
     "💬 مركز الدردشة والرسائل",
     "👥 بطاقات الطلاب والتحكم",
     "📝 رصد حصة جديدة",
@@ -665,9 +688,9 @@ tab_exam_maker, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, 
     "🖨️ تقرير ولي الأمر للطباعة",
 ])
 
-# ----------------- تبويب صانع الامتحانات (تطابق كامل لواجهة الصورة) -----------------
+# ----------------- تبويب صانع الامتحانات المصورة (سكرين شوت ولصق مباشر) -----------------
 with tab_exam_maker:
-    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / إدخال بنك الأسئلة</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / إدخال بنك الأسئلة بالصور</div>", unsafe_allow_html=True)
 
     if "temp_questions" not in st.session_state:
         st.session_state.temp_questions = []
@@ -675,7 +698,7 @@ with tab_exam_maker:
     with st.expander("⚙️ 1. الإعدادات الرئيسية للامتحان", expanded=True):
         c_ex1, c_ex2 = st.columns(2)
         with c_ex1:
-            ex_title_input = st.text_input("عنوان الامتحان:*", placeholder="مثال: امتحان مراجعة الجبر وحساب المثلثات")
+            ex_title_input = st.text_input("عنوان الامتحان:*", placeholder="مثال: اختبار الجبر المصور - شهر أكتوبر")
             ex_desc_input = st.text_area("وصف الامتحان:*", placeholder="تعليمات هامة للطلاب قبل البدء...")
             ex_pass_input = st.text_input("كلمة المرور (اختياري):", placeholder="اتركه فارغاً إن لم ترغب بكلمة سر")
         with c_ex2:
@@ -685,83 +708,71 @@ with tab_exam_maker:
             ex_term_input = st.selectbox("اختر الفصل الدراسي:*", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني", "مراجعة نهائية"])
             ex_time_input = st.number_input("مدة الامتحان (بالدقائق):", min_value=5, max_value=180, value=45, step=5)
 
-    with st.expander("📐 2. محرر وإدخال الأسئلة (موضوعي ومقالي)", expanded=True):
+    with st.expander("📐 2. إدخال الأسئلة بالصور أو النصوص (لصق Screenshot)", expanded=True):
         q_count = len(st.session_state.temp_questions) + 1
         st.markdown(f"#### إضافة سؤال رقم {q_count}")
 
-        # نوع السؤال
-        q_type_choice = st.selectbox("الرجاء اختيار نوع السؤال:", ["سؤال موضوعي (اختيار من متعدد)", "سؤال مقالي (خطوات حل وكتابة / رفع صورة)"])
+        q_type_choice = st.selectbox("نوع السؤال:", ["سؤال موضوعي (اختيار من متعدد)", "سؤال مقالي (خطوات حل ورفع صورة)"])
         is_mcq = "موضوعي" in q_type_choice
 
-        # شريط أدوات الرموز الرياضية
-        st.markdown("""
-            <div class="editor-toolbar">
-                <span>➕ شريط الرموز الرياضية السريعة:</span>
-                <b>B</b> | <i>I</i> | <u>U</u> | 
-                <code>x²</code> <code>√x</code> <code>½</code> <code>π</code> <code>θ</code> <code>Δ</code> <code>≤</code> <code>≥</code> <code>≠</code> <code>∞</code>
-            </div>
-        """, unsafe_allow_html=True)
-
         with st.form(f"add_question_form_{q_count}", clear_on_submit=True):
-            st.markdown("**نص السؤال الرياضي:***")
-            q_text = st.text_area("اكتب نص السؤال هنا (يدعم LaTeX مثل $x^2 + 5 = 9$):", label_visibility="collapsed")
+            st.markdown("##### 📌 نص أو صورة السؤال:")
+            q_text = st.text_area("نص السؤال (اختياري إذا أرفقت صورة مسألة):", placeholder="مثال: أوجد مجموعة الحل للمعادلة الموضحة بالصورة:")
+            q_img_file = st.file_uploader("📷 ارفع أو الصق صورة السؤال (Screenshot) هنا:", type=["jpg", "png", "jpeg"], key=f"q_img_{q_count}")
+
+            opt1_img_file, opt2_img_file, opt3_img_file, opt4_img_file = None, None, None, None
+            opt1, opt2, opt3, opt4 = "", "", "", ""
+            correct_num = 1
 
             if is_mcq:
-                st.markdown("---")
-                st.markdown("**خيارات الإجابة الأربعة:**")
+                st.write("---")
+                st.markdown("##### 🎯 خيارات الإجابة الأربعة (يمكن كتابة نص أو رفع لقطة شاشة لكل خيار):")
 
-                col_o1, col_o2 = st.columns([4, 1])
-                with col_o1:
-                    opt1 = st.text_input("الإجابة الأولى (أ):")
-                with col_o2:
-                    st.write("")
-                    c1 = st.checkbox("الإجابة الصحيحة", key="chk_1")
+                # الخيار 1
+                c1_a, c1_b = st.columns([3, 2])
+                with c1_a: opt1 = st.text_input("نص الخيار الأول (أ):", placeholder="الخيار أ")
+                with c1_b: opt1_img_file = st.file_uploader("📷 صورة الخيار (أ):", type=["jpg", "png", "jpeg"], key=f"opt1_img_{q_count}")
 
-                col_o3, col_o4 = st.columns([4, 1])
-                with col_o3:
-                    opt2 = st.text_input("الإجابة الثانية (ب):")
-                with col_o4:
-                    st.write("")
-                    c2 = st.checkbox("الإجابة الصحيحة", key="chk_2")
+                # الخيار 2
+                c2_a, c2_b = st.columns([3, 2])
+                with c2_a: opt2 = st.text_input("نص الخيار الثاني (ب):", placeholder="الخيار ب")
+                with c2_b: opt2_img_file = st.file_uploader("📷 صورة الخيار (ب):", type=["jpg", "png", "jpeg"], key=f"opt2_img_{q_count}")
 
-                col_o5, col_o6 = st.columns([4, 1])
-                with col_o5:
-                    opt3 = st.text_input("الإجابة الثالثة (ج):")
-                with col_o6:
-                    st.write("")
-                    c3 = st.checkbox("الإجابة الصحيحة", key="chk_3")
+                # الخيار 3
+                c3_a, c3_b = st.columns([3, 2])
+                with c3_a: opt3 = st.text_input("نص الخيار الثالث (ج):", placeholder="الخيار ج")
+                with c3_b: opt3_img_file = st.file_uploader("📷 صورة الخيار (ج):", type=["jpg", "png", "jpeg"], key=f"opt3_img_{q_count}")
 
-                col_o7, col_o8 = st.columns([4, 1])
-                with col_o7:
-                    opt4 = st.text_input("الإجابة الرابعة (د):")
-                with col_o8:
-                    st.write("")
-                    c4 = st.checkbox("الإجابة الصحيحة", key="chk_4")
-            else:
-                opt1, opt2, opt3, opt4 = "", "", "", ""
-                c1, c2, c3, c4 = False, False, False, False
-                st.info("💡 في السؤال المقالي، ستظهر للطالب مساحة لكتابة خطوات الحل أو زر لرفع صورة كشكوله لحلها، لتصححها أنت يدوياً.")
+                # الخيار 4
+                c4_a, c4_b = st.columns([3, 2])
+                with c4_a: opt4 = st.text_input("نص الخيار الرابع (د):", placeholder="الخيار د")
+                with c4_b: opt4_img_file = st.file_uploader("📷 صورة الخيار (د):", type=["jpg", "png", "jpeg"], key=f"opt4_img_{q_count}")
+
+                st.write("---")
+                correct_num = st.selectbox("الإجابة الصحيحة هي:*", [1, 2, 3, 4], format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})")
 
             st.write("---")
-            q_points = st.selectbox("علامة هذا السؤال (الدرجة):*", [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0], index=1)
-            add_q_submit = st.form_submit_button("إضافة هذا السؤال")
+            q_points = st.selectbox("علامة السؤال (الدرجة):*", [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0], index=1)
+            add_q_submit = st.form_submit_button("➕ حفظ وإضافة السؤال إلى الامتحان")
 
             if add_q_submit:
-                if not q_text.strip():
-                    st.error("يرجى كتابة نص السؤال أولاً.")
-                elif is_mcq and (not opt1.strip() or not opt2.strip()):
-                    st.error("يرجى كتابة خيارين على الأقل للسؤال الموضوعي.")
+                if not q_text.strip() and q_img_file is None:
+                    st.error("يرجى كتابة نص للسؤال أو إرفاق صورة للسؤال (Screenshot).")
                 else:
-                    correct_num = 1
-                    if c2: correct_num = 2
-                    elif c3: correct_num = 3
-                    elif c4: correct_num = 4
+                    q_img_b64 = base64.b64encode(q_img_file.read()).decode() if q_img_file is not None else ""
+                    opt1_b64 = base64.b64encode(opt1_img_file.read()).decode() if opt1_img_file is not None else ""
+                    opt2_b64 = base64.b64encode(opt2_img_file.read()).decode() if opt2_img_file is not None else ""
+                    opt3_b64 = base64.b64encode(opt3_img_file.read()).decode() if opt3_img_file is not None else ""
+                    opt4_b64 = base64.b64encode(opt4_img_file.read()).decode() if opt4_img_file is not None else ""
 
                     st.session_state.temp_questions.append({
                         "type": "موضوعي" if is_mcq else "مقالي",
                         "text": q_text.strip(),
-                        "opt1": opt1.strip(), "opt2": opt2.strip(),
-                        "opt3": opt3.strip(), "opt4": opt4.strip(),
+                        "q_img": q_img_b64,
+                        "opt1": opt1.strip(), "opt1_img": opt1_b64,
+                        "opt2": opt2.strip(), "opt2_img": opt2_b64,
+                        "opt3": opt3.strip(), "opt3_img": opt3_b64,
+                        "opt4": opt4.strip(), "opt4_img": opt4_b64,
                         "correct": correct_num,
                         "points": q_points,
                     })
@@ -769,9 +780,9 @@ with tab_exam_maker:
                     st.rerun()
 
         if st.session_state.temp_questions:
-            st.write(f"**الأسئلة المجهزة حالياً: ({len(st.session_state.temp_questions)}) سؤال**")
+            st.write(f"**الأسئلة المجهزة: ({len(st.session_state.temp_questions)}) سؤال**")
             for idx_q, q_item in enumerate(st.session_state.temp_questions):
-                st.markdown(f"- **س {idx_q+1} ({q_item['type']}):** {q_item['text']} — *(الدرجة: {q_item['points']})*")
+                st.markdown(f"- **س {idx_q+1} ({q_item['type']}):** {q_item['text'] if q_item['text'] else '[سؤال مصور]'} — *(الدرجة: {q_item['points']})*")
             if st.button("🗑️ مسح الأسئلة والبدء من جديد"):
                 st.session_state.temp_questions = []
                 st.rerun()
@@ -802,7 +813,6 @@ with tab_exam_maker:
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لطلاب صف ({ex_grade_input})!")
             st.rerun()
 
-    # قائمة الامتحانات المنشورة
     st.write("---")
     st.markdown("### 📋 الامتحانات المنشورة مسبقاً:")
     if st.session_state.exams_df.empty:
@@ -819,7 +829,7 @@ with tab_exam_maker:
                     st.warning("تم حذف الامتحان.")
                     st.rerun()
 
-# ----------------- تبويب تصحيح الأسئلة المقالية والصور -----------------
+# ----------------- تبويب تصحيح المقالي بالصور -----------------
 with tab_essay_grade:
     st.subheader("📝 كنترول تصحيح إجابات الطلاب المقالية وصور الحل:")
     essays = st.session_state.essays_df
@@ -858,7 +868,6 @@ with tab_essay_grade:
                         essays.at[es_idx, "حالة التصحيح"] = "تم التصحيح والاعتماد"
                         essays.at[es_idx, "ملاحظات المعلم"] = teacher_feedback.strip()
 
-                        # تحديث درجة الطالب الإجمالية في Assessments
                         match_ass = st.session_state.assessments_df[
                             (st.session_state.assessments_df["اسم الطالب"] == st_name)
                             & (st.session_state.assessments_df["عنوان التكليف"] == ex_name)
@@ -871,7 +880,7 @@ with tab_essay_grade:
 
                         st.session_state.essays_df = essays
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                        st.success(f"✓ تم رصد درجة الطالب ({st_name}) بنجاح وإضافتها لشهادة درجاته!")
+                        st.success(f"✓ تم رصد درجة الطالب ({st_name}) بنجاح!")
                         st.rerun()
 
 # ----------------- تبويب الدردشة -----------------
