@@ -170,18 +170,35 @@ def delete_student_completely(student_name_to_del):
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
 
-# تصحيح الـ CSS لمنع تشويه الأيقونات ومنع انهيار أداة القص
+# ==================== كود الـ CSS المحدّث للخط العريض والواضح جداً ====================
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
     
-    body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
+    /* فرض الخط العريض والواضح Cairo Black على جميع النصوص والمكونات */
+    html, body, [class*="css"], p, span, label, div, input, textarea, select, button, h1, h2, h3, h4, h5, h6 {
         font-family: 'Cairo', sans-serif !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
         direction: rtl;
         text-align: right;
     }
     
-    /* حماية الأيقونات وأدوات الكانفاس من التشويه */
+    /* تكبير وتوضيح نصوص الأسئلة والخيارات داخل الامتحان */
+    .stRadio label, .stCheckbox label {
+        font-size: 17px !important;
+        font-weight: 900 !important;
+    }
+
+    .stTextInput input, .stTextArea textarea, .stSelectbox div {
+        font-size: 16px !important;
+        font-weight: 800 !important;
+    }
+
+    /* حماية الرموز والأيقونات */
     i, svg, [class*="material-symbols"], [class*="material-icons"] {
         font-family: inherit !important;
         direction: ltr !important;
@@ -198,23 +215,23 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(11, 31, 58, 0.35);
     }
     .brand-title {
-        font-size: 34px !important;
+        font-size: 36px !important;
         font-weight: 900 !important;
         color: #ffffff !important;
         margin: 0 !important;
     }
     .brand-subtitle {
         color: #e0edff !important;
-        font-size: 16px !important;
-        font-weight: 700 !important;
+        font-size: 17px !important;
+        font-weight: 800 !important;
         margin-top: 6px !important;
     }
     .exam-builder-header {
         background-color: #f59e0b;
         color: #ffffff !important;
-        padding: 14px 20px;
+        padding: 16px 22px;
         border-radius: 10px 10px 0 0;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 900;
         margin-bottom: 15px;
         display: flex;
@@ -224,11 +241,11 @@ st.markdown("""
     .vertical-section-header {
         background: linear-gradient(135deg, #0284c7, #0369a1);
         color: #ffffff !important;
-        padding: 12px 18px;
+        padding: 14px 20px;
         border-radius: 10px;
         margin-top: 25px;
         margin-bottom: 15px;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 900;
         display: flex;
         align-items: center;
@@ -238,13 +255,39 @@ st.markdown("""
         background: #0052cc !important;
         color: #ffffff !important;
         border: none !important;
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 900 !important;
-        font-size: 16px !important;
-        padding: 10px 24px;
+        font-size: 17px !important;
+        padding: 12px 26px;
+        box-shadow: 0 4px 10px rgba(0, 82, 204, 0.25);
     }
     .stButton>button:hover { background: #003d99 !important; }
     
+    .chat-bubble-student {
+        background-color: #e0f2fe;
+        color: #0369a1;
+        padding: 14px 18px;
+        border-radius: 14px 14px 0 14px;
+        margin-bottom: 12px;
+        max-width: 78%;
+        margin-right: auto;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        border: 1px solid #bae6fd;
+    }
+    .chat-bubble-teacher {
+        background-color: #f0fdf4;
+        color: #166534;
+        padding: 14px 18px;
+        border-radius: 14px 14px 14px 0;
+        margin-bottom: 12px;
+        max-width: 78%;
+        margin-left: auto;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        border: 1px solid #bbf7d0;
+    }
+
     .crop-container {
         direction: ltr !important;
         text-align: center;
@@ -253,6 +296,58 @@ st.markdown("""
         padding: 15px;
         border-radius: 10px;
         margin: 15px 0;
+    }
+
+    .call-btn-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    .call-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff !important;
+        padding: 14px 28px;
+        border-radius: 50px;
+        font-size: 18px;
+        font-weight: 900;
+        text-decoration: none !important;
+        border: 2px solid #ffffff;
+    }
+    .social-footer-box {
+        margin-top: 20px;
+        padding: 20px 0;
+        border-top: 1px solid rgba(150, 150, 150, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    .rights-text { font-size: 16px; font-weight: 900; margin-top: 10px; text-align: center; }
+
+    @media (prefers-color-scheme: light) {
+        body, .stApp { background-color: #ffffff !important; }
+        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
+        div[data-testid="stMetric"] { background: #f8fafc !important; border: 2px solid #0052cc !important; border-radius: 12px; padding: 14px 18px; }
+        div[data-testid="stMetric"] label { color: #1e293b !important; font-size: 16px !important; font-weight: 900 !important; }
+        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #0052cc !important; font-weight: 900 !important; font-size: 26px !important; }
+        input, select, textarea { color: #000000 !important; background-color: #ffffff !important; border: 2px solid #94a3b8 !important; font-weight: 800 !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+        body, .stApp { background-color: #0e1117 !important; }
+        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
+        div[data-testid="stMetric"] { background: #1e232d !important; border: 2px solid #3b82f6 !important; border-radius: 12px; padding: 14px 18px; }
+        div[data-testid="stMetric"] label { color: #e2e8f0 !important; font-size: 16px !important; font-weight: 900 !important; }
+        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 900 !important; font-size: 26px !important; }
+        input, select, textarea { color: #ffffff !important; background-color: #262730 !important; border: 2px solid #475569 !important; font-weight: 800 !important; }
+        .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
+        .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -346,7 +441,7 @@ if is_student_mode:
             st.markdown(f"""
                 <div style="background: rgba(0, 82, 204, 0.08); padding: 12px 18px; border-radius: 10px; border-right: 5px solid #0052cc;">
                     <h3 style="margin: 0; color: #0052cc;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-                    <p style="margin: 3px 0 0 0; font-weight: 800;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
+                    <p style="margin: 3px 0 0 0; font-weight: 900;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
         with col_u2:
@@ -660,7 +755,7 @@ if found_img_path and os.path.exists(found_img_path):
 st.sidebar.markdown("""
     <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
         <h2 style="margin: 0; color: #0052cc; font-weight: 900;">البشمهندس X الرياضة</h2>
-        <p style="margin: 4px 0; font-weight: 800; font-size: 15px;">لوحة المعلم المتقدمة</p>
+        <p style="margin: 4px 0; font-weight: 900; font-size: 16px;">لوحة المعلم المتقدمة</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -696,7 +791,6 @@ with tab_exam_maker:
     if "temp_questions" not in st.session_state:
         st.session_state.temp_questions = []
 
-    # مفاتيح الجلسة للصور مع عدادات إعادة التعيين (Reset Counters)
     if "q_img_ver" not in st.session_state: st.session_state.q_img_ver = 0
     if "opt1_ver" not in st.session_state: st.session_state.opt1_ver = 0
     if "opt2_ver" not in st.session_state: st.session_state.opt2_ver = 0
@@ -756,7 +850,6 @@ with tab_exam_maker:
                     st.session_state.q_img_ver += 1
                     st.rerun()
 
-            # قسم القص المرئي المباشر بالماوس
             st.markdown("##### ✂️ أداة قص الصورة بالماوس مباشرة:")
             pil_q = base64_to_pil(st.session_state.pasted_q_img)
             if pil_q:
@@ -875,7 +968,6 @@ with tab_exam_maker:
                     "correct": correct_num,
                     "points": q_pts_val,
                 })
-                # تصفير الصور ورفع العدادات لتنظيف المكونات
                 st.session_state.pasted_q_img = ""
                 st.session_state.pasted_opt1_img = ""
                 st.session_state.pasted_opt2_img = ""
@@ -1076,7 +1168,7 @@ with tab_cards:
                 with col_c1:
                     st.markdown(f"""
                         <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
-                        <p style="margin: 3px 0; font-size: 14px; font-weight: 800;">{st_curr} — {st_grade}</p>
+                        <p style="margin: 3px 0; font-size: 14px; font-weight: 900;">{st_curr} — {st_grade}</p>
                         <p style="margin: 0; font-size: 13px; color: #64748b;">تاريخ التسجيل: {st_date} | كلمة المرور: <b>{st_pass}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c2:
@@ -1329,16 +1421,16 @@ with tab4:
                 for _, r in st_assessments.iterrows():
                     ass_html_rows += f"""
                     <tr>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['التاريخ']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['التاريخ']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['النوع']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['عنوان التكليف']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['عنوان التكليف']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['الدرجة المحصلة']} / {r['الدرجة العظمى']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['حالة التسليم']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 800; color: #047857;">{r['ملاحظات وتوجيهات']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['حالة التسليم']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #047857;">{r['ملاحظات وتوجيهات']}</td>
                     </tr>
                     """
             else:
-                ass_html_rows = "<tr><td colspan='6' style='padding: 15px; font-weight: 800; border: 2px solid #000;'>لا توجد واجبات أو اختبارات مرصودة حتى الآن.</td></tr>"
+                ass_html_rows = "<tr><td colspan='6' style='padding: 15px; font-weight: 900; border: 2px solid #000;'>لا توجد واجبات أو اختبارات مرصودة حتى الآن.</td></tr>"
 
             session_html_rows = ""
             if not st_sessions.empty:
@@ -1347,22 +1439,22 @@ with tab4:
                     p_curr = float(r.get('سعر الحصة', 0)) if pd.notnull(r.get('سعر الحصة')) else 0.0
                     session_html_rows += f"""
                     <tr>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['التاريخ']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['التاريخ']}</td>
                         <td style="padding: 10px; border: 2px solid #000; color:{st_color}; font-weight: 900;">{r['الحالة']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #16a34a; font-size: 16px;">{p_curr:,.1f}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #16a34a; font-size: 17px;">{p_curr:,.1f}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['مستوى الطالب']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['ملاحظات']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['ملاحظات']}</td>
                     </tr>
                     """
                 session_html_rows += f"""
                 <tr style="background-color: #f1f5f9;">
-                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 16px;">الإجمالي الكلي المستحق للحصص:</td>
-                    <td style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 18px; color: #b91c1c;">{total_cost:,.1f}</td>
-                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 800; font-size: 15px;">نظام الدفع المعتمد: {pay_val}</td>
+                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 17px;">الإجمالي الكلي المستحق للحصص:</td>
+                    <td style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 19px; color: #b91c1c;">{total_cost:,.1f}</td>
+                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 16px;">نظام الدفع المعتمد: {pay_val}</td>
                 </tr>
                 """
             else:
-                session_html_rows = "<tr><td colspan='5' style='padding: 15px; font-weight: 800; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
+                session_html_rows = "<tr><td colspan='5' style='padding: 15px; font-weight: 900; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
 
             teacher_img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
 
@@ -1372,19 +1464,19 @@ with tab4:
                 <meta charset="utf-8">
                 <title>تقرير متابعة ولي الأمر - {selected_student}</title>
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
-                    body {{ font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 30px; color: #000000 !important; background-color: #ffffff !important; font-weight: 800; }}
+                    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@800;900&display=swap');
+                    body {{ font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 30px; color: #000000 !important; background-color: #ffffff !important; font-weight: 900; }}
                     .header-box {{ border-bottom: 3px solid #0052cc; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }}
-                    .brand-name {{ color: #0052cc; margin: 0; font-size: 30px; font-weight: 900; }}
-                    .brand-sub {{ color: #000000; margin: 4px 0; font-size: 15px; font-weight: 800; }}
-                    .parent-notice {{ background-color: #f0fdf4; border: 2px solid #16a34a; padding: 12px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 16px; font-weight: 800; color: #14532d; }}
+                    .brand-name {{ color: #0052cc; margin: 0; font-size: 32px; font-weight: 900; }}
+                    .brand-sub {{ color: #000000; margin: 4px 0; font-size: 16px; font-weight: 900; }}
+                    .parent-notice {{ background-color: #f0fdf4; border: 2px solid #16a34a; padding: 12px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 17px; font-weight: 900; color: #14532d; }}
                     .stats-box {{ width: 100%; border-collapse: collapse; margin-bottom: 25px; }}
-                    .stats-box th, .stats-box td {{ border: 2px solid #000000; padding: 10px; text-align: center; font-size: 15px; font-weight: 800; }}
+                    .stats-box th, .stats-box td {{ border: 2px solid #000000; padding: 10px; text-align: center; font-size: 16px; font-weight: 900; }}
                     .stats-box th {{ background: #f1f5f9; color: #000000; font-weight: 900; }}
-                    .section-title {{ margin-top: 25px; margin-bottom: 10px; color: #0052cc; font-size: 19px; font-weight: 900; border-bottom: 2px solid #0052cc; padding-bottom: 6px; display: inline-block; }}
+                    .section-title {{ margin-top: 25px; margin-bottom: 10px; color: #0052cc; font-size: 20px; font-weight: 900; border-bottom: 2px solid #0052cc; padding-bottom: 6px; display: inline-block; }}
                     .table-main {{ width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; margin-bottom: 20px; }}
-                    .table-main th {{ background-color: #f8fafc; color: #000000; font-weight: 900; font-size: 15px; padding: 10px; border: 2px solid #000000; }}
-                    .footer-note {{ margin-top: 35px; text-align: center; color: #000000; font-size: 15px; font-weight: 900; border-top: 2px solid #000000; padding-top: 15px; }}
+                    .table-main th {{ background-color: #f8fafc; color: #000000; font-weight: 900; font-size: 16px; padding: 10px; border: 2px solid #000000; }}
+                    .footer-note {{ margin-top: 35px; text-align: center; color: #000000; font-size: 16px; font-weight: 900; border-top: 2px solid #000000; padding-top: 15px; }}
                 </style>
             </head>
             <body onload="window.print()">
@@ -1394,12 +1486,12 @@ with tab4:
                         <div>
                             <h2 class="brand-name">البشمهندس X الرياضة 📐</h2>
                             <p class="brand-sub">تقرير التقييم الدوري والحساب المالي الشامل لولي الأمر</p>
-                            <p style="margin: 2px 0; color: #000000; font-size: 15px; font-weight: 800;"><b>المنهج والمرحلة:</b> {curr_val} — {group_val}</p>
+                            <p style="margin: 2px 0; color: #000000; font-size: 16px; font-weight: 900;"><b>المنهج والمرحلة:</b> {curr_val} — {group_val}</p>
                         </div>
                     </div>
                     <div style="text-align: left;">
-                        <h2 style="color: #0052cc; margin: 0; font-size: 24px; font-weight: 900;">الطالب: {selected_student}</h2>
-                        <p style="margin: 5px 0 0 0; color: #000000; font-size: 14px; font-weight: 800;">تاريخ إصدار التقرير: {date.today()}</p>
+                        <h2 style="color: #0052cc; margin: 0; font-size: 26px; font-weight: 900;">الطالب: {selected_student}</h2>
+                        <p style="margin: 5px 0 0 0; color: #000000; font-size: 15px; font-weight: 900;">تاريخ إصدار التقرير: {date.today()}</p>
                     </div>
                 </div>
                 <table class="stats-box">
@@ -1411,7 +1503,7 @@ with tab4:
                         <td style="color: #0f766e; font-weight: 900;">{att_cnt}</td>
                         <td style="color: #b91c1c; font-weight: 900;">{abs_cnt}</td>
                         <td style="font-weight: 900; color: #0052cc;">{att_percentage:.1f}%</td>
-                        <td style="font-weight: 900; font-size: 17px; color: #b91c1c;">{total_cost:,.1f}</td>
+                        <td style="font-weight: 900; font-size: 18px; color: #b91c1c;">{total_cost:,.1f}</td>
                         <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
                     </tr>
                 </table>
