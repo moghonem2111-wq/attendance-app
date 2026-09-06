@@ -200,6 +200,41 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
+    /* شريط التنقل العلوي الاحترافي (Navbar) */
+    .darssly-navbar {
+        background: #ffffff;
+        padding: 12px 25px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+    }
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .navbar-title-group h3 {
+        margin: 0 !important;
+        color: #4f46e5 !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
+    }
+    .navbar-title-group p {
+        margin: 2px 0 0 0 !important;
+        color: #64748b !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+    }
+    .navbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     .exam-builder-header {
         background-color: #f59e0b;
         color: #ffffff !important;
@@ -233,8 +268,8 @@ st.markdown("""
         border: none !important;
         border-radius: 10px;
         font-weight: 900 !important;
-        font-size: 17px !important;
-        padding: 12px 26px;
+        font-size: 16px !important;
+        padding: 10px 22px;
         box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
     }
     .stButton>button:hover { 
@@ -391,8 +426,9 @@ st.markdown("""
     @media (prefers-color-scheme: dark) {
         body, .stApp { background-color: #0e1117 !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
+        .darssly-navbar { background: #1e232d !important; border-color: #334155 !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
-        .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
+        .chat-builder-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
         .course-title { color: #34d399 !important; }
         .course-desc { color: #9ca3af !important; }
@@ -404,7 +440,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (بأسلوب منصة درسلي الاحترافي)
+# 1. واجهة الطالب
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -413,19 +449,37 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    # قسم الترحيب الرئيسي المماثل لصورة درسلي مع الصورة الاحترافية للمعلم
+    # شريط التنقل العلوي الاحترافي (Navbar) مطابق للصورة المطلوبة
+    nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #4f46e5; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
+    
+    st.markdown(f"""
+    <div class="darssly-navbar" dir="rtl">
+        <div class="navbar-brand">
+            {nav_avatar_tag}
+            <div class="navbar-title-group">
+                <h3>مستر / محمد غنيم</h3>
+                <p>منصة الرياضيات للثانوية العامة والمرحلة الإعدادية</p>
+            </div>
+        </div>
+        <div class="navbar-actions">
+            <span style="font-size: 14px; color: #4f46e5; font-weight: 900;">🌐 بوابة الطالب الذكية</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # قسم الترحيب الرئيسي الاحترافي (Hero Section) مطابق لصورة درسلي
     col_hero_txt, col_hero_img = st.columns([1.3, 1])
     with col_hero_txt:
-        st.markdown("<h1 style='color: #4f46e5; font-size: 42px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-        st.markdown("<div style='background: #e0e7ff; color: #4338ca; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>دفعة 2026 / 2027</div>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 16px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم الرياضيات بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color: #4f46e5; font-size: 40px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+        st.markdown("<div style='background: #e0e7ff; color: #4338ca; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>دفعة 2026 / 2027</div>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم الرياضيات بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
 
     with col_hero_img:
         if img_b64:
             st.markdown(f"""
                 <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                    <div style="position: absolute; width: 260px; height: 260px; background: #d1fae5; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
-                    <img src="data:image/jpeg;base64,{img_b64}" style="width: 250px; height: 250px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                    <div style="position: absolute; width: 240px; height: 240px; background: #d1fae5; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
+                    <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                 </div>
             """, unsafe_allow_html=True)
         else:
