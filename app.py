@@ -294,83 +294,6 @@ st.markdown("""
         margin: 15px 0;
     }
 
-    .darssly-banner {
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        border-radius: 16px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-    }
-    .darssly-title {
-        color: #ffffff !important;
-        font-size: 24px !important;
-        font-weight: 900 !important;
-        margin: 0 0 8px 0 !important;
-        text-align: center !important;
-    }
-    .darssly-sub {
-        color: #e0e7ff !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        margin-bottom: 20px !important;
-        text-align: center !important;
-    }
-    .darssly-card {
-        background: #ffffff;
-        border-radius: 14px;
-        padding: 16px 20px;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-right: 6px solid #4f46e5;
-    }
-    .darssly-card-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    .darssly-card-icon {
-        font-size: 32px;
-        background: #e0e7ff;
-        width: 55px;
-        height: 55px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-    }
-    .darssly-card-title {
-        color: #1e1b4b !important;
-        font-size: 18px !important;
-        font-weight: 900 !important;
-        margin: 0 !important;
-    }
-    .darssly-card-desc {
-        color: #64748b !important;
-        font-size: 14px !important;
-        font-weight: 800 !important;
-        margin: 3px 0 0 0 !important;
-    }
-    .darssly-card-btn {
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        color: #ffffff !important;
-        padding: 10px 22px;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 900;
-        text-decoration: none !important;
-        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
-        transition: transform 0.2s ease;
-        white-space: nowrap;
-    }
-    .darssly-card-btn:hover {
-        transform: translateY(-2px);
-        background: linear-gradient(135deg, #4338ca, #6d28d9);
-    }
-
     .social-top-container {
         display: flex;
         gap: 12px;
@@ -445,8 +368,6 @@ st.markdown("""
         div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 900 !important; font-size: 26px !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
-        .darssly-card { background: #1e232d; border-color: #334155; }
-        .darssly-card-title { color: #ffffff !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -474,13 +395,24 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # استخدام st.components.v1.html لضمان عرض بنر درسلي كـ HTML سليم 100% دون أي نصوص برمجية ظاهرة
+    # بنر كورسات منصة درسلي (بما في ذلك إحصاء الصف الثالث الثانوي)
     st.components.v1.html("""
     <div dir="rtl" style="font-family: 'Cairo', sans-serif;">
         <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3); border: 2px solid rgba(255, 255, 255, 0.25);">
-            <h3 style="color: #ffffff; font-size: 24px; font-weight: 900; margin: 0 0 8px 0; text-align: center;">📢 اشترك الآن في كورسات الرياضيات على منصة درسلي (Darssly)</h3>
+            <h3 style="color: #ffffff; font-size: 24px; font-weight: 900; margin: 0 0 8px 0; text-align: center;">📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>
             <p style="color: #e0e7ff; font-size: 16px; font-weight: 800; margin-bottom: 20px; text-align: center;">اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>
             
+            <div style="background: #ffffff; border-radius: 14px; padding: 16px 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #4f46e5;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 28px; background: #e0e7ff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📊</div>
+                    <div>
+                        <h4 style="color: #1e1b4b; font-size: 17px; font-weight: 900; margin: 0;">إحصاء الصف الثالث الثانوي</h4>
+                        <p style="color: #64748b; font-size: 13px; font-weight: 800; margin: 3px 0 0 0;">شرح مبسط، تمارين شاملة، وتدريبات متقدمة لامتحان العزم مع البشمهندس محمد غنيم</p>
+                    </div>
+                </div>
+                <a href="https://darssly.com/courses/mohamed-ghoneim-statistics/plans" target="_blank" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 900; text-decoration: none; white-space: nowrap;">معرفة تفاصيل الاشتراك 👈</a>
+            </div>
+
             <div style="background: #ffffff; border-radius: 14px; padding: 16px 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #4f46e5;">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <div style="font-size: 28px; background: #e0e7ff; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📖</div>
@@ -515,7 +447,7 @@ if is_student_mode:
             </div>
         </div>
     </div>
-    """, height=440)
+    """, height=530)
 
     if "logged_student" not in st.session_state:
         st.session_state.logged_student = None
