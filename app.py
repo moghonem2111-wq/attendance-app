@@ -200,28 +200,6 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    .brand-banner {
-        background: linear-gradient(135deg, #0b1f3a, #1e3c72) !important;
-        padding: 24px 30px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 25px;
-        box-shadow: 0 6px 18px rgba(11, 31, 58, 0.35);
-    }
-    .brand-title {
-        font-size: 36px !important;
-        font-weight: 900 !important;
-        color: #ffffff !important;
-        margin: 0 !important;
-    }
-    .brand-subtitle {
-        color: #e0edff !important;
-        font-size: 17px !important;
-        font-weight: 800 !important;
-        margin-top: 6px !important;
-    }
     .exam-builder-header {
         background-color: #f59e0b;
         color: #ffffff !important;
@@ -409,16 +387,10 @@ st.markdown("""
     @media (prefers-color-scheme: light) {
         body, .stApp { background-color: #ffffff !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] { background: #f8fafc !important; border: 2px solid #10b981 !important; border-radius: 12px; padding: 14px 18px; }
-        div[data-testid="stMetric"] label { color: #1e293b !important; font-size: 16px !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #10b981 !important; font-weight: 900 !important; font-size: 26px !important; }
     }
     @media (prefers-color-scheme: dark) {
         body, .stApp { background-color: #0e1117 !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] { background: #1e232d !important; border: 2px solid #059669 !important; border-radius: 12px; padding: 14px 18px; }
-        div[data-testid="stMetric"] label { color: #e2e8f0 !important; font-size: 16px !important; font-weight: 900 !important; }
-        div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #34d399 !important; font-weight: 900 !important; font-size: 26px !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
@@ -432,7 +404,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب
+# 1. واجهة الطالب (بأسلوب منصة درسلي الاحترافي)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -441,17 +413,27 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class="brand-banner" dir="rtl">
-        <div>
-            <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
-            <p class="brand-subtitle">بوابة الطالب الذكية • الحضور، الاختبارات الإلكترونية التفاعلية، والدردشة</p>
-        </div>
-        {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
-    </div>
-    """, unsafe_allow_html=True)
+    # قسم الترحيب الرئيسي المماثل لصورة درسلي مع الصورة الاحترافية للمعلم
+    col_hero_txt, col_hero_img = st.columns([1.3, 1])
+    with col_hero_txt:
+        st.markdown("<h1 style='color: #4f46e5; font-size: 42px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+        st.markdown("<div style='background: #e0e7ff; color: #4338ca; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>دفعة 2026 / 2027</div>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 16px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم الرياضيات بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
 
-    # 1. كورسات درسلي في البداية
+    with col_hero_img:
+        if img_b64:
+            st.markdown(f"""
+                <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
+                    <div style="position: absolute; width: 260px; height: 260px; background: #d1fae5; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
+                    <img src="data:image/jpeg;base64,{img_b64}" style="width: 250px; height: 250px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("قم برفع صورة المعلم (teacher.jpg) من لوحة التحكم لتظهر هنا.")
+
+    st.write("---")
+
+    # كورسات درسلي
     st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
     st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -534,7 +516,7 @@ if is_student_mode:
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
-        # 2. ظهور الفيديو هنا قبل زر التواصل مباشرة (بناءً على طلبك)
+        # فيديو الترحيب هنا قبل صندوق التواصل مباشرة
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
@@ -562,7 +544,7 @@ if is_student_mode:
                 st.session_state.logged_student = None
                 st.rerun()
 
-        # ظهور الفيديو هنا أيضاً بعد تسجيل الدخول وقبل قسم الاختبارات
+        # فيديو الترحيب هنا أيضاً بعد تسجيل الدخول بنجاح
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
@@ -842,7 +824,7 @@ if is_student_mode:
                     st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                     st.rerun()
 
-    # الأيقونات وأزرار التواصل في أسفل الصفحة
+    # أزرار وأيقونات التواصل في أسفل الصفحة
     st.markdown("""
         <div class="call-btn-container">
             <a href="tel:01016361440" class="call-btn">
