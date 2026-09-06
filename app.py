@@ -110,7 +110,7 @@ def get_image_base64(path):
 
 img_b64 = get_image_base64(found_img_path)
 
-# ==================== قواعد البيانات والإكسيل ====================
+# ==================== إدارة قواعد البيانات (Excel Sheets) ====================
 COL_SESSIONS = [
     "التاريخ",
     "اسم الطالب",
@@ -199,7 +199,33 @@ if "users_df" not in st.session_state:
     st.session_state.assessments_df = a_df
     st.session_state.messages_df = m_df
 
-# ==================== التنسيق والتصميم (Dark / Light) ====================
+# دالة الحذف الشامل لأي طالب
+def delete_student_completely(student_name_to_del):
+    target = student_name_to_del.strip()
+    st.session_state.users_df = st.session_state.users_df[
+        st.session_state.users_df["اسم الطالب"].astype(str).str.strip() != target
+    ].reset_index(drop=True)
+    
+    st.session_state.sessions_df = st.session_state.sessions_df[
+        st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() != target
+    ].reset_index(drop=True)
+    
+    st.session_state.assessments_df = st.session_state.assessments_df[
+        st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() != target
+    ].reset_index(drop=True)
+    
+    st.session_state.messages_df = st.session_state.messages_df[
+        st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() != target
+    ].reset_index(drop=True)
+    
+    save_all_data(
+        st.session_state.users_df,
+        st.session_state.sessions_df,
+        st.session_state.assessments_df,
+        st.session_state.messages_df
+    )
+
+# ==================== التنسيق والتصميم ====================
 st.markdown(
     """
     <style>
@@ -288,7 +314,6 @@ st.markdown(
         background-color: #f8fafc;
     }
 
-    /* عناوين الأقسام العمودية لطالب */
     .vertical-section-header {
         background: linear-gradient(135deg, #0284c7, #0369a1);
         color: #ffffff !important;
@@ -302,18 +327,6 @@ st.markdown(
         align-items: center;
         gap: 10px;
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
-    }
-
-    .student-card {
-        background: #ffffff;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 
     .chat-bubble-student {
@@ -424,7 +437,6 @@ st.markdown(
         div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #0052cc !important; font-weight: 900 !important; }
         input, select, textarea { color: #000000 !important; background-color: #ffffff !important; border: 2px solid #94a3b8 !important; font-weight: 700 !important; }
         .rights-text { color: #1e293b !important; }
-        .student-card { background: #ffffff; border-color: #e2e8f0; }
     }
 
     @media (prefers-color-scheme: dark) {
@@ -435,7 +447,6 @@ st.markdown(
         div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 900 !important; }
         input, select, textarea { color: #ffffff !important; background-color: #262730 !important; border: 2px solid #475569 !important; font-weight: 700 !important; }
         .rights-text { color: #e2e8f0 !important; }
-        .student-card { background: #1e232d; border-color: #334155; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
     }
@@ -448,7 +459,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (الأقسام تحت بعضها البعض بشكل عمودي مريح)
+# 1. واجهة الطالب (عمودي متتالي)
 # ==============================================================================
 if is_student_mode:
     st.markdown(
@@ -506,13 +517,13 @@ if is_student_mode:
 
                 if btn_login:
                     users_match = st.session_state.users_df[
-                        (st.session_state.users_df["اسم الطالب"].str.strip() == login_name.strip())
+                        (st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == login_name.strip())
                         & (st.session_state.users_df["كلمة المرور"].astype(str).str.strip() == login_pass.strip())
                     ]
                     if not users_match.empty:
                         user_info = users_match.iloc[0].to_dict()
                         if user_info.get("الحالة_حظر") == "محظور":
-                            st.error("🚫 عذراً، تم حظر هذا الحساب من قبل المعلم. يرجى مراجعة البشمهندس مباشرة.")
+                            st.error("🚫 عذراً، تم حظر هذا الحساب من قبل المعلم.")
                         else:
                             st.session_state.logged_student = user_info
                             st.success(f"مرحباً بك مجدداً يا {login_name}!")
@@ -526,16 +537,18 @@ if is_student_mode:
                 reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
                 reg_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[reg_curr])
-                reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك (احفظه جيداً):", type="password")
+                reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك:", type="password")
                 btn_reg = st.form_submit_button("تأكيد إنشاء الحساب")
 
                 if btn_reg:
                     if not reg_name.strip() or not reg_pass.strip():
                         st.error("يرجى كتابة اسمك والرقم السري.")
                     else:
-                        existing = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].str.strip() == reg_name.strip()]
+                        existing = st.session_state.users_df[
+                            st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == reg_name.strip()
+                        ]
                         if not existing.empty:
-                            st.warning("هذا الاسم مسجل بالفعل! يرجى تسجيل الدخول مباشرة أو كتابة الاسم ثلاثياً.")
+                            st.warning("هذا الاسم مسجل بالفعل! يرجى تسجيل الدخول أو كتابة الاسم ثلاثياً.")
                         else:
                             new_user = {
                                 "اسم الطالب": reg_name.strip(),
@@ -554,13 +567,14 @@ if is_student_mode:
     else:
         st_user = st.session_state.logged_student
 
-        fresh_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].str.strip() == st_user["اسم الطالب"].strip()]
+        fresh_user = st.session_state.users_df[
+            st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()
+        ]
         if not fresh_user.empty and fresh_user.iloc[0].get("الحالة_حظر") == "محظور":
             st.error("🚫 عذراً، تم حظر حسابك من قبل المعلم.")
             st.session_state.logged_student = None
             st.stop()
 
-        # شريط ترحيبي وزر الخروج
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(
@@ -578,9 +592,7 @@ if is_student_mode:
                 st.session_state.logged_student = None
                 st.rerun()
 
-        # ==========================================
-        # 1. قسم تسجيل حضور حصة اليوم
-        # ==========================================
+        # 1. تسجيل الحضور
         st.markdown("<div class='vertical-section-header'>📝 أولاً: تسجيل حضور حصة اليوم وتقييمها</div>", unsafe_allow_html=True)
         with st.form("logged_student_att_form", clear_on_submit=True):
             st_date = st.date_input("تاريخ الحصة:", value=date.today())
@@ -611,12 +623,10 @@ if is_student_mode:
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
                 st.success(f"تم تسجيل حضورك وتقييمك بنجاح للحصة بتاريخ {st_date}!")
 
-        # ==========================================
-        # 2. قسم متابعة الواجبات والاختبارات
-        # ==========================================
+        # 2. الواجبات والاختبارات
         st.markdown("<div class='vertical-section-header'>📊 ثانياً: متابعة سجل الواجبات والاختبارات</div>", unsafe_allow_html=True)
         my_assessments = st.session_state.assessments_df[
-            st.session_state.assessments_df["اسم الطالب"].str.strip() == st_user["اسم الطالب"].strip()
+            st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()
         ].copy()
 
         if my_assessments.empty:
@@ -630,15 +640,13 @@ if is_student_mode:
 
             st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
-        # ==========================================
-        # 3. قسم الدردشة مع البشمهندس
-        # ==========================================
+        # 3. الدردشة
         st.markdown("<div class='vertical-section-header'>💬 ثالثاً: الدردشة والتواصل المباشر مع البشمهندس</div>", unsafe_allow_html=True)
         st.write("اطرح استفسارك أو مسألة رياضية تريد توضيحها، أو أرفق صورة المسألة:")
 
         student_name_key = st_user["اسم الطالب"].strip()
         chat_history = st.session_state.messages_df[
-            st.session_state.messages_df["اسم الطالب"].str.strip() == student_name_key
+            st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key
         ].copy()
 
         with st.container():
@@ -684,7 +692,6 @@ if is_student_mode:
                     st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                     st.rerun()
 
-    # زر الاتصال وشريط التواصل
     st.markdown(
         """
         <div class="call-btn-container">
@@ -759,7 +766,7 @@ st.markdown(
 
 tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
     "💬 مركز الدردشة والرسائل",
-    "👥 بطاقات الطلاب والتحكم (حظر/تفعيل)",
+    "👥 بطاقات الطلاب والتحكم (حذف / حظر)",
     "📝 رصد حصة جديدة",
     "📚 رصد واجب / اختبار",
     "✏️ تعديل السجلات",
@@ -767,7 +774,7 @@ tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
     "🖨️ تقرير ولي الأمر للطباعة",
 ])
 
-# ----------------- تبويب الدردشة عند المعلم -----------------
+# ----------------- تبويب الدردشة -----------------
 with tab_chat:
     st.subheader("💬 صندوق محادثات الطلاب والرد على الأسئلة:")
 
@@ -777,20 +784,20 @@ with tab_chat:
     )))
 
     if not all_students_with_chat:
-        st.info("لا توجد رسائل واردة بعد. بمجرد أن يرسل أي طالب استفساراً سيظهر هنا.")
+        st.info("لا توجد رسائل واردة بعد.")
     else:
         selected_chat_student = st.selectbox("اختر الطالب لمشاهدة محادثته والرد عليه:", all_students_with_chat)
 
         if selected_chat_student:
             student_thread = st.session_state.messages_df[
-                st.session_state.messages_df["اسم الطالب"].str.strip() == selected_chat_student.strip()
+                st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == selected_chat_student.strip()
             ].copy()
 
             st.write(f"### سجل المحادثة مع الطالب: **{selected_chat_student}**")
 
             with st.container():
                 if student_thread.empty:
-                    st.info("لا توجد رسائل متبادلة مع هذا الطالب حتى الآن. يمكنك إرسال رسالة له أولاً:")
+                    st.info("لا توجد رسائل متبادلة مع هذا الطالب حتى الآن.")
                 else:
                     for _, m in student_thread.iterrows():
                         sender = m["المرسل"]
@@ -826,33 +833,62 @@ with tab_chat:
                         st.success("تم إرسال الرد للطالب فوراً!")
                         st.rerun()
 
-# ----------------- تبويب بطاقات الطلاب والتحكم -----------------
+# ----------------- تبويب بطاقات الطلاب (كود الحذف الشامل) -----------------
 with tab_cards:
-    st.subheader("👥 بطاقات الطلاب المسجلين والتحكم بالحسابات:")
-    u_data = st.session_state.users_df
+    st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
 
-    if u_data.empty:
-        st.info("لم يسجل أي طالب حسابه حتى الآن.")
+    all_known_students = sorted(list(set(
+        [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+    )))
+
+    # قسم الحذف المباشر بالاختيار
+    if all_known_students:
+        with st.expander("🗑️ حذف طالب محدد نهائياً من كافة السجلات (سريع)"):
+            del_selected_st = st.selectbox("اختر الطالب المراد حذفه نهائياً:", all_known_students, key="del_box_select")
+            if st.button("🚨 تأكيد حذف هذا الطالب نهائياً", key="btn_confirm_del_box"):
+                delete_student_completely(del_selected_st)
+                st.success(f"✓ تم مسح الطالب ({del_selected_st}) وجميع بياناته نهائياً من قاعدة البيانات!")
+                st.rerun()
+
+    st.write("---")
+
+    if not all_known_students:
+        st.info("لا يوجد طلاب مسجلون حالياً.")
     else:
-        for idx, row in u_data.iterrows():
-            st_name = row.get("اسم الطالب", "")
-            st_curr = row.get("المنهج/الدولة", "-")
-            st_grade = row.get("المجموعة/الصف", "-")
-            st_date = row.get("تاريخ التسجيل", "-")
-            st_pass = row.get("كلمة المرور", "")
-            is_banned = row.get("الحالة_حظر") == "محظور"
+        for idx, st_name in enumerate(all_known_students):
+            u_row = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
+            s_row = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
+
+            st_curr = "-"
+            st_grade = "-"
+            st_date = "-"
+            st_pass = "غير محدد"
+            is_banned = False
+
+            if not u_row.empty:
+                st_curr = u_row.iloc[0].get("المنهج/الدولة", "-")
+                st_grade = u_row.iloc[0].get("المجموعة/الصف", "-")
+                st_date = u_row.iloc[0].get("تاريخ التسجيل", "-")
+                st_pass = u_row.iloc[0].get("كلمة المرور", "-")
+                is_banned = u_row.iloc[0].get("الحالة_حظر") == "محظور"
+            elif not s_row.empty:
+                st_curr = s_row.iloc[-1].get("المنهج/الدولة", "-")
+                st_grade = s_row.iloc[-1].get("المجموعة/الصف", "-")
+                st_date = s_row.iloc[0].get("التاريخ", "-")
 
             status_badge = "🚫 محظور" if is_banned else "✅ نشط"
             badge_color = "#dc2626" if is_banned else "#16a34a"
 
             with st.container():
-                col_c1, col_c2, col_c3 = st.columns([3, 2, 1])
+                col_c1, col_c2, col_c3, col_c4 = st.columns([4, 2, 2, 2])
                 with col_c1:
                     st.markdown(
                         f"""
                         <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
                         <p style="margin: 3px 0; font-size: 14px; font-weight: 800;">{st_curr} — {st_grade}</p>
-                        <p style="margin: 0; font-size: 13px; color: #64748b;">تاريخ الانضمام: {st_date} | كلمة المرور: <b>{st_pass}</b></p>
+                        <p style="margin: 0; font-size: 13px; color: #64748b;">تاريخ التسجيل: {st_date} | كلمة المرور: <b>{st_pass}</b></p>
                         """,
                         unsafe_allow_html=True,
                     )
@@ -862,18 +898,24 @@ with tab_cards:
                 with col_c3:
                     if is_banned:
                         if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
-                            u_data.at[idx, "الحالة_حظر"] = "نشط"
-                            st.session_state.users_df = u_data
+                            st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
                             st.success(f"تم فك حظر {st_name}!")
                             st.rerun()
                     else:
-                        if st.button("حظر الطالب 🚫", key=f"ban_{idx}"):
-                            u_data.at[idx, "الحالة_حظر"] = "محظور"
-                            st.session_state.users_df = u_data
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
-                            st.warning(f"تم حظر {st_name} بنجاح.")
-                            st.rerun()
+                        if st.button("حظر 🚫", key=f"ban_{idx}"):
+                            if not u_row.empty:
+                                st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                                st.warning(f"تم حظر {st_name}.")
+                                st.rerun()
+
+                with col_c4:
+                    if st.button("حذف نهائي 🗑️", key=f"del_card_btn_{idx}"):
+                        delete_student_completely(st_name)
+                        st.success(f"✓ تم حذف الطالب ({st_name}) نهائياً!")
+                        st.rerun()
+
                 st.write("---")
 
 # ----------------- تبويب رصد الحصة -----------------
