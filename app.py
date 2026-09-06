@@ -196,16 +196,6 @@ st.markdown("""
         text-align: right;
     }
     
-    .stRadio label, .stCheckbox label {
-        font-size: 17px !important;
-        font-weight: 900 !important;
-    }
-
-    .stTextInput input, .stTextArea textarea, .stSelectbox div {
-        font-size: 16px !important;
-        font-weight: 800 !important;
-    }
-
     .darssly-navbar {
         background: #ffffff;
         padding: 12px 25px;
@@ -275,6 +265,26 @@ st.markdown("""
     }
     .stButton>button:hover { 
         background: #059669 !important; 
+    }
+
+    .exam-top-bar {
+        background-color: #f97316;
+        color: #ffffff;
+        padding: 15px 25px;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 20px;
+        font-weight: 900;
+    }
+    .exam-card-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0 0 12px 12px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
     }
 
     .chat-bubble-student {
@@ -428,6 +438,7 @@ st.markdown("""
         body, .stApp { background-color: #0e1117 !important; }
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
         .darssly-navbar { background: #1e232d !important; border-color: #334155 !important; }
+        .exam-card-box { background: #1e232d !important; border-color: #334155 !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
@@ -642,7 +653,7 @@ if is_student_mode:
         with col_vid2:
             st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
-        # ==================== لوحة خدمات الطالب (أيقونات تحت بعضها) ====================
+        # ==================== لوحة خدمات الطالب (أيقونات تحت بعضها تماماً) ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; margin-bottom: 15px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
@@ -665,21 +676,13 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع معالجة ذكية للأسئلة
+        # 1. صفحة الاختبارات بدعم كامل لصور الأسئلة والخيارات (الاسكرينات) وبنفس السيستم الاحترافي
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
-            my_grade = str(st_user.get("المجموعة/الصف", "")).strip()
-            
-            # فلترة الامتحانات المطابقة للمجموعة أو عرض كل الامتحانات إذا لم تكن مطابقة بدقة لتجنب فراغ القائمة
             available_exams = st.session_state.exams_df.copy()
-            if not available_exams.empty and "المجموعة/الصف" in available_exams.columns:
-                available_exams["clean_grade"] = available_exams["المجموعة/الصف"].astype(str).str.strip()
-                match_grade = available_exams[available_exams["clean_grade"] == my_grade]
-                if not match_grade.empty:
-                    available_exams = match_grade
 
             if available_exams.empty:
-                st.info(f"لا توجد اختبارات إلكترونية مخصصة حالياً لصفك ({my_grade}).")
+                st.info("لا توجد اختبارات إلكترونية منشورة حالياً.")
             else:
                 for _, ex_row in available_exams.iterrows():
                     ex_id = ex_row["معرف_الامتحان"]
@@ -687,9 +690,18 @@ if is_student_mode:
                     ex_desc = ex_row["وصف الامتحان"]
                     ex_pass = str(ex_row.get("كلمة المرور", "")).strip()
                     ex_time = int(ex_row.get("مدة الامتحان بالدقائق", 30))
+                    ex_grade_target = str(ex_row.get("المجموعة/الصف", ""))
 
-                    with st.expander(f"📝 {ex_title} (المدة: {ex_time} دقيقة)"):
-                        st.write(f"**الوصف:** {ex_desc}")
+                    with st.container():
+                        st.markdown(f"""
+                            <div class="exam-top-bar">
+                                <span>{ex_title}</span>
+                                <span style="font-size: 15px;">المدة: {ex_time} دقيقة</span>
+                            </div>
+                            <div class="exam-card-box">
+                                <p><b>الوصف:</b> {ex_desc}</p>
+                                <p><b>المجموعة / الصف:</b> {ex_grade_target}</p>
+                        """, unsafe_allow_html=True)
 
                         already_solved = st.session_state.assessments_df[
                             (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
@@ -700,7 +712,7 @@ if is_student_mode:
                             solved_score = already_solved.iloc[-1]["الدرجة المحصلة"]
                             solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
                             st.success(f"✅ لقد قمت بأداء هذا الاختبار مسبقاً بنتيجة: ({solved_score} من {solved_max})")
-                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:10px;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:10px;'><b>تفاصيل إجاباتك:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
                         else:
                             exam_state_key = f"exam_state_{ex_id}"
                             if exam_state_key not in st.session_state:
@@ -717,11 +729,11 @@ if is_student_mode:
                             if not st_ex["started"]:
                                 input_pass = ""
                                 if ex_pass and ex_pass != "nan" and ex_pass != "":
-                                    input_pass = st.text_input("🔐 أدخل كلمة مرور الاختبار للبدء:", type="password", key=f"start_pass_{ex_id}")
+                                    input_pass = st.text_input("🔐 كلمة مرور الامتحان:", type="password", key=f"start_pass_{ex_id}")
                                 
-                                if st.button("🚀 بدء حل الاختبار الآن", key=f"btn_start_ex_{ex_id}"):
+                                if st.button("🚀 بدء الامتحان الآن", key=f"btn_start_ex_{ex_id}"):
                                     if ex_pass and ex_pass != "nan" and ex_pass != "" and input_pass.strip() != ex_pass:
-                                        st.error("كلمة مرور الاختبار غير صحيحة.")
+                                        st.error("كلمة مرور الامتحان غير صحيحة.")
                                     else:
                                         st_ex["started"] = True
                                         st.rerun()
@@ -740,15 +752,20 @@ if is_student_mode:
                                         questions = []
 
                                 if not questions:
-                                    st.error("⚠️ عذراً، لا توجد أسئلة مضافة في هذا الاختبار أو حدث خطأ في قراءتها.")
+                                    st.error("⚠️ لا توجد أسئلة مضافة في هذا الاختبار.")
                                 else:
-                                    st.warning(f"⏱️ تنبيه: وقت الامتحان المحدد هو {ex_time} دقيقة. ركز في إجاباتك!")
-
                                     total_q = len(questions)
                                     cur_i = st_ex["cur_idx"]
                                     q_curr = questions[cur_i]
 
-                                    st.markdown("##### 📌 خريطة أسئلة الاختبار (اضغط على رقم السؤال للذهاب إليه مباشرة):")
+                                    st.markdown(f"""
+                                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:10px 15px; border-radius:8px; margin-bottom:15px;">
+                                            <span>⏱️ الوقت المتاح: <b>{ex_time} دقيقة</b></span>
+                                            <span>السؤال (<b>{cur_i + 1}</b> من <b>{total_q}</b>)</span>
+                                        </div>
+                                    """, unsafe_allow_html=True)
+
+                                    st.markdown("##### 📌 خريطة أسئلة الاختبار (انقر للانتقال الفوري):")
                                     nav_cols = st.columns(min(total_q, 10))
                                     for q_num_i in range(total_q):
                                         col_target = nav_cols[q_num_i % 10]
@@ -766,12 +783,10 @@ if is_student_mode:
                                     st.write("---")
 
                                     q_type = q_curr.get("type", "موضوعي")
-                                    st.markdown(f"### **سؤال {cur_i + 1} من {total_q}:**")
-
                                     if q_curr.get("text"):
                                         st.markdown(f"**{q_curr['text']}**")
                                     
-                                    # عرض صورة السؤال (سكرين شوت)
+                                    # عرض صورة السؤال (سكرين شوت) بدقة كاملة
                                     if q_curr.get("q_img"):
                                         st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", use_container_width=True)
 
@@ -783,7 +798,7 @@ if is_student_mode:
                                             t_val = q_curr.get(f"opt{opt_idx}", "")
                                             i_val = q_curr.get(f"opt{opt_idx}_img", "")
                                             st.markdown(f"**الخيار ({lbl}):** {t_val}")
-                                            # عرض صور الاختيارات (الاسكرينات)
+                                            # عرض صور الاختيارات (الاسكرينات) بدقة
                                             if i_val:
                                                 st.image(f"data:image/jpeg;base64,{i_val}", width=280)
 
@@ -818,23 +833,26 @@ if is_student_mode:
 
                                     with c_prev:
                                         if cur_i > 0:
-                                            if st.button("➡️ السؤال السابق", key=f"btn_prev_{ex_id}"):
+                                            if st.button("➡️ السابق", key=f"btn_prev_{ex_id}"):
                                                 st_ex["cur_idx"] -= 1
                                                 st.rerun()
 
                                     with c_next:
                                         if cur_i < total_q - 1:
-                                            if st.button("السؤال التالي ⬅️", key=f"btn_next_{ex_id}"):
+                                            if st.button("التالي ⬅️", key=f"btn_next_{ex_id}"):
                                                 st_ex["cur_idx"] += 1
                                                 st.rerun()
 
                                     with c_finish:
-                                        if st.button("🏁 تسليم وإنهاء الاختبار", key=f"btn_finish_{ex_id}"):
+                                        if st.button("🏁 إنهاء الامتحان ومشاهدة النتيجة", key=f"btn_finish_{ex_id}"):
                                             st_ex["show_confirm_submit"] = True
 
                                     if st_ex.get("show_confirm_submit"):
-                                        st.write("")
-                                        if st.button("⚠️ تأكيد نهائي لتسليم ورقة الإجابة الآن", key=f"confirm_final_{ex_id}"):
+                                        unanswered_list = [q_idx+1 for q_idx in range(total_q) if q_idx not in st_ex["answers_mcq"]]
+                                        if unanswered_list:
+                                            st.warning(f"⚠️ تنبيه: لقد نسيت الإجابة على الأسئلة الآتية: {unanswered_list}")
+                                        
+                                        if st.button("⚠️ تأكيد نهائي لتسليم ورقة الامتحان الآن", key=f"confirm_final_{ex_id}"):
                                             mcq_score = 0.0
                                             total_max = 0.0
                                             detailed_report = ""
@@ -871,6 +889,7 @@ if is_student_mode:
                                                     st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_essay_sub])], ignore_index=True)
 
                                             note_msg = f"الدرجة الموضوعية: {mcq_score}/{total_max}. تفاصيل الإجابات: {detailed_report}"
+                                            pct = (mcq_score / total_max * 100) if total_max > 0 else 0
 
                                             new_ass = {
                                                 "التاريخ": str(date.today()),
@@ -885,9 +904,22 @@ if is_student_mode:
                                             st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
                                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                                             st.session_state.pop(exam_state_key, None)
-                                            st.success(f"🎉 تم تسليم إجاباتك بنجاح! درجتك: ({mcq_score} من {total_max})")
-                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px;'><b>نتيجة التفصيلية:</b><br>{note_msg}</div>", unsafe_allow_html=True)
+                                            
+                                            # شاشة النتيجة النهائية الدائرية كالطلب تماماً
+                                            st.markdown(f"""
+                                                <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05); margin-top:20px;">
+                                                    <h2 style="color:#0f172a; margin-bottom:5px;">النتيجة النهائية</h2>
+                                                    <p style="font-size:18px; color:#475569;"><b>{st_user['اسم الطالب']}</b></p>
+                                                    <p style="font-size:15px; color:#64748b;">{ex_title} : {total_q} اسئله</p>
+                                                    <div style="width:120px; height:120px; border-radius:50%; border:8px solid #10b981; display:flex; align-items:center; justify-content:center; margin:20px auto; font-size:24px; font-weight:900; color:#059669;">
+                                                        {pct:.0f}%
+                                                    </div>
+                                                    <p style="font-size:16px; font-weight:900;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                </div>
+                                            """, unsafe_allow_html=True)
+                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px;'><b>تفاصيل الإجابات (صح / خطأ):</b><br>{note_msg}</div>", unsafe_allow_html=True)
                                             st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
 
         # 2. صفحة الحضور
         elif sub_page == "attendance":
@@ -1323,7 +1355,7 @@ with tab_exam_maker:
                     st.warning("تم حذف الامتحان.")
                     st.rerun()
 
-# ----------------- تبويب درجات الاختبارات للمعلم -----------------
+# ----------------- تبويب درجات الاختبارات للمعلم (مع إمكانية التصدير لـ Excel) -----------------
 with tab_exam_grades_teacher:
     st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
     exam_assessments = st.session_state.assessments_df[
@@ -1334,6 +1366,18 @@ with tab_exam_grades_teacher:
         st.info("لا توجد نتائج اختبارات مرصودة للطلاب حتى الآن.")
     else:
         st.dataframe(exam_assessments[["التاريخ", "اسم الطالب", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+        # زر تصدير درجات الطلاب لملف Excel
+        buf_grades = io.BytesIO()
+        with pd.ExcelWriter(buf_grades, engine="openpyxl") as writer:
+            exam_assessments.to_excel(writer, sheet_name="Exam_Grades", index=False)
+        
+        st.download_button(
+            label="📥 تصدير درجات الطلاب لملف Excel",
+            data=buf_grades.getvalue(),
+            file_name="درجات_الاختبارات_للطلاب.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 # ----------------- تبويب تصحيح المقالي والصور -----------------
 with tab_essay_grade:
