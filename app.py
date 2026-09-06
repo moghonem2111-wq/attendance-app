@@ -299,7 +299,16 @@ st.markdown("""
         margin: 15px 0;
     }
 
-    /* تصميم بطاقات الكورسات الاحترافية بجانب بعضها (مطابق للصورة المطلوبة) */
+    .darssly-box {
+        background: linear-gradient(135deg, #059669, #10b981);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+    }
+
+    /* تصميم بطاقات الكورسات النظيفة بدون تفاصيل ومميزة بلون زر الاشتراك */
     .course-card {
         background: #ffffff;
         border: 2px solid #e2e8f0;
@@ -336,16 +345,6 @@ st.markdown("""
         font-size: 14px !important;
         font-weight: 800 !important;
         margin-bottom: 15px !important;
-    }
-    .course-features {
-        text-align: right;
-        background: #f8fafc;
-        padding: 12px;
-        border-radius: 10px;
-        margin-bottom: 18px;
-        font-size: 13px;
-        font-weight: 800;
-        color: #1e293b;
     }
 
     .social-top-container {
@@ -425,7 +424,6 @@ st.markdown("""
         .course-card { background: #1e232d; border-color: #334155; }
         .course-title { color: #34d399 !important; }
         .course-desc { color: #9ca3af !important; }
-        .course-features { background: #0f172a; color: #f8fafc; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -453,34 +451,35 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # قسم كورسات درسلي بتصميم بطاقات رأسية بجانب بعضها (مطابق للصورة الاحترافية)
-    st.markdown("<h2 style='text-align: center; margin-bottom: 5px;'>إه أفضل الباقات والعروض على المنصة؟ 🎓</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 25px; font-weight: 800;'>اختر الكورس أو الباقة المناسبة لمرحلتك الدراسية:</p>", unsafe_allow_html=True)
+    # قسم كورسات درسلي (بدون تفاصيل محاضرات، وزر أحمر بارز للنص الأبيض العريض)
+    st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
 
     courses_grid = [
-        ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", ["✔️ المحاضرة (01): التوزيع الطبيعي", "✔️ المحاضرة (02): المتغير العشوائي", "✔️ المحاضرة (03): الإحصاء التطبيقي", "✔️ مراجعات واختبارات شاملة"], "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-        ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", ["✔️ الجبر ووحداته الكاملة", "✔️ الهندسة والقياس", "✔️ اختبارات دورية على كل درس", "✔️ متابعة مستمرة وتأسيس قوي"], "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww"),
-        ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", ["✔️ الجبر وتحليل المقادير", "✔️ مثلث الإحصاء والتحليل", "✔️ تدريبات على أفكار الامتحانات", "✔️ امتحانات إلكترونية فورية"], "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw"),
-        ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", ["✔️ الهندسة التحليلية وحساب المثلثات", "✔️ الجبر والدوال الحقيقية", "✔️ مراجعات نهائية مكثفة", "✔️ حل مسائل المحافظات السابقة"], "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw")
+        ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
+        ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww"),
+        ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw"),
+        ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw")
     ]
 
     c_cols = st.columns(2)
-    for idx, (icon, title, desc, features, link) in enumerate(courses_grid):
+    for idx, (icon, title, desc, link) in enumerate(courses_grid):
         col_target = c_cols[idx % 2]
         with col_target:
-            feat_html = "".join([f"<div style='margin-bottom: 5px;'>{f}</div>" for f in features])
             st.markdown(f"""
                 <div class="course-card">
                     <div>
                         <div class="course-icon-box">{icon}</div>
                         <div class="course-title">{title}</div>
                         <div class="course-desc">{desc}</div>
-                        <div class="course-features">{feat_html}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
             st.write("")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if "logged_student" not in st.session_state:
         st.session_state.logged_student = None
