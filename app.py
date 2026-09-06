@@ -162,7 +162,10 @@ if "users_df" not in st.session_state:
     st.session_state.essays_df = es_df
 
 if "page_view" not in st.session_state:
-    st.session_state.page_view = "home" # "home", "login", "register"
+    st.session_state.page_view = "home"
+
+if "student_sub_page" not in st.session_state:
+    st.session_state.student_sub_page = "dashboard"
 
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
@@ -273,6 +276,30 @@ st.markdown("""
         background: #059669 !important; 
     }
     
+    .menu-icon-card {
+        background: #ffffff;
+        border: 2px solid #10b981;
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.15);
+        margin-bottom: 15px;
+        transition: transform 0.2s ease;
+    }
+    .menu-icon-card:hover {
+        transform: translateY(-4px);
+    }
+    .menu-icon-emoji {
+        font-size: 45px;
+        margin-bottom: 12px;
+    }
+    .menu-icon-title {
+        color: #064e3b;
+        font-size: 18px;
+        font-weight: 900;
+        margin: 0;
+    }
+
     .chat-bubble-student {
         background-color: #e0f2fe;
         color: #0369a1;
@@ -427,6 +454,8 @@ st.markdown("""
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
+        .menu-icon-card { background: #1e232d; border-color: #059669; }
+        .menu-icon-title { color: #34d399 !important; }
         .course-title { color: #34d399 !important; }
         .course-desc { color: #9ca3af !important; }
     }
@@ -446,7 +475,7 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    # شريط التنقل العلوي مع أزرار التنقل بين الصفحات المستقلة
+    # شريط التنقل العلوي المستقل
     nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
     col_nav1, col_nav2 = st.columns([2, 1.5])
@@ -468,6 +497,7 @@ if is_student_mode:
         with c_btn0:
             if st.button("🏠 الرئيسية"):
                 st.session_state.page_view = "home"
+                st.session_state.logged_student = None
                 st.rerun()
         with c_btn1:
             if st.button("👤 دخول"):
@@ -484,7 +514,7 @@ if is_student_mode:
         st.session_state.logged_student = None
 
     if not st.session_state.logged_student:
-        # إذا كان في الصفحة الرئيسية (Home)
+        # 1. الرئيسية
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
@@ -543,7 +573,7 @@ if is_student_mode:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # صفحة مستقلة لتسجيل الدخول
+        # 2. صفحة تسجيل الدخول المستقلة
         elif st.session_state.page_view == "login":
             st.markdown("### 🔐 تسجيل دخول الطالب:")
             with st.form("student_login_form"):
@@ -573,7 +603,7 @@ if is_student_mode:
                     else:
                         st.error("اسم الطالب أو الرقم السري غير صحيح.")
 
-        # صفحة مستقلة لإنشاء حساب جديد
+        # 3. صفحة إنشاء حساب مستقلة
         elif st.session_state.page_view == "register":
             st.markdown("### ✨ إنشاء حساب طالب جديد:")
             with st.form("student_register_form"):
@@ -608,7 +638,7 @@ if is_student_mode:
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
-        # فيديو الترحيب هنا قبل صندوق التواصل مباشرة في صفحات الدخول والتسجيل والرئيسية
+        # فيديو الترحيب قبل صندوق التواصل في الصفحات العامة
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
@@ -637,285 +667,332 @@ if is_student_mode:
                 st.session_state.page_view = "home"
                 st.rerun()
 
-        # فيديو الترحيب هنا أيضاً بعد تسجيل الدخول بنجاح
+        # فيديو الترحيب بعد تسجيل الدخول بنجاح
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
         col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
         with col_vid2:
             st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
-        # ==================== قسم الاختبارات التفاعلية ====================
-        st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية التفاعلية المتاحة</div>", unsafe_allow_html=True)
-        my_grade = st_user.get("المجموعة/الصف", "")
-        available_exams = st.session_state.exams_df[st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == my_grade.strip()].copy()
+        # ==================== الأيقونات الرئيسية المعبرة والمنتقلة لصفحات مستقلة ====================
+        st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
+        
+        ic1, ic2, ic3, ic4, ic5 = st.columns(5)
+        
+        with ic1:
+            if st.button("✍️ الاختبارات الإلكترونية", use_container_width=True):
+                st.session_state.student_sub_page = "exams"
+                st.rerun()
+        with ic2:
+            if st.button("📝 تسجيل الحضور", use_container_width=True):
+                st.session_state.student_sub_page = "attendance"
+                st.rerun()
+        with ic3:
+            if st.button("📊 درجات الواجبات", use_container_width=True):
+                st.session_state.student_sub_page = "hw_grades"
+                st.rerun()
+        with ic4:
+            if st.button("📈 درجات الاختبارات", use_container_width=True):
+                st.session_state.student_sub_page = "exam_grades"
+                st.rerun()
+        with ic5:
+            if st.button("💬 الدردشة والدعم", use_container_width=True):
+                st.session_state.student_sub_page = "chat"
+                st.rerun()
 
-        if available_exams.empty:
-            st.info("لا توجد اختبارات إلكترونية مخصصة لصفك الدراسي حالياً.")
-        else:
-            for _, ex_row in available_exams.iterrows():
-                ex_id = ex_row["معرف_الامتحان"]
-                ex_title = ex_row["عنوان الامتحان"]
-                ex_desc = ex_row["وصف الامتحان"]
-                ex_pass = str(ex_row.get("كلمة المرور", "")).strip()
-                ex_time = ex_row.get("مدة الامتحان بالدقائق", 30)
+        sub_page = st.session_state.student_sub_page
 
-                with st.expander(f"📝 {ex_title} (المدة: {ex_time} دقيقة)"):
-                    st.write(f"**الوصف:** {ex_desc}")
+        # ----------------- 1. صفحة الاختبارات الإلكترونية -----------------
+        if sub_page == "exams":
+            st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
+            my_grade = st_user.get("المجموعة/الصف", "")
+            available_exams = st.session_state.exams_df[st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == my_grade.strip()].copy()
 
-                    already_solved = st.session_state.assessments_df[
-                        (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
-                        & (st.session_state.assessments_df["عنوان التكليف"].astype(str).str.contains(ex_title, na=False))
-                    ]
+            if available_exams.empty:
+                st.info("لا توجد اختبارات إلكترونية مخصصة لصفك الدراسي حالياً.")
+            else:
+                for _, ex_row in available_exams.iterrows():
+                    ex_id = ex_row["معرف_الامتحان"]
+                    ex_title = ex_row["عنوان الامتحان"]
+                    ex_desc = ex_row["وصف الامتحان"]
+                    ex_pass = str(ex_row.get("كلمة المرور", "")).strip()
+                    ex_time = ex_row.get("مدة الامتحان بالدقائق", 30)
 
-                    if not already_solved.empty:
-                        solved_score = already_solved.iloc[-1]["الدرجة المحصلة"]
-                        solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
-                        st.success(f"✅ لقد قمت بأداء هذا الاختبار مسبقاً بنتيجة: ({solved_score} من {solved_max})")
-                    else:
-                        exam_state_key = f"exam_state_{ex_id}"
-                        if exam_state_key not in st.session_state:
-                            st.session_state[exam_state_key] = {
-                                "started": False,
-                                "cur_idx": 0,
-                                "answers_mcq": {},
-                                "essay_texts": {},
-                                "essay_imgs": {},
-                            }
+                    with st.expander(f"📝 {ex_title} (المدة: {ex_time} دقيقة)"):
+                        st.write(f"**الوصف:** {ex_desc}")
 
-                        st_ex = st.session_state[exam_state_key]
+                        already_solved = st.session_state.assessments_df[
+                            (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
+                            & (st.session_state.assessments_df["عنوان التكليف"].astype(str).str.contains(ex_title, na=False))
+                        ]
 
-                        if not st_ex["started"]:
-                            input_pass = ""
-                            if ex_pass and ex_pass != "nan":
-                                input_pass = st.text_input("🔐 أدخل كلمة مرور الاختبار للبدء:", type="password", key=f"start_pass_{ex_id}")
-                            
-                            if st.button("🚀 بدء حل الاختبار الآن", key=f"btn_start_ex_{ex_id}"):
-                                if ex_pass and ex_pass != "nan" and input_pass.strip() != ex_pass:
-                                    st.error("كلمة مرور الاختبار غير صحيحة.")
-                                else:
-                                    st_ex["started"] = True
-                                    st.rerun()
+                        if not already_solved.empty:
+                            solved_score = already_solved.iloc[-1]["الدرجة المحصلة"]
+                            solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
+                            st.success(f"✅ لقد قمت بأداء هذا الاختبار مسبقاً بنتيجة: ({solved_score} من {solved_max})")
                         else:
-                            questions = []
-                            try:
-                                questions = json.loads(ex_row["الأسئلة_JSON"])
-                            except Exception:
-                                pass
+                            exam_state_key = f"exam_state_{ex_id}"
+                            if exam_state_key not in st.session_state:
+                                st.session_state[exam_state_key] = {
+                                    "started": False,
+                                    "cur_idx": 0,
+                                    "answers_mcq": {},
+                                    "essay_texts": {},
+                                    "essay_imgs": {},
+                                }
 
-                            if not questions:
-                                st.error("لا توجد أسئلة مضافة في هذا الاختبار.")
-                            else:
-                                total_q = len(questions)
-                                cur_i = st_ex["cur_idx"]
-                                q_curr = questions[cur_i]
+                            st_ex = st.session_state[exam_state_key]
 
-                                st.markdown("##### 📌 خريطة أسئلة الاختبار (اضغط على رقم السؤال للذهاب إليه مباشرة):")
-                                nav_cols = st.columns(min(total_q, 10))
-                                for q_num_i in range(total_q):
-                                    col_target = nav_cols[q_num_i % 10]
-                                    q_info = questions[q_num_i]
-                                    if q_info.get("type", "موضوعي") == "موضوعي":
-                                        is_answered = (q_num_i in st_ex["answers_mcq"])
+                            if not st_ex["started"]:
+                                input_pass = ""
+                                if ex_pass and ex_pass != "nan":
+                                    input_pass = st.text_input("🔐 أدخل كلمة مرور الاختبار للبدء:", type="password", key=f"start_pass_{ex_id}")
+                                
+                                if st.button("🚀 بدء حل الاختبار الآن", key=f"btn_start_ex_{ex_id}"):
+                                    if ex_pass and ex_pass != "nan" and input_pass.strip() != ex_pass:
+                                        st.error("كلمة مرور الاختبار غير صحيحة.")
                                     else:
-                                        is_answered = bool(st_ex["essay_texts"].get(q_num_i, "").strip() or st_ex["essay_imgs"].get(q_num_i))
-
-                                    btn_label = f"س {q_num_i+1} {'✅' if is_answered else '⚪'}"
-                                    if col_target.button(btn_label, key=f"nav_btn_{ex_id}_{q_num_i}"):
-                                        st_ex["cur_idx"] = q_num_i
+                                        st_ex["started"] = True
                                         st.rerun()
+                            else:
+                                questions = []
+                                try:
+                                    questions = json.loads(ex_row["الأسئلة_JSON"])
+                                except Exception:
+                                    pass
 
-                                st.write("---")
-
-                                q_type = q_curr.get("type", "موضوعي")
-                                st.markdown(f"### **سؤال {cur_i + 1} من {total_q}:**")
-
-                                if q_curr.get("text"):
-                                    st.markdown(f"**{q_curr['text']}**")
-                                if q_curr.get("q_img"):
-                                    st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", width=500)
-
-                                st.caption(f"درجة السؤال: {q_curr['points']}")
-
-                                if q_type == "موضوعي":
-                                    opts_labels = ["أ", "ب", "ج", "د"]
-                                    for opt_idx, lbl in enumerate(opts_labels, 1):
-                                        t_val = q_curr.get(f"opt{opt_idx}", "")
-                                        i_val = q_curr.get(f"opt{opt_idx}_img", "")
-                                        st.markdown(f"**الخيار ({lbl}):** {t_val}")
-                                        if i_val:
-                                            st.image(f"data:image/jpeg;base64,{i_val}", width=240)
-
-                                    saved_choice = st_ex["answers_mcq"].get(cur_i, None)
-                                    radio_idx = (saved_choice - 1) if saved_choice in [1, 2, 3, 4] else None
-
-                                    sel_ans = st.radio(
-                                        "اختر إجابتك لهذا السؤال:",
-                                        options=[1, 2, 3, 4],
-                                        index=radio_idx if radio_idx is not None else 0,
-                                        format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})",
-                                        key=f"cur_radio_{ex_id}_{cur_i}"
-                                    )
-                                    st_ex["answers_mcq"][cur_i] = sel_ans
-
+                                if not questions:
+                                    st.error("لا توجد أسئلة مضافة في هذا الاختبار.")
                                 else:
-                                    st.info("✍️ اكتب خطوات الحل أو ارفع صورة الحل من كشكولك:")
-                                    prev_essay_txt = st_ex["essay_texts"].get(cur_i, "")
-                                    in_essay_txt = st.text_area("خطوات الحل المكتوبة:", value=prev_essay_txt, key=f"essay_input_txt_{ex_id}_{cur_i}")
-                                    st_ex["essay_texts"][cur_i] = in_essay_txt
+                                    total_q = len(questions)
+                                    cur_i = st_ex["cur_idx"]
+                                    q_curr = questions[cur_i]
 
-                                    up_essay_img = st.file_uploader("📷 إرفاق صورة الحل (من الكشكول):", type=["jpg", "png", "jpeg"], key=f"essay_input_img_{ex_id}_{cur_i}")
-                                    if up_essay_img is not None:
-                                        st_ex["essay_imgs"][cur_i] = base64.b64encode(up_essay_img.read()).decode()
+                                    st.markdown("##### 📌 خريطة أسئلة الاختبار (اضغط على رقم السؤال للذهاب إليه مباشرة):")
+                                    nav_cols = st.columns(min(total_q, 10))
+                                    for q_num_i in range(total_q):
+                                        col_target = nav_cols[q_num_i % 10]
+                                        q_info = questions[q_num_i]
+                                        if q_info.get("type", "موضوعي") == "موضوعي":
+                                            is_answered = (q_num_i in st_ex["answers_mcq"])
+                                        else:
+                                            is_answered = bool(st_ex["essay_texts"].get(q_num_i, "").strip() or st_ex["essay_imgs"].get(q_num_i))
 
-                                    if st_ex["essay_imgs"].get(cur_i):
-                                        st.image(f"data:image/jpeg;base64,{st_ex['essay_imgs'][cur_i]}", width=300)
-
-                                st.write("---")
-
-                                c_prev, c_next, c_finish = st.columns([1, 1, 2])
-
-                                with c_prev:
-                                    if cur_i > 0:
-                                        if st.button("➡️ السؤال السابق", key=f"btn_prev_{ex_id}"):
-                                            st_ex["cur_idx"] -= 1
+                                        btn_label = f"س {q_num_i+1} {'✅' if is_answered else '⚪'}"
+                                        if col_target.button(btn_label, key=f"nav_btn_{ex_id}_{q_num_i}"):
+                                            st_ex["cur_idx"] = q_num_i
                                             st.rerun()
 
-                                with c_next:
-                                    if cur_i < total_q - 1:
-                                        if st.button("السؤال التالي ⬅️", key=f"btn_next_{ex_id}"):
-                                            st_ex["cur_idx"] += 1
+                                    st.write("---")
+
+                                    q_type = q_curr.get("type", "موضوعي")
+                                    st.markdown(f"### **سؤال {cur_i + 1} من {total_q}:**")
+
+                                    if q_curr.get("text"):
+                                        st.markdown(f"**{q_curr['text']}**")
+                                    if q_curr.get("q_img"):
+                                        st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", width=500)
+
+                                    st.caption(f"درجة السؤال: {q_curr['points']}")
+
+                                    if q_type == "موضوعي":
+                                        opts_labels = ["أ", "ب", "ج", "د"]
+                                        for opt_idx, lbl in enumerate(opts_labels, 1):
+                                            t_val = q_curr.get(f"opt{opt_idx}", "")
+                                            i_val = q_curr.get(f"opt{opt_idx}_img", "")
+                                            st.markdown(f"**الخيار ({lbl}):** {t_val}")
+                                            if i_val:
+                                                st.image(f"data:image/jpeg;base64,{i_val}", width=240)
+
+                                        saved_choice = st_ex["answers_mcq"].get(cur_i, None)
+                                        radio_idx = (saved_choice - 1) if saved_choice in [1, 2, 3, 4] else None
+
+                                        sel_ans = st.radio(
+                                            "اختر إجابتك لهذا السؤال:",
+                                            options=[1, 2, 3, 4],
+                                            index=radio_idx if radio_idx is not None else 0,
+                                            format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})",
+                                            key=f"cur_radio_{ex_id}_{cur_i}"
+                                        )
+                                        st_ex["answers_mcq"][cur_i] = sel_ans
+
+                                    else:
+                                        st.info("✍️ اكتب خطوات الحل أو ارفع صورة الحل من كشكولك:")
+                                        prev_essay_txt = st_ex["essay_texts"].get(cur_i, "")
+                                        in_essay_txt = st.text_area("خطوات الحل المكتوبة:", value=prev_essay_txt, key=f"essay_input_txt_{ex_id}_{cur_i}")
+                                        st_ex["essay_texts"][cur_i] = in_essay_txt
+
+                                        up_essay_img = st.file_uploader("📷 إرفاق صورة الحل (من الكشكول):", type=["jpg", "png", "jpeg"], key=f"essay_input_img_{ex_id}_{cur_i}")
+                                        if up_essay_img is not None:
+                                            st_ex["essay_imgs"][cur_i] = base64.b64encode(up_essay_img.read()).decode()
+
+                                        if st_ex["essay_imgs"].get(cur_i):
+                                            st.image(f"data:image/jpeg;base64,{st_ex['essay_imgs'][cur_i]}", width=300)
+
+                                    st.write("---")
+
+                                    c_prev, c_next, c_finish = st.columns([1, 1, 2])
+
+                                    with c_prev:
+                                        if cur_i > 0:
+                                            if st.button("➡️ السؤال السابق", key=f"btn_prev_{ex_id}"):
+                                                st_ex["cur_idx"] -= 1
+                                                st.rerun()
+
+                                    with c_next:
+                                        if cur_i < total_q - 1:
+                                            if st.button("السؤال التالي ⬅️", key=f"btn_next_{ex_id}"):
+                                                st_ex["cur_idx"] += 1
+                                                st.rerun()
+
+                                    with c_finish:
+                                        if st.button("🏁 تسليم وإنهاء الاختبار", key=f"btn_finish_{ex_id}"):
+                                            unanswered_q = []
+                                            for check_i in range(total_q):
+                                                q_c = questions[check_i]
+                                                if q_c.get("type", "موضوعي") == "موضوعي":
+                                                    if check_i not in st_ex["answers_mcq"]:
+                                                        unanswered_q.append(check_i + 1)
+                                                else:
+                                                    txt_has = bool(st_ex["essay_texts"].get(check_i, "").strip())
+                                                    img_has = bool(st_ex["essay_imgs"].get(check_i))
+                                                    if not txt_has and not img_has:
+                                                        unanswered_q.append(check_i + 1)
+
+                                            if unanswered_q:
+                                                st.warning(f"⚠️ تنبيه: لم تقم بالإجابة على الأسئلة رقم: {unanswered_q} بعد!")
+                                            st_ex["show_confirm_submit"] = True
+
+                                    if st_ex.get("show_confirm_submit"):
+                                        st.write("")
+                                        if st.button("⚠️ تأكيد نهائي لتسليم ورقة الإجابة الآن", key=f"confirm_final_{ex_id}"):
+                                            mcq_score = 0.0
+                                            total_max = 0.0
+                                            has_essay = False
+
+                                            for q_idx, q in enumerate(questions):
+                                                q_pts = float(q.get("points", 1.0))
+                                                total_max += q_pts
+
+                                                if q.get("type", "موضوعي") == "موضوعي":
+                                                    if st_ex["answers_mcq"].get(q_idx) == int(q.get("correct", 1)):
+                                                        mcq_score += q_pts
+                                                else:
+                                                    has_essay = True
+                                                    new_essay_sub = {
+                                                        "معرف_الحل": f"ANS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{q_idx}",
+                                                        "معرف_الامتحان": ex_id,
+                                                        "عنوان الامتحان": ex_title,
+                                                        "اسم الطالب": st_user["اسم الطالب"],
+                                                        "رقم السؤال": q_idx + 1,
+                                                        "نص السؤال": q.get("text", "سؤال مصور"),
+                                                        "إجابة الطالب النصية": st_ex["essay_texts"].get(q_idx, ""),
+                                                        "صورة الحل_base64": st_ex["essay_imgs"].get(q_idx, ""),
+                                                        "درجة السؤال": q_pts,
+                                                        "الدرجة المرصودة": 0.0,
+                                                        "حالة التصحيح": "قيد التصحيح من المعلم",
+                                                        "ملاحظات المعلم": "",
+                                                        "تاريخ الحل": str(date.today()),
+                                                    }
+                                                    st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_essay_sub])], ignore_index=True)
+
+                                            note_msg = f"الأسئلة الموضوعية: {mcq_score} درجة"
+                                            if has_essay:
+                                                note_msg += " + الأسئلة المقالية قيد التصحيح"
+
+                                            new_ass = {
+                                                "التاريخ": str(date.today()),
+                                                "اسم الطالب": st_user["اسم الطالب"],
+                                                "النوع": "اختبار دوري إلكتروني",
+                                                "عنوان التكليف": ex_title,
+                                                "الدرجة المحصلة": mcq_score,
+                                                "الدرجة العظمى": total_max,
+                                                "حالة التسليم": "تم التسليم بنجاح",
+                                                "ملاحظات وتوجيهات": note_msg,
+                                            }
+                                            st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
+                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                                            st.session_state.pop(exam_state_key, None)
+                                            st.success(f"🎉 تم تسليم إجاباتك بنجاح! درجتك في الاختياري: ({mcq_score} من {total_max})")
                                             st.rerun()
 
-                                with c_finish:
-                                    if st.button("🏁 تسليم وإنهاء الاختبار", key=f"btn_finish_{ex_id}"):
-                                        unanswered_q = []
-                                        for check_i in range(total_q):
-                                            q_c = questions[check_i]
-                                            if q_c.get("type", "موضوعي") == "موضوعي":
-                                                if check_i not in st_ex["answers_mcq"]:
-                                                    unanswered_q.append(check_i + 1)
-                                            else:
-                                                txt_has = bool(st_ex["essay_texts"].get(check_i, "").strip())
-                                                img_has = bool(st_ex["essay_imgs"].get(check_i))
-                                                if not txt_has and not img_has:
-                                                    unanswered_q.append(check_i + 1)
-
-                                        if unanswered_q:
-                                            st.warning(f"⚠️ تنبيه: لم تقم بالإجابة على الأسئلة رقم: {unanswered_q} بعد!")
-                                        st_ex["show_confirm_submit"] = True
-
-                                if st_ex.get("show_confirm_submit"):
-                                    st.write("")
-                                    if st.button("⚠️ تأكيد نهائي لتسليم ورقة الإجابة الآن", key=f"confirm_final_{ex_id}"):
-                                        mcq_score = 0.0
-                                        total_max = 0.0
-                                        has_essay = False
-
-                                        for q_idx, q in enumerate(questions):
-                                            q_pts = float(q.get("points", 1.0))
-                                            total_max += q_pts
-
-                                            if q.get("type", "موضوعي") == "موضوعي":
-                                                if st_ex["answers_mcq"].get(q_idx) == int(q.get("correct", 1)):
-                                                    mcq_score += q_pts
-                                            else:
-                                                has_essay = True
-                                                new_essay_sub = {
-                                                    "معرف_الحل": f"ANS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{q_idx}",
-                                                    "معرف_الامتحان": ex_id,
-                                                    "عنوان الامتحان": ex_title,
-                                                    "اسم الطالب": st_user["اسم الطالب"],
-                                                    "رقم السؤال": q_idx + 1,
-                                                    "نص السؤال": q.get("text", "سؤال مصور"),
-                                                    "إجابة الطالب النصية": st_ex["essay_texts"].get(q_idx, ""),
-                                                    "صورة الحل_base64": st_ex["essay_imgs"].get(q_idx, ""),
-                                                    "درجة السؤال": q_pts,
-                                                    "الدرجة المرصودة": 0.0,
-                                                    "حالة التصحيح": "قيد التصحيح من المعلم",
-                                                    "ملاحظات المعلم": "",
-                                                    "تاريخ الحل": str(date.today()),
-                                                }
-                                                st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_essay_sub])], ignore_index=True)
-
-                                        note_msg = f"الأسئلة الموضوعية: {mcq_score} درجة"
-                                        if has_essay:
-                                            note_msg += " + الأسئلة المقالية قيد التصحيح"
-
-                                        new_ass = {
-                                            "التاريخ": str(date.today()),
-                                            "اسم الطالب": st_user["اسم الطالب"],
-                                            "النوع": "اختبار دوري إلكتروني",
-                                            "عنوان التكليف": ex_title,
-                                            "الدرجة المحصلة": mcq_score,
-                                            "الدرجة العظمى": total_max,
-                                            "حالة التسليم": "تم التسليم بنجاح",
-                                            "ملاحظات وتوجيهات": note_msg,
-                                        }
-                                        st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                                        st.session_state.pop(exam_state_key, None)
-                                        st.success(f"🎉 تم تسليم إجاباتك بنجاح! درجتك في الاختياري: ({mcq_score} من {total_max})")
-                                        st.rerun()
-
-        # 2. تسجيل الحضور
-        st.markdown("<div class='vertical-section-header'>📝 ثانياً: تسجيل حضور حصة اليوم وتقييمها</div>", unsafe_allow_html=True)
-        with st.form("logged_student_att_form", clear_on_submit=True):
-            st_date = st.date_input("تاريخ الحصة:", value=date.today())
-            selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", [
-                "⭐⭐⭐⭐⭐ (5/5) ممتاز جداً وفهم ممتاز", "⭐⭐⭐⭐ (4/5) جيد جداً",
-                "⭐⭐⭐ (3/5) جيد ومفهوم", "⭐⭐ (2/5) متوسط ويحتاج توضيح", "⭐ (1/5) يحتاج إعادة شرح"
-            ])
-            if st.form_submit_button("✅ تأكيد حضور الحصة"):
-                new_row = {
-                    "التاريخ": str(st_date), "اسم الطالب": st_user["اسم الطالب"],
-                    "المنهج/الدولة": st_user.get("المنهج/الدولة", ""), "المجموعة/الصف": st_user.get("المجموعة/الصف", ""),
-                    "الحالة": "حاضر", "سعر الحصة": 0.0, "عدد الحصص الكلي": 1, "نظام الدفع": "مؤجل",
-                    "مستوى الطالب": "قيد التقييم", "ملاحظات": f"تقييم الحصة: {selected_rating}",
-                }
-                st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
-
-        # 3. سجل الدرجات
-        st.markdown("<div class='vertical-section-header'>📊 ثالثاً: متابعة سجل الواجبات والاختبارات</div>", unsafe_allow_html=True)
-        my_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()].copy()
-        if my_assessments.empty:
-            st.info("لا توجد درجات مرصودة لك حتى الآن.")
-        else:
-            st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
-
-        # 4. الدردشة
-        st.markdown("<div class='vertical-section-header'>💬 رابعاً: الدردشة والتواصل المباشر مع البشمهندس</div>", unsafe_allow_html=True)
-        student_name_key = st_user["اسم الطالب"].strip()
-        chat_history = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key].copy()
-
-        with st.container():
-            if not chat_history.empty:
-                for _, msg in chat_history.iterrows():
-                    sender = msg["المرسل"]
-                    t_stamp = msg.get("التاريخ_والوقت", "")
-                    content = msg.get("نص الرسالة", "")
-                    img_data = msg.get("الصورة_base64", "")
-                    if sender == "student":
-                        st.markdown(f"<div class='chat-bubble-student'><b>أنت ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<div class='chat-bubble-teacher'><b>البشمهندس محمد غنيم ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
-                    if pd.notnull(img_data) and str(img_data).strip():
-                        st.image(f"data:image/jpeg;base64,{img_data}", width=300)
-
-        with st.form("student_chat_send_form", clear_on_submit=True):
-            msg_text = st.text_area("اكتب رسالتك أو استفسارك هنا:", placeholder="مستر، مش فاهم المسألة رقم...")
-            uploaded_msg_img = st.file_uploader("📷 إرفاق صورة للمسألة (اختياري)", type=["jpg", "png", "jpeg"])
-            if st.form_submit_button("📤 إرسال الرسالة إلى البشمهندس"):
-                if msg_text.strip() or uploaded_msg_img is not None:
-                    img_str = base64.b64encode(uploaded_msg_img.read()).decode() if uploaded_msg_img is not None else ""
-                    new_msg = {
-                        "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"), "اسم الطالب": student_name_key,
-                        "المرسل": "student", "نص الرسالة": msg_text.strip(), "الصورة_base64": img_str,
+        # ----------------- 2. صفحة تسجيل الحضور -----------------
+        elif sub_page == "attendance":
+            st.markdown("### 📝 تسجيل حضور حصة اليوم وتقييمها:")
+            with st.form("logged_student_att_form", clear_on_submit=True):
+                st_date = st.date_input("تاريخ الحصة:", value=date.today())
+                selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", [
+                    "⭐⭐⭐⭐⭐ (5/5) ممتاز جداً وفهم ممتاز", "⭐⭐⭐⭐ (4/5) جيد جداً",
+                    "⭐⭐⭐ (3/5) جيد ومفهوم", "⭐⭐ (2/5) متوسط ويحتاج توضيح", "⭐ (1/5) يحتاج إعادة شرح"
+                ])
+                if st.form_submit_button("✅ تأكيد حضور الحصة"):
+                    new_row = {
+                        "التاريخ": str(st_date), "اسم الطالب": st_user["اسم الطالب"],
+                        "المنهج/الدولة": st_user.get("المنهج/الدولة", ""), "المجموعة/الصف": st_user.get("المجموعة/الصف", ""),
+                        "الحالة": "حاضر", "سعر الحصة": 0.0, "عدد الحصص الكلي": 1, "نظام الدفع": "مؤجل",
+                        "مستوى الطالب": "قيد التقييم", "ملاحظات": f"تقييم الحصة: {selected_rating}",
                     }
-                    st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
+                    st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                    st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
-                    st.rerun()
+                    st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
+
+        # ----------------- 3. صفحة متابعة درجات الواجبات -----------------
+        elif sub_page == "hw_grades":
+            st.markdown("### 📊 متابعة سجل درجات الواجبات المنزلية:")
+            my_assessments = st.session_state.assessments_df[
+                (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
+                & (st.session_state.assessments_df["النوع"].astype(str).str.contains("واجب", na=False))
+            ].copy()
+            if my_assessments.empty:
+                st.info("لا توجد درجات واجبات مرصودة لك حتى الآن.")
+            else:
+                st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+        # ----------------- 4. صفحة متابعة درجات الاختبارات -----------------
+        elif sub_page == "exam_grades":
+            st.markdown("### 📈 متابعة سجل درجات الاختبارات والكويزات:")
+            my_exams = st.session_state.assessments_df[
+                (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
+                & (st.session_state.assessments_df["النوع"].astype(str).str.contains("اختبار|كويز", na=False))
+            ].copy()
+            if my_exams.empty:
+                st.info("لا توجد درجات اختبارات مرصودة لك حتى الآن.")
+            else:
+                st.dataframe(my_exams[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+        # ----------------- 5. صفحة الدردشة والدعم -----------------
+        elif sub_page == "chat":
+            st.markdown("### 💬 مركز الدردشة والتواصل المباشر مع البشمهندس:")
+            student_name_key = st_user["اسم الطالب"].strip()
+            chat_history = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key].copy()
+
+            with st.container():
+                if not chat_history.empty:
+                    for _, msg in chat_history.iterrows():
+                        sender = msg["المرسل"]
+                        t_stamp = msg.get("التاريخ_والوقت", "")
+                        content = msg.get("نص الرسالة", "")
+                        img_data = msg.get("الصورة_base64", "")
+                        if sender == "student":
+                            st.markdown(f"<div class='chat-bubble-student'><b>أنت ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<div class='chat-bubble-teacher'><b>البشمهندس محمد غنيم ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
+                        if pd.notnull(img_data) and str(img_data).strip():
+                            st.image(f"data:image/jpeg;base64,{img_data}", width=300)
+
+            with st.form("student_chat_send_form", clear_on_submit=True):
+                msg_text = st.text_area("اكتب رسالتك أو استفسارك هنا:", placeholder="مستر، مش فاهم المسألة رقم...")
+                uploaded_msg_img = st.file_uploader("📷 إرفاق صورة للمسألة (اختياري)", type=["jpg", "png", "jpeg"])
+                if st.form_submit_button("📤 إرسال الرسالة إلى البشمهندس"):
+                    if msg_text.strip() or uploaded_msg_img is not None:
+                        img_str = base64.b64encode(uploaded_msg_img.read()).decode() if uploaded_msg_img is not None else ""
+                        new_msg = {
+                            "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"), "اسم الطالب": student_name_key,
+                            "المرسل": "student", "نص الرسالة": msg_text.strip(), "الصورة_base64": img_str,
+                        }
+                        st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
+                        st.rerun()
 
     # أزرار وأيقونات التواصل في أسفل الصفحة
     st.markdown("""
@@ -1390,7 +1467,7 @@ with tab_cards:
                 with col_c4:
                     if st.button("حذف نهائي 🗑️", key=f"del_card_btn_{idx}"):
                         delete_student_completely(st_name)
-                        st.success(f"✓ تم حذف الطالب ({st_name}) نهائياً!")
+                        st.success(f"✓ تم مسح الطالب ({st_name}) نهائياً!")
                         st.rerun()
                 st.write("---")
 
@@ -1709,7 +1786,7 @@ with tab4:
                 </table>
                 <div class="section-title">1. تقرير الواجبات المنزلية والاختبارات الدورية:</div>
                 <table class="table-main">
-                    <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف / الاختبار</th><th>الدرجة المحصلة</th><th>حالة التسليم والالتزام</th><th>ملاحظات المعلم وتوجيهاته</th></tr>
+                    <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف / الاختبار</th><th>الدرجة المحصلة</th><th>حالة التسليم والالتزام</th><th>ملاحظات وتوجيهات</th></tr>
                     {ass_html_rows}
                 </table>
                 <div class="section-title">2. سجل الحضور وتفاصيل سعر كل حصة:</div>
