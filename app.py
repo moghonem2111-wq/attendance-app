@@ -248,7 +248,6 @@ st.markdown("""
         gap: 10px;
     }
     
-    /* تصميم الأزرار باللون الأخضر الفاتح والنص الأبيض العريض */
     .stButton>button {
         background: #10b981 !important;
         color: #ffffff !important;
@@ -450,6 +449,7 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
+    # قسم كورسات درسلي
     st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
     st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -539,6 +539,14 @@ if is_student_mode:
             st.error("🚫 عذراً، تم حظر حسابك.")
             st.session_state.logged_student = None
             st.stop()
+
+        # ==========================================
+        # ظهور فيديو الترحيب والتعريف بعد تسجيل الدخول (شبه الصورة المطلوبة)
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
+        col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
+        with col_vid2:
+            st.video("https://youtube.com/shorts/6PleAxZCNZM?si=kigEW_611N81ITvc")
 
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
