@@ -164,6 +164,56 @@ st.markdown(
         background: #003d99 !important;
     }
 
+    /* صندوق التواصل وحفظ الحقوق */
+    .social-footer-box {
+        margin-top: 35px;
+        padding: 20px 0;
+        border-top: 1px solid rgba(150, 150, 150, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    .social-icons-container {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .social-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        text-decoration: none !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease;
+    }
+    .social-btn:hover {
+        transform: scale(1.12);
+    }
+    .social-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+    .facebook-bg { background-color: #1877F2; }
+    .whatsapp-bg { background-color: #25D366; }
+    .telegram-bg { background-color: #229ED9; }
+    .tiktok-bg   { background-color: #000000; border: 1px solid #444; }
+    .youtube-bg  { background-color: #FF0000; }
+
+    .rights-text {
+        font-size: 15px;
+        font-weight: 900;
+        margin-top: 10px;
+        text-align: center !important;
+        direction: rtl;
+    }
+
     @media (prefers-color-scheme: light) {
         body, .stApp {
             background-color: #ffffff !important;
@@ -193,8 +243,8 @@ st.markdown(
             border: 2px solid #94a3b8 !important;
             font-weight: 700 !important;
         }
-        .sidebar-desc {
-            color: #334155 !important;
+        .rights-text {
+            color: #1e293b !important;
         }
     }
 
@@ -227,8 +277,8 @@ st.markdown(
             border: 2px solid #475569 !important;
             font-weight: 700 !important;
         }
-        .sidebar-desc {
-            color: #cbd5e1 !important;
+        .rights-text {
+            color: #e2e8f0 !important;
         }
     }
     </style>
@@ -274,7 +324,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (إخفاء الشريط الجانبي تماماً)
+# 1. واجهة الطالب
 # ==============================================================================
 if is_student_mode:
     st.markdown(
@@ -354,10 +404,45 @@ if is_student_mode:
                 st.success(
                     f"🎉 شكراً لك {st_name}! تم تسجيل حضورك وتقييمك بنجاح."
                 )
+
+    # شريط التواصل وحفظ الحقوق في واجهة الطالب
+    st.markdown(
+        """
+        <div class="social-footer-box">
+            <div class="social-icons-container">
+                <!-- فيسبوك -->
+                <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn facebook-bg">
+                    <svg fill="#ffffff" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <!-- واتساب -->
+                <a href="https://wa.me/qr/YFB55GOW3WKZN1" target="_blank" title="WhatsApp" class="social-btn whatsapp-bg">
+                    <svg fill="#ffffff" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg>
+                </a>
+                <!-- تليجرام -->
+                <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn telegram-bg">
+                    <svg fill="#ffffff" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg>
+                </a>
+                <!-- تيك توك -->
+                <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn tiktok-bg">
+                    <svg fill="#ffffff" viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg>
+                </a>
+                <!-- يوتيوب -->
+                <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn youtube-bg">
+                    <svg fill="#ffffff" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </a>
+            </div>
+            <div class="rights-text">
+                جميع الحقوق محفوظة لدي م / محمد غنيم 2026
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية (يظهر فيها الشريط الجانبي فقط)
+# 2. لوحة تحكم المعلم الرئيسية
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader(
