@@ -140,7 +140,7 @@ COL_ASSESSMENTS = [
 COL_MESSAGES = [
     "التاريخ_والوقت",
     "اسم الطالب",
-    "المرسل",  # 'student' أو 'teacher'
+    "المرسل",
     "نص الرسالة",
     "الصورة_base64",
 ]
@@ -288,7 +288,22 @@ st.markdown(
         background-color: #f8fafc;
     }
 
-    /* بطاقات الطلاب */
+    /* عناوين الأقسام العمودية لطالب */
+    .vertical-section-header {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: #ffffff !important;
+        padding: 12px 18px;
+        border-radius: 10px;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        font-size: 18px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+    }
+
     .student-card {
         background: #ffffff;
         border: 2px solid #e2e8f0;
@@ -301,7 +316,6 @@ st.markdown(
         align-items: center;
     }
 
-    /* فقاعات الدردشة */
     .chat-bubble-student {
         background-color: #e0f2fe;
         color: #0369a1;
@@ -434,7 +448,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (تسجيل الدخول + الحضور + الواجبات + شات البشمهندس)
+# 1. واجهة الطالب (الأقسام تحت بعضها البعض بشكل عمودي مريح)
 # ==============================================================================
 if is_student_mode:
     st.markdown(
@@ -540,131 +554,135 @@ if is_student_mode:
     else:
         st_user = st.session_state.logged_student
 
-        # التحقق الفوري مما إذا تم حظر الطالب وهو مسجل الدخول
         fresh_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].str.strip() == st_user["اسم الطالب"].strip()]
         if not fresh_user.empty and fresh_user.iloc[0].get("الحالة_حظر") == "محظور":
             st.error("🚫 عذراً، تم حظر حسابك من قبل المعلم.")
             st.session_state.logged_student = None
             st.stop()
 
-        st.markdown(
-            f"""
-        <div style="background: rgba(0, 82, 204, 0.08); padding: 15px 20px; border-radius: 10px; border-right: 5px solid #0052cc; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: #0052cc;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-            <p style="margin: 5px 0 0 0; font-weight: 800;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
+        # شريط ترحيبي وزر الخروج
+        col_u1, col_u2 = st.columns([4, 1])
+        with col_u1:
+            st.markdown(
+                f"""
+                <div style="background: rgba(0, 82, 204, 0.08); padding: 12px 18px; border-radius: 10px; border-right: 5px solid #0052cc;">
+                    <h3 style="margin: 0; color: #0052cc;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
+                    <p style="margin: 3px 0 0 0; font-weight: 800;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col_u2:
+            st.write("")
+            if st.button("🚪 خروج"):
+                st.session_state.logged_student = None
+                st.rerun()
 
-        st_menu1, st_menu2, st_menu3 = st.tabs([
-            "📝 تسجيل حضور حصة اليوم",
-            "📊 متابعة الواجبات والاختبارات",
-            "💬 محادثة البشمهندس (إرسال أسئلة وصور)",
-        ])
+        # ==========================================
+        # 1. قسم تسجيل حضور حصة اليوم
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>📝 أولاً: تسجيل حضور حصة اليوم وتقييمها</div>", unsafe_allow_html=True)
+        with st.form("logged_student_att_form", clear_on_submit=True):
+            st_date = st.date_input("تاريخ الحصة:", value=date.today())
+            rating_options = [
+                "⭐⭐⭐⭐⭐ (5/5) ممتاز جداً وفهم ممتاز",
+                "⭐⭐⭐⭐ (4/5) جيد جداً",
+                "⭐⭐⭐ (3/5) جيد ومفهوم",
+                "⭐⭐ (2/5) متوسط ويحتاج توضيح",
+                "⭐ (1/5) يحتاج إعادة شرح",
+            ]
+            selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", options=rating_options, index=0)
+            submit_btn = st.form_submit_button("✅ تأكيد حضور الحصة")
 
-        # 1. تسجيل الحضور
-        with st_menu1:
-            with st.form("logged_student_att_form", clear_on_submit=True):
-                st_date = st.date_input("تاريخ الحصة:", value=date.today())
-                rating_options = [
-                    "⭐⭐⭐⭐⭐ (5/5) ممتاز جداً وفهم ممتاز",
-                    "⭐⭐⭐⭐ (4/5) جيد جداً",
-                    "⭐⭐⭐ (3/5) جيد ومفهوم",
-                    "⭐⭐ (2/5) متوسط ويحتاج توضيح",
-                    "⭐ (1/5) يحتاج إعادة شرح",
-                ]
-                selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", options=rating_options, index=0)
-                submit_btn = st.form_submit_button("✅ تأكيد حضور الحصة")
+            if submit_btn:
+                new_row = {
+                    "التاريخ": str(st_date),
+                    "اسم الطالب": st_user["اسم الطالب"],
+                    "المنهج/الدولة": st_user.get("المنهج/الدولة", ""),
+                    "المجموعة/الصف": st_user.get("المجموعة/الصف", ""),
+                    "الحالة": "حاضر",
+                    "سعر الحصة": 0.0,
+                    "عدد الحصص الكلي": 1,
+                    "نظام الدفع": "مؤجل",
+                    "مستوى الطالب": "قيد التقييم",
+                    "ملاحظات": f"تقييم الحصة: {selected_rating}",
+                }
+                st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                st.success(f"تم تسجيل حضورك وتقييمك بنجاح للحصة بتاريخ {st_date}!")
 
-                if submit_btn:
-                    new_row = {
-                        "التاريخ": str(st_date),
-                        "اسم الطالب": st_user["اسم الطالب"],
-                        "المنهج/الدولة": st_user.get("المنهج/الدولة", ""),
-                        "المجموعة/الصف": st_user.get("المجموعة/الصف", ""),
-                        "الحالة": "حاضر",
-                        "سعر الحصة": 0.0,
-                        "عدد الحصص الكلي": 1,
-                        "نظام الدفع": "مؤجل",
-                        "مستوى الطالب": "قيد التقييم",
-                        "ملاحظات": f"تقييم الحصة: {selected_rating}",
-                    }
-                    st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
-                    st.success(f"تم تسجيل حضورك وتقييمك بنجاح للحصة بتاريخ {st_date}!")
+        # ==========================================
+        # 2. قسم متابعة الواجبات والاختبارات
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>📊 ثانياً: متابعة سجل الواجبات والاختبارات</div>", unsafe_allow_html=True)
+        my_assessments = st.session_state.assessments_df[
+            st.session_state.assessments_df["اسم الطالب"].str.strip() == st_user["اسم الطالب"].strip()
+        ].copy()
 
-        # 2. الواجبات والاختبارات
-        with st_menu2:
-            st.subheader("سجل الواجبات والاختبارات الخاصة بك:")
-            my_assessments = st.session_state.assessments_df[
-                st.session_state.assessments_df["اسم الطالب"].str.strip() == st_user["اسم الطالب"].strip()
-            ].copy()
+        if my_assessments.empty:
+            st.info("لا توجد درجات واجبات أو اختبارات مرصودة لك حتى الآن من قبل البشمهندس.")
+        else:
+            c1, c2 = st.columns(2)
+            hw_count = len(my_assessments[my_assessments["النوع"].str.contains("واجب", na=False)])
+            exam_count = len(my_assessments[my_assessments["النوع"].str.contains("اختبار", na=False)])
+            c1.metric("عدد الواجبات المستلمة", hw_count)
+            c2.metric("عدد الاختبارات الدورية", exam_count)
 
-            if my_assessments.empty:
-                st.info("لم يتم رصد واجبات أو اختبارات لك حتى الآن من قبل البشمهندس.")
+            st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+        # ==========================================
+        # 3. قسم الدردشة مع البشمهندس
+        # ==========================================
+        st.markdown("<div class='vertical-section-header'>💬 ثالثاً: الدردشة والتواصل المباشر مع البشمهندس</div>", unsafe_allow_html=True)
+        st.write("اطرح استفسارك أو مسألة رياضية تريد توضيحها، أو أرفق صورة المسألة:")
+
+        student_name_key = st_user["اسم الطالب"].strip()
+        chat_history = st.session_state.messages_df[
+            st.session_state.messages_df["اسم الطالب"].str.strip() == student_name_key
+        ].copy()
+
+        with st.container():
+            if chat_history.empty:
+                st.info("لا توجد رسائل سابقة. ابدأ المحادثة الآن!")
             else:
-                st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+                for _, msg in chat_history.iterrows():
+                    sender = msg["المرسل"]
+                    t_stamp = msg.get("التاريخ_والوقت", "")
+                    content = msg.get("نص الرسالة", "")
+                    img_data = msg.get("الصورة_base64", "")
 
-        # 3. دردشة الطالب مع المعلم
-        with st_menu3:
-            st.subheader("💬 تواصل مباشر مع البشمهندس محمد غنيم:")
-            st.write("يمكنك إرسال استفسارك أو مسألة رياضية تريد توضيحها، أو إرفاق صورة المسألة مباشرة:")
-
-            # عرض سجل الرسائل بين الطالب والمعلم
-            student_name_key = st_user["اسم الطالب"].strip()
-            chat_history = st.session_state.messages_df[
-                st.session_state.messages_df["اسم الطالب"].str.strip() == student_name_key
-            ].copy()
-
-            chat_container = st.container()
-            with chat_container:
-                if chat_history.empty:
-                    st.info("لا توجد رسائل سابقة. ابدأ المحادثة الآن!")
-                else:
-                    for _, msg in chat_history.iterrows():
-                        sender = msg["المرسل"]
-                        t_stamp = msg.get("التاريخ_والوقت", "")
-                        content = msg.get("نص الرسالة", "")
-                        img_data = msg.get("الصورة_base64", "")
-
-                        if sender == "student":
-                            st.markdown(f"<div class='chat-bubble-student'><b>أنت ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<div class='chat-bubble-teacher'><b>البشمهندس محمد غنيم ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
-
-                        if pd.notnull(img_data) and str(img_data).strip():
-                            st.image(f"data:image/jpeg;base64,{img_data}", width=300)
-
-            # صندوق إرسال رسالة جديدة
-            with st.form("student_chat_send_form", clear_on_submit=True):
-                msg_text = st.text_area("اكتب رسالتك أو استفسارك هنا:", placeholder="مستر، مش فاهم المسألة رقم...")
-                uploaded_msg_img = st.file_uploader("📷 إرفاق صورة للمسألة (اختياري):", type=["jpg", "png", "jpeg"])
-                send_msg_btn = st.form_submit_button("📤 إرسال الرسالة إلى البشمهندس")
-
-                if send_msg_btn:
-                    if not msg_text.strip() and uploaded_msg_img is None:
-                        st.warning("يرجى كتابة نص الرسالة أو إرفاق صورة أولاً.")
+                    if sender == "student":
+                        st.markdown(f"<div class='chat-bubble-student'><b>أنت ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
                     else:
-                        img_str = ""
-                        if uploaded_msg_img is not None:
-                            img_str = base64.b64encode(uploaded_msg_img.read()).decode()
+                        st.markdown(f"<div class='chat-bubble-teacher'><b>البشمهندس محمد غنيم ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
 
-                        new_msg = {
-                            "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                            "اسم الطالب": student_name_key,
-                            "المرسل": "student",
-                            "نص الرسالة": msg_text.strip(),
-                            "الصورة_base64": img_str,
-                        }
-                        st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
-                        st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
-                        st.rerun()
+                    if pd.notnull(img_data) and str(img_data).strip():
+                        st.image(f"data:image/jpeg;base64,{img_data}", width=300)
 
-        if st.button("🚪 تسجيل الخروج من الحساب"):
-            st.session_state.logged_student = None
-            st.rerun()
+        with st.form("student_chat_send_form", clear_on_submit=True):
+            msg_text = st.text_area("اكتب رسالتك أو استفسارك هنا:", placeholder="مستر، مش فاهم المسألة رقم...")
+            uploaded_msg_img = st.file_uploader("📷 إرفاق صورة للمسألة (اختياري):", type=["jpg", "png", "jpeg"])
+            send_msg_btn = st.form_submit_button("📤 إرسال الرسالة إلى البشمهندس")
+
+            if send_msg_btn:
+                if not msg_text.strip() and uploaded_msg_img is None:
+                    st.warning("يرجى كتابة نص الرسالة أو إرفاق صورة أولاً.")
+                else:
+                    img_str = ""
+                    if uploaded_msg_img is not None:
+                        img_str = base64.b64encode(uploaded_msg_img.read()).decode()
+
+                    new_msg = {
+                        "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "اسم الطالب": student_name_key,
+                        "المرسل": "student",
+                        "نص الرسالة": msg_text.strip(),
+                        "الصورة_base64": img_str,
+                    }
+                    st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df)
+                    st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
+                    st.rerun()
 
     # زر الاتصال وشريط التواصل
     st.markdown(
@@ -697,7 +715,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية (إدارة شاملة + دردشة المعلم + بطاقات الطلاب والحظر)
+# 2. لوحة تحكم المعلم الرئيسية
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -788,7 +806,6 @@ with tab_chat:
                         if pd.notnull(img_data) and str(img_data).strip():
                             st.image(f"data:image/jpeg;base64,{img_data}", width=350)
 
-            # نموذج رد المعلم
             with st.form("teacher_reply_form", clear_on_submit=True):
                 reply_text = st.text_area("اكتب ردك أو التوجيه للطالب:", placeholder="أهلاً بك يا بطل، بخصوص هذه المسألة...")
                 send_reply_btn = st.form_submit_button("📤 إرسال الرد إلى الطالب")
@@ -809,7 +826,7 @@ with tab_chat:
                         st.success("تم إرسال الرد للطالب فوراً!")
                         st.rerun()
 
-# ----------------- تبويب بطاقات الطلاب وخاصية الحظر -----------------
+# ----------------- تبويب بطاقات الطلاب والتحكم -----------------
 with tab_cards:
     st.subheader("👥 بطاقات الطلاب المسجلين والتحكم بالحسابات:")
     u_data = st.session_state.users_df
