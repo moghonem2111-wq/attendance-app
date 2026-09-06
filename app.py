@@ -1,0 +1,823 @@
+import base64
+import io
+import os
+from datetime import date, datetime
+import pandas as pd
+from PIL import Image
+import streamlit as st
+
+FILE_NAME = "سجل_الغياب_والحصص.xlsx"
+IMG_NAME = "teacher.jpg"
+
+st.set_page_config(
+    page_title="البشمهندس X الرياضة | متابعة الطلاب",
+    page_icon="📐",
+    layout="wide",
+)
+
+CURRICULUM_DATA = {
+    "المنهج المصري 🇪🇬": [
+        "الصف الأول الإعدادي",
+        "الصف الثاني الإعدادي",
+        "الصف الثالث الإعدادي (الشهادة الإعدادية)",
+        "الصف الأول الثانوي",
+        "الصف الثاني الثانوي (علمي)",
+        "الصف الثاني الثانوي (أدبي)",
+        "الصف الثالث الثانوي (علمي رياضة)",
+        "الصف الثالث الثانوي (علمي علوم)",
+        "الصف الثالث الثانوي (أدبي)",
+        "المرحلة الابتدائية",
+    ],
+    "المنهج القطري 🇶🇦": [
+        "الصف السابع (إعدادي)",
+        "الصف الثامن (إعدادي)",
+        "الصف التاسع (إعدادي)",
+        "الصف العاشر (المشترك)",
+        "الصف الحادي عشر (المسار العلمي)",
+        "الصف الحادي عشر (مسار الآداب والإنسانيات)",
+        "الصف الحادي عشر (المسار التكنولوجي)",
+        "الصف الثاني عشر (المسار العلمي - متقدم)",
+        "الصف الثاني عشر (مسار الآداب - تأسيسي)",
+        "الصف الثاني عشر (المسار التكنولوجي)",
+        "المرحلة الابتدائية",
+    ],
+    "المنهج الإماراتي 🇦🇪": [
+        "الحلقة الثانية (الصفوف 5 - 8)",
+        "الصف التاسع (مسار عام)",
+        "الصف التاسع (مسار متقدم)",
+        "الصف العاشر (مسار عام)",
+        "الصف العاشر (مسار متقدم)",
+        "الصف العاشر (مسار النخبة)",
+        "الصف الحادي عشر (مسار عام)",
+        "الصف الحادي عشر (مسار متقدم)",
+        "الصف الحادي عشر (مسار النخبة)",
+        "الصف الثاني عشر (مسار عام)",
+        "الصف الثاني عشر (مسار متقدم)",
+        "الصف الثاني عشر (مسار النخبة)",
+    ],
+    "المنهج السعودي 🇸🇦": [
+        "المرحلة المتوسطة (أول / ثاني / ثالث متوسط)",
+        "السنة الأولى المشتركة (أول ثانوي)",
+        "السنة الثانية (المسار العام)",
+        "السنة الثانية (مسار علوم الحاسب والهندسة)",
+        "السنة الثانية (مسار الصحة والحياة)",
+        "السنة الثانية (مسار إدارة الأعمال / الشرعي)",
+        "السنة الثالثة (المسار العام)",
+        "السنة الثالثة (مسار علوم الحاسب والهندسة)",
+        "السنة الثالثة (مسار الصحة والحياة)",
+    ],
+    "المنهج الكويتي 🇰🇼": [
+        "المرحلة المتوسطة (الصفوف 6 - 9)",
+        "الصف العاشر الثانوي (مشترك)",
+        "الصف الحادي عشر (القسم العلمي)",
+        "الصف الحادي عشر (القسم الأدبي)",
+        "الصف الثاني عشر (القسم العلمي)",
+        "الصف الثاني عشر (القسم الأدبي)",
+    ],
+    "المنهج السوداني 🇸🇩": [
+        "المرحلة المتوسطة (أولى / ثانية / ثالثة متوسط)",
+        "الصف الأول الثانوي",
+        "الصف الثاني الثانوي (علمي)",
+        "الصف الثاني الثانوي (أدبي)",
+        "الصف الثالث الثانوي (علمي رياضيات - الشهادة السودانية)",
+        "الصف الثالث الثانوي (علمي أحياء)",
+        "الصف الثالث الثانوي (أدبي)",
+    ],
+}
+
+possible_images = [
+    "teacher.jpg",
+    "teacher.png",
+    "teacher.jpeg",
+    "photo_2026-08-02_00-34-53.jpg",
+]
+found_img_path = None
+for img_cand in possible_images:
+    if os.path.exists(img_cand):
+        found_img_path = img_cand
+        break
+
+
+def get_image_base64(path):
+    if path and os.path.exists(path):
+        try:
+            with open(path, "rb") as img_file:
+                return base64.b64encode(img_file.read()).decode()
+        except Exception:
+            return ""
+    return ""
+
+
+st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
+uploaded_photo = st.sidebar.file_uploader(
+    "ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"]
+)
+if uploaded_photo is not None:
+    with open(IMG_NAME, "wb") as f:
+        f.write(uploaded_photo.getbuffer())
+    found_img_path = IMG_NAME
+    st.sidebar.success("✓ تم حفظ صورتك بنجاح!")
+    st.rerun()
+
+img_b64 = get_image_base64(found_img_path)
+
+st.markdown(
+    """
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap');
+    
+    html, body, [class*="css"], p, span, label {
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: 700 !important;
+    }
+    
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
+    [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-left: 2px solid #e5e7eb;
+    }
+
+    .brand-banner {
+        background: linear-gradient(135deg, #0b1f3a, #1e3c72) !important;
+        padding: 24px 30px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        box-shadow: 0 6px 18px rgba(11, 31, 58, 0.25);
+    }
+    
+    .brand-title {
+        font-size: 34px !important;
+        font-weight: 900 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        margin: 0 !important;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    }
+
+    .brand-subtitle {
+        color: #e0edff !important;
+        -webkit-text-fill-color: #e0edff !important;
+        font-size: 17px !important;
+        font-weight: 800 !important;
+        margin-top: 6px !important;
+    }
+
+    div[data-testid="stMetric"] {
+        background: #ffffff !important;
+        border: 2px solid #0052cc !important;
+        border-radius: 12px;
+        padding: 16px 20px;
+        box-shadow: 0 2px 8px rgba(0, 82, 204, 0.08);
+    }
+    div[data-testid="stMetric"] label {
+        color: #1f2937 !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+    }
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+        color: #0052cc !important;
+        font-weight: 900 !important;
+        font-size: 26px !important;
+    }
+
+    input, select, textarea {
+        font-weight: 700 !important;
+        color: #000000 !important;
+        border: 2px solid #cbd5e1 !important;
+    }
+
+    .stButton>button {
+        background: #0052cc !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px;
+        font-weight: 900 !important;
+        font-size: 17px !important;
+        padding: 12px 28px;
+        box-shadow: 0 4px 10px rgba(0, 82, 204, 0.25);
+    }
+    .stButton>button:hover {
+        background: #003d99 !important;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+COLUMNS = [
+    "التاريخ",
+    "اسم الطالب",
+    "المنهج/الدولة",
+    "المجموعة/الصف",
+    "الحالة",
+    "سعر الحصة",
+    "عدد الحصص الكلي",
+    "نظام الدفع",
+    "مستوى الطالب",
+    "ملاحظات",
+]
+
+
+def load_data():
+    if os.path.exists(FILE_NAME):
+        try:
+            df = pd.read_excel(FILE_NAME)
+            for col in COLUMNS:
+                if col not in df.columns:
+                    df[col] = ""
+            return df
+        except Exception:
+            return pd.DataFrame(columns=COLUMNS)
+    return pd.DataFrame(columns=COLUMNS)
+
+
+def save_data(df):
+    df.to_excel(FILE_NAME, index=False)
+
+
+if "data" not in st.session_state:
+    st.session_state.data = load_data()
+
+query_params = st.query_params
+is_student_mode = query_params.get("role") == "student"
+
+# ==============================================================================
+# 1. واجهة الطالب (بدون خانة الملاحظات)
+# ==============================================================================
+if is_student_mode:
+    st.markdown(
+        f"""
+    <div class="brand-banner" dir="rtl">
+        <div>
+            <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
+            <p class="brand-subtitle">استمارة تسجيل حضور الطالب وتقييم الحصة</p>
+        </div>
+        {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("سجل بيانات حضورك للحصة:")
+
+    selected_curriculum = st.selectbox(
+        "اختر المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys())
+    )
+    available_grades = CURRICULUM_DATA[selected_curriculum]
+
+    with st.form("student_self_registration", clear_on_submit=True):
+        st_name = st.text_input(
+            "اسم الطالب بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمد"
+        )
+        st_grade = st.selectbox("المرحلة / الصف الدراسي:", available_grades)
+        st_date = st.date_input("تاريخ الحصة:", value=date.today())
+
+        rating_options = [
+            "⭐⭐⭐⭐⭐ (5/5) ممتاز جداً وفهم ممتاز",
+            "⭐⭐⭐⭐ (4/5) جيد جداً",
+            "⭐⭐⭐ (3/5) جيد ومفهوم",
+            "⭐⭐ (2/5) متوسط ويحتاج توضيح",
+            "⭐ (1/5) يحتاج إعادة شرح",
+        ]
+        selected_rating = st.selectbox(
+            "⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):",
+            options=rating_options,
+            index=0,
+        )
+
+        submit_btn = st.form_submit_button("✅ إرسال وتأكيد الحضور")
+
+        if submit_btn:
+            if not st_name.strip():
+                st.error("يرجى كتابة اسمك بالكامل.")
+            else:
+                new_row = {
+                    "التاريخ": str(st_date),
+                    "اسم الطالب": st_name.strip(),
+                    "المنهج/الدولة": selected_curriculum,
+                    "المجموعة/الصف": st_grade,
+                    "الحالة": "حاضر",
+                    "سعر الحصة": 0.0,
+                    "عدد الحصص الكلي": 1,
+                    "نظام الدفع": "مؤجل",
+                    "مستوى الطالب": "قيد التقييم",
+                    "ملاحظات": f"تقييم الحصة: {selected_rating}",
+                }
+                st.session_state.data = pd.concat(
+                    [st.session_state.data, pd.DataFrame([new_row])],
+                    ignore_index=True,
+                )
+                save_data(st.session_state.data)
+                st.success(
+                    f"🎉 شكراً لك {st_name}! تم تسجيل حضورك وتقييمك بنجاح."
+                )
+    st.stop()
+
+# ==============================================================================
+# 2. لوحة تحكم المعلم الرئيسية
+# ==============================================================================
+if found_img_path and os.path.exists(found_img_path):
+    st.sidebar.image(found_img_path, width=220)
+
+st.sidebar.markdown(
+    """
+<div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
+    <h2 style="margin: 0; color: #0052cc; font-weight: 900;">البشمهندس X الرياضة</h2>
+    <p style="margin: 4px 0; color: #374151; font-weight: 800; font-size: 15px;">نظام إدارة ومتابعة الحصص</p>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+st.sidebar.header("🔗 رابط تسجيل الطلاب")
+st.sidebar.markdown("شارك الرابط مع الطلاب ليسجلوا حضورهم بأنفسهم:")
+student_url = "http://localhost:8501/?role=student"
+st.sidebar.code(student_url, language="text")
+
+# الهيدر في اللوحة الرئيسية
+st.markdown(
+    f"""
+<div class="brand-banner" dir="rtl">
+    <div>
+        <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
+        <p class="brand-subtitle">إدارة الحصص • متابعة نسب الحضور والغياب • الكشوف المالية ومستوى الطلاب</p>
+    </div>
+    {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📝 رصد حصة جديدة",
+    "✏️ تعديل ومراجعة السجلات",
+    "📊 قاعدة البيانات الشاملة",
+    "🖨️ كشف وطباعة بطاقة طالب",
+])
+
+# ----------------- تبويب 1: رصد الحصة -----------------
+with tab1:
+    st.subheader("إدخال بيانات الحصة")
+    t_curriculum = st.selectbox(
+        "اختر المنهج الدراسي:",
+        list(CURRICULUM_DATA.keys()),
+        key="teacher_curr_select",
+    )
+    t_grades = CURRICULUM_DATA[t_curriculum]
+
+    with st.form("teacher_entry_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            session_date = st.date_input("تاريخ الحصة", value=date.today())
+            student_name = st.text_input(
+                "اسم الطالب", placeholder="مثال: أحمد محمد"
+            )
+            group_name = st.selectbox("المرحلة / الصف الدراسي:", t_grades)
+            status = st.selectbox(
+                "حالة الحضور", ["حاضر", "غائب", "متأخر", "بعذر"]
+            )
+
+        with col2:
+            price = st.number_input(
+                "سعر الحصة", min_value=0.0, step=10.0, value=100.0
+            )
+            total_sessions = st.number_input(
+                "الحصص المنفذة حتى الآن", min_value=1, step=1, value=1
+            )
+            payment_type = st.selectbox(
+                "نظام الدفع",
+                ["اشتراك شهري", "مقدم", "مؤخر (بعد الحصة)", "مؤجل"],
+            )
+            student_level = st.selectbox(
+                "المستوى الدراسي",
+                [
+                    "ممتاز ⭐⭐⭐",
+                    "جيد جداً ⭐⭐",
+                    "جيد ⭐",
+                    "متوسط",
+                    "يحتاج متابعة",
+                ],
+            )
+
+        notes = st.text_area(
+            "ملاحظات الواجب أو التقييم والدرجات",
+            placeholder="أداء الحصة، حل الواجب...",
+        )
+        submitted = st.form_submit_button("💾 رصد وحفظ الحصة")
+
+        if submitted:
+            if not student_name.strip():
+                st.error("يرجى كتابة اسم الطالب أولاً.")
+            else:
+                new_row = {
+                    "التاريخ": str(session_date),
+                    "اسم الطالب": student_name.strip(),
+                    "المنهج/الدولة": t_curriculum,
+                    "المجموعة/الصف": group_name,
+                    "الحالة": status,
+                    "سعر الحصة": price,
+                    "عدد الحصص الكلي": total_sessions,
+                    "نظام الدفع": payment_type,
+                    "مستوى الطالب": student_level,
+                    "ملاحظات": notes.strip(),
+                }
+                st.session_state.data = pd.concat(
+                    [st.session_state.data, pd.DataFrame([new_row])],
+                    ignore_index=True,
+                )
+                save_data(st.session_state.data)
+                st.success(f"✓ تم حفظ سجل الطالب ({student_name}) بنجاح!")
+
+# ----------------- تبويب 2: التعديل والمراجعة -----------------
+with tab2:
+    st.subheader("مراجعة وتعديل بيانات الطلاب والحصص")
+    df = st.session_state.data
+
+    if df.empty:
+        st.info("لا توجد سجلات مسجلة بعد.")
+    else:
+        record_options = {
+            idx: f"[{row['التاريخ']}] - {row['اسم الطالب']} ({row.get('المنهج/الدولة', '')} | {row['المجموعة/الصف']}) - {row['الحالة']}"
+            for idx, row in df.iterrows()
+        }
+        selected_idx = st.selectbox(
+            "اختر السجل المراد تعديل بياناته:",
+            options=list(record_options.keys()),
+            format_func=lambda x: record_options[x],
+        )
+
+        selected_row = df.loc[selected_idx]
+        try:
+            curr_date = datetime.strptime(
+                str(selected_row["التاريخ"]), "%Y-%m-%d"
+            ).date()
+        except Exception:
+            curr_date = date.today()
+
+        with st.form("edit_record_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                edit_name = st.text_input(
+                    "اسم الطالب:", value=str(selected_row["اسم الطالب"])
+                )
+
+                saved_curr = selected_row.get("المنهج/الدولة", "")
+                curr_list = list(CURRICULUM_DATA.keys())
+                curr_idx = (
+                    curr_list.index(saved_curr) if saved_curr in curr_list else 0
+                )
+                edit_curr = st.selectbox(
+                    "المنهج / الدولة:", curr_list, index=curr_idx
+                )
+
+                edit_group = st.text_input(
+                    "المرحلة / الصف الدراسي:",
+                    value=str(selected_row["المجموعة/الصف"]),
+                )
+                edit_date = st.date_input("التاريخ:", value=curr_date)
+                s_opts = ["حاضر", "غائب", "متأخر", "بعذر"]
+                edit_status = st.selectbox(
+                    "الحالة:",
+                    s_opts,
+                    index=(
+                        s_opts.index(selected_row["الحالة"])
+                        if selected_row["الحالة"] in s_opts
+                        else 0
+                    ),
+                )
+
+            with c2:
+                try:
+                    p_val = float(selected_row["سعر الحصة"])
+                except Exception:
+                    p_val = 0.0
+                edit_price = st.number_input(
+                    "سعر الحصة:", min_value=0.0, step=10.0, value=p_val
+                )
+
+                try:
+                    s_val = int(selected_row["عدد الحصص الكلي"])
+                except Exception:
+                    s_val = 1
+                edit_sessions = st.number_input(
+                    "عدد الحصص الكلي:", min_value=1, step=1, value=s_val
+                )
+
+                p_opts = ["اشتراك شهري", "مقدم", "مؤخر (بعد الحصة)", "مؤجل"]
+                edit_pay = st.selectbox(
+                    "نظام الدفع:",
+                    p_opts,
+                    index=(
+                        p_opts.index(selected_row["نظام الدفع"])
+                        if selected_row["نظام الدفع"] in p_opts
+                        else 0
+                    ),
+                )
+
+                l_opts = [
+                    "ممتاز ⭐⭐⭐",
+                    "جيد جداً ⭐⭐",
+                    "جيد ⭐",
+                    "متوسط",
+                    "يحتاج متابعة",
+                    "قيد التقييم",
+                ]
+                edit_level = st.selectbox(
+                    "المستوى:",
+                    l_opts,
+                    index=(
+                        l_opts.index(selected_row["مستوى الطالب"])
+                        if selected_row["مستوى الطالب"] in l_opts
+                        else 0
+                    ),
+                )
+
+            edit_notes = st.text_area(
+                "الملاحظات والتقييم:", value=str(selected_row["ملاحظات"])
+            )
+
+            b1, b2 = st.columns([1, 4])
+            with b1:
+                update_btn = st.form_submit_button("💾 تحديث البيانات")
+            with b2:
+                delete_btn = st.form_submit_button("🗑️ حذف السجل")
+
+            if update_btn:
+                df.at[selected_idx, "التاريخ"] = str(edit_date)
+                df.at[selected_idx, "اسم الطالب"] = edit_name.strip()
+                df.at[selected_idx, "المنهج/الدولة"] = edit_curr
+                df.at[selected_idx, "المجموعة/الصف"] = edit_group.strip()
+                df.at[selected_idx, "الحالة"] = edit_status
+                df.at[selected_idx, "سعر الحصة"] = edit_price
+                df.at[selected_idx, "عدد الحصص الكلي"] = edit_sessions
+                df.at[selected_idx, "نظام الدفع"] = edit_pay
+                df.at[selected_idx, "مستوى الطالب"] = edit_level
+                df.at[selected_idx, "ملاحظات"] = edit_notes.strip()
+
+                save_data(df)
+                st.session_state.data = df
+                st.success("✓ تم تحديث بيانات الحصة بنجاح!")
+                st.rerun()
+
+            if delete_btn:
+                df = df.drop(selected_idx).reset_index(drop=True)
+                save_data(df)
+                st.session_state.data = df
+                st.warning("⚠️ تم حذف السجل.")
+                st.rerun()
+
+# ----------------- تبويب 3: السجلات العامة -----------------
+with tab3:
+    st.subheader("نظرة شاملة على السجلات والإحصائيات")
+    current_df = st.session_state.data
+
+    if current_df.empty:
+        st.info("لا توجد بيانات متاحة.")
+    else:
+        c_f1, c_f2, c_f3 = st.columns(3)
+        with c_f1:
+            all_currs = ["الكل"] + [
+                c
+                for c in current_df["المنهج/الدولة"].dropna().unique()
+                if str(c).strip()
+            ]
+            filter_curr = st.selectbox("تصفية حسب المنهج / الدولة:", all_currs)
+        with c_f2:
+            all_groups = ["الكل"] + [
+                g
+                for g in current_df["المجموعة/الصف"].dropna().unique()
+                if str(g).strip()
+            ]
+            filter_group = st.selectbox("تصفية حسب المرحلة / الصف:", all_groups)
+        with c_f3:
+            search_name = st.text_input("بحث باسم الطالب:")
+
+        filtered = current_df.copy()
+        if filter_curr != "الكل":
+            filtered = filtered[filtered["المنهج/الدولة"] == filter_curr]
+        if filter_group != "الكل":
+            filtered = filtered[filtered["المجموعة/الصف"] == filter_group]
+        if search_name.strip():
+            filtered = filtered[
+                filtered["اسم الطالب"].str.contains(
+                    search_name.strip(), na=False
+                )
+            ]
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("إجمالي الحصص", len(filtered))
+        m2.metric(
+            "عدد مرات الحضور", len(filtered[filtered["الحالة"] == "حاضر"])
+        )
+        m3.metric("عدد مرات الغياب", len(filtered[filtered["الحالة"] == "غائب"]))
+        total_cash = (
+            filtered["سعر الحصة"]
+            .astype(float, errors="ignore")
+            .sum(numeric_only=True)
+        )
+        m4.metric("إجمالي المبالغ المستحقة", f"{total_cash:,.1f}")
+
+        st.dataframe(filtered, width="stretch")
+
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+            current_df.to_excel(writer, index=False)
+        st.download_button(
+            label="📥 تصدير السجل بالكامل إلى Excel",
+            data=buf.getvalue(),
+            file_name=FILE_NAME,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+# ----------------- تبويب 4: الكشف والطباعة -----------------
+with tab4:
+    st.subheader("كشف متابعة وحساب الطالب الجاهز للطباعة")
+    current_df = st.session_state.data
+
+    if current_df.empty:
+        st.info("السجل فارغ حالياً.")
+    else:
+        st_names = sorted(
+            list(
+                set([
+                    s
+                    for s in current_df["اسم الطالب"].dropna().unique()
+                    if str(s).strip()
+                ])
+            )
+        )
+        selected_student = st.selectbox("اختر الطالب لإصدار الكشف:", st_names)
+
+        if selected_student:
+            st_records = (
+                current_df[current_df["اسم الطالب"] == selected_student]
+                .copy()
+                .sort_values(by="التاريخ")
+            )
+            latest = st_records.iloc[-1]
+
+            level_val = latest.get("مستوى الطالب", "غير محدد")
+            pay_val = latest.get("نظام الدفع", "غير محدد")
+            curr_val = latest.get("المنهج/الدولة", "-")
+            group_val = latest.get("المجموعة/الصف", "-")
+            price_val = latest.get("سعر الحصة", 0)
+
+            att_cnt = len(st_records[st_records["الحالة"] == "حاضر"])
+            abs_cnt = len(st_records[st_records["الحالة"] == "غائب"])
+            total_cnt = len(st_records)
+            total_due = (
+                st_records["سعر الحصة"]
+                .astype(float, errors="ignore")
+                .sum(numeric_only=True)
+            )
+
+            col_k1, col_k2, col_k3, col_k4 = st.columns(4)
+            col_k1.metric("المنهج والمرحلة", f"{curr_val} - {group_val}")
+            col_k2.metric("المستوى", str(level_val))
+            col_k3.metric("نظام الدفع", str(pay_val))
+            col_k4.metric("سعر الحصة", f"{price_val}")
+
+            col_k5, col_k6, col_k7, col_k8 = st.columns(4)
+            col_k5.metric("الحصص المنفذة", total_cnt)
+            col_k5.metric("مرات الحضور", att_cnt)
+            col_k7.metric("مرات الغياب", abs_cnt)
+            col_k8.metric("إجمالي الحساب", f"{total_due:,.1f}")
+
+            rows_html = ""
+            for _, r in st_records.iterrows():
+                st_color = (
+                    "#0f766e"
+                    if r["الحالة"] == "حاضر"
+                    else ("#b91c1c" if r["الحالة"] == "غائب" else "#b45309")
+                )
+                rows_html += f"""
+                <tr>
+                    <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['التاريخ']}</td>
+                    <td style="padding: 10px; border: 2px solid #000; color:{st_color}; font-weight: 900;">{r['الحالة']}</td>
+                    <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['سعر الحصة']}</td>
+                    <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['نظام الدفع']}</td>
+                    <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['مستوى الطالب']}</td>
+                    <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['ملاحظات']}</td>
+                </tr>
+                """
+
+            teacher_img_tag = (
+                f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 95px; height: 95px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">'
+                if img_b64
+                else ""
+            )
+
+            printable_html = f"""<!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+            <head>
+                <meta charset="utf-8">
+                <title>كشف متابعة - {selected_student}</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
+                    body {{ 
+                        font-family: 'Cairo', Tahoma, Arial, sans-serif; 
+                        padding: 35px; 
+                        color: #000000; 
+                        background-color: #ffffff;
+                        font-weight: 800;
+                    }}
+                    .header-box {{
+                        border-bottom: 3px solid #0052cc;
+                        padding-bottom: 18px;
+                        margin-bottom: 25px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }}
+                    .brand-name {{ color: #0052cc; margin: 0; font-size: 32px; font-weight: 900; }}
+                    .brand-sub {{ color: #000000; margin: 5px 0 0 0; font-size: 16px; font-weight: 800; }}
+                    .stats-box {{ width: 100%; border-collapse: collapse; margin-bottom: 25px; }}
+                    .stats-box th, .stats-box td {{ border: 2px solid #000000; padding: 12px; text-align: center; font-size: 16px; font-weight: 800; }}
+                    .stats-box th {{ background: #ffffff; color: #000000; font-weight: 900; }}
+                    .details-table {{ width: 100%; border-collapse: collapse; text-align: center; margin-top: 15px; }}
+                    .details-table th {{ background-color: #ffffff; color: #000000; font-weight: 900; font-size: 16px; padding: 12px; border: 2px solid #000000; }}
+                    .footer-note {{ margin-top: 35px; text-align: center; color: #000000; font-size: 15px; font-weight: 800; border-top: 2px solid #000000; padding-top: 15px; }}
+                </style>
+            </head>
+            <body onload="window.print()">
+                <div class="header-box">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        {teacher_img_tag}
+                        <div>
+                            <h2 class="brand-name">البشمهندس X الرياضة 📐</h2>
+                            <p class="brand-sub">كشف التقييم الأكاديمي والحساب المالي الدوري</p>
+                            <p style="margin: 4px 0; color: #000000; font-size: 16px; font-weight: 800;"><b>المنهج الدراسي:</b> {curr_val} — {group_val}</p>
+                        </div>
+                    </div>
+                    <div style="text-align: left;">
+                        <h2 style="color: #0052cc; margin: 0; font-size: 26px; font-weight: 900;">{selected_student}</h2>
+                        <p style="margin: 5px 0 0 0; color: #000000; font-size: 15px; font-weight: 800;">تاريخ الكشف: {date.today()}</p>
+                    </div>
+                </div>
+
+                <table class="stats-box">
+                    <tr>
+                        <th>المستوى الدراسي</th>
+                        <th>نظام الدفع</th>
+                        <th>سعر الحصة</th>
+                        <th>إجمالي الحصص</th>
+                        <th>مرات الحضور</th>
+                        <th>مرات الغياب</th>
+                        <th>المبلغ المستحق</th>
+                    </tr>
+                    <tr>
+                        <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
+                        <td>{pay_val}</td>
+                        <td>{price_val}</td>
+                        <td style="font-weight: 900;">{total_cnt}</td>
+                        <td style="color: #0f766e; font-weight: 900;">{att_cnt}</td>
+                        <td style="color: #b91c1c; font-weight: 900;">{abs_cnt}</td>
+                        <td style="font-weight: 900; font-size: 18px; color: #000000;">{total_due:,.1f}</td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 30px; margin-bottom: 12px; color: #0052cc; font-size: 20px; font-weight: 900;">سجل تفاصيل الحصص والواجبات:</h3>
+                <table class="details-table">
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                        <th>سعر الحصة</th>
+                        <th>نظام الدفع</th>
+                        <th>المستوى</th>
+                        <th>ملاحظات المعلم وتقييم الطالب</th>
+                    </tr>
+                    {rows_html}
+                </table>
+
+                <div class="footer-note">
+                    مع تحيات: <b>البشمهندس X الرياضة</b> — متابعة مستمرة نحو التفوق والدرجة النهائية 🌟
+                </div>
+            </body>
+            </html>"""
+
+            st.download_button(
+                label=f"🖨️ تحميل وطباعة كشف ({selected_student}) كـ PDF",
+                data=printable_html.encode("utf-8"),
+                file_name=f"كشف_{selected_student}.html",
+                mime="text/html",
+            )
+
+            st.write("---")
+            st.dataframe(
+                st_records[[
+                    "التاريخ",
+                    "الحالة",
+                    "سعر الحصة",
+                    "نظام الدفع",
+                    "مستوى الطالب",
+                    "ملاحظات",
+                ]],
+                width="stretch",
+            )
