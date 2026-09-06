@@ -676,7 +676,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات بدعم كامل لصور الأسئلة والخيارات (الاسكرينات) وبنفس السيستم الاحترافي
+        # 1. صفحة الاختبارات مع معالجة ذكية للصور والأسئلة
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
             available_exams = st.session_state.exams_df.copy()
@@ -1355,7 +1355,7 @@ with tab_exam_maker:
                     st.warning("تم حذف الامتحان.")
                     st.rerun()
 
-# ----------------- تبويب درجات الاختبارات للمعلم (مع إمكانية التصدير لـ Excel) -----------------
+# ----------------- تبويب درجات الاختبارات للمعلم (مع تصدير درجات الطلاب لملف Excel و PDF) -----------------
 with tab_exam_grades_teacher:
     st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
     exam_assessments = st.session_state.assessments_df[
@@ -1372,12 +1372,48 @@ with tab_exam_grades_teacher:
         with pd.ExcelWriter(buf_grades, engine="openpyxl") as writer:
             exam_assessments.to_excel(writer, sheet_name="Exam_Grades", index=False)
         
-        st.download_button(
-            label="📥 تصدير درجات الطلاب لملف Excel",
-            data=buf_grades.getvalue(),
-            file_name="درجات_الاختبارات_للطلاب.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        c_ex_dl1, c_ex_dl2 = st.columns(2)
+        with c_ex_dl1:
+            st.download_button(
+                label="📥 تصدير درجات الطلاب لملف Excel",
+                data=buf_grades.getvalue(),
+                file_name="درجات_الاختبارات_للطلاب.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        with c_ex_dl2:
+            # زر طباعة درجات الطلاب PDF
+            grades_pdf_html = """<!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+            <head><meta charset="utf-8"><title>سجل درجات الاختبارات</title></head>
+            <body style="font-family: Arial; padding: 25px;" onload="window.print()">
+                <h2>سجل درجات ونقاط اختبارات الطلاب - م/ محمد غنيم</h2>
+                <table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin-top:20px;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="padding:10px;">التاريخ</th>
+                        <th style="padding:10px;">اسم الطالب</th>
+                        <th style="padding:10px;">عنوان الامتحان</th>
+                        <th style="padding:10px;">الدرجة</th>
+                        <th style="padding:10px;">الحالة</th>
+                    </tr>
+            """
+            for _, r in exam_assessments.iterrows():
+                grades_pdf_html += f"""
+                    <tr>
+                        <td style="padding:8px;">{r['التاريخ']}</td>
+                        <td style="padding:8px;">{r['اسم الطالب']}</td>
+                        <td style="padding:8px;">{r['عنوان التكليف']}</td>
+                        <td style="padding:8px;">{r['الدرجة المحصلة']} / {r['الدرجة العظمى']}</td>
+                        <td style="padding:8px;">{r['حالة التسليم']}</td>
+                    </tr>
+                """
+            grades_pdf_html += "</table></body></html>"
+
+            st.download_button(
+                label="🖨️ طباعة وتصدير درجات الطلاب PDF",
+                data=grades_pdf_html.encode("utf-8"),
+                file_name="سجل_درجات_الاختبارات.html",
+                mime="application/octet-stream"
+            )
 
 # ----------------- تبويب تصحيح المقالي والصور -----------------
 with tab_essay_grade:
