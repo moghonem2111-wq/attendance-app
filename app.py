@@ -180,7 +180,6 @@ st.markdown("""
         letter-spacing: 0.3px !important;
     }
 
-    /* حماية حقول الإدخال وعدم تداخل الأيقونات بداخلها */
     input, textarea, select {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
@@ -295,7 +294,6 @@ st.markdown("""
         margin: 15px 0;
     }
 
-    /* بنر كورسات منصة درسلي المطول والمخصص */
     .darssly-banner {
         background: linear-gradient(135deg, #4f46e5, #7c3aed);
         border-radius: 16px;
@@ -373,7 +371,6 @@ st.markdown("""
         background: linear-gradient(135deg, #4338ca, #6d28d9);
     }
 
-    /* أيقونات السوشيال ميديا */
     .social-top-container {
         display: flex;
         gap: 12px;
@@ -477,7 +474,6 @@ if is_student_mode:
     </div>
     """, unsafe_allow_html=True)
 
-    # بنر كورسات منصة درسلي (ظاهر فوراً في وجه الطالب)
     st.markdown("""
         <div class="darssly-banner" dir="rtl">
             <h3 class="darssly-title">📢 اشترك الآن في كورسات الرياضيات على منصة درسلي (Darssly)</h3>
@@ -862,7 +858,7 @@ if is_student_mode:
 
         with st.form("student_chat_send_form", clear_on_submit=True):
             msg_text = st.text_area("اكتب رسالتك أو استفسارك هنا:", placeholder="مستر، مش فاهم المسألة رقم...")
-            uploaded_msg_img = st.file_uploader("📷 إرفاق صورة للمسألة (اختياري), type=["jpg", "png", "jpeg"])
+            uploaded_msg_img = st.file_uploader("📷 إرفاق صورة للمسألة (اختياري)", type=["jpg", "png", "jpeg"])
             if st.form_submit_button("📤 إرسال الرسالة إلى البشمهندس"):
                 if msg_text.strip() or uploaded_msg_img is not None:
                     img_str = base64.b64encode(uploaded_msg_img.read()).decode() if uploaded_msg_img is not None else ""
