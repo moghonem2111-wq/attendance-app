@@ -200,7 +200,6 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    /* شريط التنقل العلوي الاحترافي (Navbar) */
     .darssly-navbar {
         background: #ffffff;
         padding: 12px 25px;
@@ -219,7 +218,7 @@ st.markdown("""
     }
     .navbar-title-group h3 {
         margin: 0 !important;
-        color: #4f46e5 !important;
+        color: #10b981 !important;
         font-size: 18px !important;
         font-weight: 900 !important;
     }
@@ -428,7 +427,7 @@ st.markdown("""
         p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
         .darssly-navbar { background: #1e232d !important; border-color: #334155 !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
-        .chat-builder-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
+        .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
         .course-card { background: #1e232d; border-color: #334155; }
         .course-title { color: #34d399 !important; }
         .course-desc { color: #9ca3af !important; }
@@ -449,30 +448,40 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    # شريط التنقل العلوي الاحترافي (Navbar) مطابق للصورة المطلوبة
-    nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #4f46e5; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
+    # شريط التنقل العلوي الاحترافي بالاسم المطلوب وأزرار تسجيل الدخول وإنشاء حساب
+    nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
-    st.markdown(f"""
-    <div class="darssly-navbar" dir="rtl">
-        <div class="navbar-brand">
-            {nav_avatar_tag}
-            <div class="navbar-title-group">
-                <h3>مستر / محمد غنيم</h3>
-                <p>منصة الرياضيات للثانوية العامة والمرحلة الإعدادية</p>
+    col_nav1, col_nav2 = st.columns([2, 1])
+    with col_nav1:
+        st.markdown(f"""
+        <div class="darssly-navbar" dir="rtl" style="margin-bottom: 0px;">
+            <div class="navbar-brand">
+                {nav_avatar_tag}
+                <div class="navbar-title-group">
+                    <h3>م/ محمد غنيم</h3>
+                    <p>منصة شرح الرياضيات والإحصاء</p>
+                </div>
             </div>
         </div>
-        <div class="navbar-actions">
-            <span style="font-size: 14px; color: #4f46e5; font-weight: 900;">🌐 بوابة الطالب الذكية</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+    with col_nav2:
+        st.write("")
+        c_btn1, c_btn2 = st.columns(2)
+        with c_btn1:
+            if st.button("👤 تسجيل الدخول"):
+                st.session_state.auth_view = "login"
+        with c_btn2:
+            if st.button("✨ إنشاء حساب"):
+                st.session_state.auth_view = "register"
 
-    # قسم الترحيب الرئيسي الاحترافي (Hero Section) مطابق لصورة درسلي
+    st.write("---")
+
+    # قسم الترحيب الرئيسي الاحترافي (Hero Section)
     col_hero_txt, col_hero_img = st.columns([1.3, 1])
     with col_hero_txt:
-        st.markdown("<h1 style='color: #4f46e5; font-size: 40px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-        st.markdown("<div style='background: #e0e7ff; color: #4338ca; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>دفعة 2026 / 2027</div>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم الرياضيات بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+        st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
 
     with col_hero_img:
         if img_b64:
@@ -587,8 +596,8 @@ if is_student_mode:
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(f"""
-                <div style="background: rgba(0, 82, 204, 0.08); padding: 14px 20px; border-radius: 12px; border-right: 5px solid #0052cc; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #0052cc;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
+                <div style="background: rgba(16, 185, 129, 0.08); padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #059669;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
                     <p style="margin: 4px 0 10px 0; font-weight: 900;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
