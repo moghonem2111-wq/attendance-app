@@ -129,7 +129,7 @@ COL_USERS = ["اسم الطالب", "كلمة المرور", "المنهج/ال�
 COL_ASSESSMENTS = [
     "التاريخ",
     "اسم الطالب",
-    "النوع",  # واجب أو اختبار
+    "النوع",
     "عنوان التكليف",
     "الدرجة المحصلة",
     "الدرجة العظمى",
@@ -223,7 +223,6 @@ st.markdown(
         margin-top: 6px !important;
     }
 
-    /* بنر إعلان منصة درسلي */
     .darssly-banner {
         background: linear-gradient(135deg, #4f46e5, #7c3aed);
         border-radius: 16px;
@@ -403,7 +402,7 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب (نظام تسجيل الدخول + رصد الحضور + نتائج الواجبات والاختبارات)
+# 1. واجهة الطالب
 # ==============================================================================
 if is_student_mode:
     st.markdown(
@@ -449,7 +448,6 @@ if is_student_mode:
     if "logged_student" not in st.session_state:
         st.session_state.logged_student = None
 
-    # شاشة تسجيل الدخول أو إنشاء حساب
     if not st.session_state.logged_student:
         auth_tab1, auth_tab2 = st.tabs(["🔐 تسجيل دخول الطالب", "✨ إنشاء حساب طالب جديد"])
 
@@ -503,7 +501,6 @@ if is_student_mode:
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}! تم تسجيل دخولك تلقائياً.")
                             st.rerun()
 
-    # لوحة الطالب بعد تسجيل الدخول
     else:
         st_user = st.session_state.logged_student
         st.markdown(
@@ -518,7 +515,6 @@ if is_student_mode:
 
         st_menu1, st_menu2 = st.tabs(["📝 تسجيل حضور حصة اليوم", "📊 متابعة درجات الواجبات والاختبارات"])
 
-        # تسجيل الحضور
         with st_menu1:
             with st.form("logged_student_att_form", clear_on_submit=True):
                 st_date = st.date_input("تاريخ الحصة:", value=date.today())
@@ -549,7 +545,6 @@ if is_student_mode:
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df)
                     st.success(f"تم تسجيل حضورك وتقييمك بنجاح للحصة بتاريخ {st_date}!")
 
-        # عرض درجات الطالب الخاصة به
         with st_menu2:
             st.subheader("سجل الواجبات والاختبارات الخاصة بك:")
             my_assessments = st.session_state.assessments_df[
@@ -603,7 +598,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية (إدارة الحصص + الواجبات والاختبارات + تقرير ولي الأمر)
+# 2. لوحة تحكم المعلم الرئيسية
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -697,7 +692,7 @@ with tab1:
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
 
-# ----------------- تبويب جديد: رصد الواجبات والاختبارات -----------------
+# ----------------- تبويب 2: رصد الواجبات والاختبارات -----------------
 with tab_hw:
     st.subheader("إضافة درجات الواجبات المنزلية والاختبارات الدورية")
 
@@ -747,7 +742,7 @@ with tab_hw:
     st.write("### سجل الواجبات والاختبارات المرصودة مؤخراً:")
     st.dataframe(st.session_state.assessments_df, use_container_width=True)
 
-# ----------------- تبويب 2: التعديل والمراجعة -----------------
+# ----------------- تبويب 3: التعديل والمراجعة -----------------
 with tab2:
     st.subheader("مراجعة وتعديل بيانات الطلاب والحصص")
     df = st.session_state.sessions_df
@@ -828,7 +823,7 @@ with tab2:
                 st.warning("⚠️ تم حذف السجل.")
                 st.rerun()
 
-# ----------------- تبويب 3: السجلات العامة -----------------
+# ----------------- تبويب 4: السجلات العامة -----------------
 with tab3:
     st.subheader("نظرة شاملة على السجلات والإحصائيات")
     current_df = st.session_state.sessions_df
@@ -876,9 +871,9 @@ with tab3:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-# ----------------- تبويب 4: تقرير ولي الأمر الاحترافي للطباعة -----------------
+# ----------------- تبويب 5: تقرير ولي الأمر للطباعة (مُحدّث بالأسعار والإجمالي) -----------------
 with tab4:
-    st.subheader("📑 إصدار وطباعة تقرير متابعة الطالب لولي الأمر (شامل الحضور والواجبات والاختبارات)")
+    st.subheader("📑 إصدار وطباعة تقرير متابعة الطالب لولي الأمر (شامل الأسعار والحساب المالي)")
     
     all_names = sorted(list(set(
         [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -897,18 +892,24 @@ with tab4:
             curr_val = "-"
             group_val = "-"
             level_val = "جيد"
+            pay_val = "مؤجل"
             if not st_sessions.empty:
                 latest = st_sessions.iloc[-1]
                 curr_val = latest.get("المنهج/الدولة", "-")
                 group_val = latest.get("المجموعة/الصف", "-")
                 level_val = latest.get("مستوى الطالب", "جيد")
+                pay_val = latest.get("نظام الدفع", "مؤجل")
 
             att_cnt = len(st_sessions[st_sessions["الحالة"] == "حاضر"])
             abs_cnt = len(st_sessions[st_sessions["الحالة"] == "غائب"])
             total_sessions_cnt = len(st_sessions)
             att_percentage = (att_cnt / total_sessions_cnt * 100) if total_sessions_cnt > 0 else 0
 
-            # حساب متوسط الاختبارات والواجبات
+            # حساب إجمالي الحساب المالي
+            total_cost = 0.0
+            if not st_sessions.empty and "سعر الحصة" in st_sessions.columns:
+                total_cost = st_sessions["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True)
+
             exams = st_assessments[st_assessments["النوع"].str.contains("اختبار", na=False)]
             hws = st_assessments[st_assessments["النوع"].str.contains("واجب", na=False)]
 
@@ -920,9 +921,9 @@ with tab4:
             col_rep1.metric("نسبة الحضور والالتزام", f"{att_percentage:.1f}%")
             col_rep2.metric("عدد الواجبات المستلمة", len(hws))
             col_rep3.metric("متوسط درجات الاختبارات", f"{exam_percentage:.1f}%")
-            col_rep4.metric("التقييم العام للمستوى", str(level_val))
+            col_rep4.metric("إجمالي المبلغ المستحق", f"{total_cost:,.1f}")
 
-            # إنشاء جدول الواجبات والاختبارات في التقرير
+            # جدول الواجبات والاختبارات
             ass_html_rows = ""
             if not st_assessments.empty:
                 for _, r in st_assessments.iterrows():
@@ -939,25 +940,34 @@ with tab4:
             else:
                 ass_html_rows = "<tr><td colspan='6' style='padding: 15px; font-weight: 800; border: 2px solid #000;'>لا توجد واجبات أو اختبارات مرصودة حتى الآن.</td></tr>"
 
-            # إنشاء جدول الحصص في التقرير
+            # جدول الحصص شاملاً سعر كل حصة وسطراً للإجمالي النهائي
             session_html_rows = ""
             if not st_sessions.empty:
                 for _, r in st_sessions.iterrows():
                     st_color = "#0f766e" if r["الحالة"] == "حاضر" else ("#b91c1c" if r["الحالة"] == "غائب" else "#b45309")
+                    p_curr = float(r.get('سعر الحصة', 0)) if pd.notnull(r.get('سعر الحصة')) else 0.0
                     session_html_rows += f"""
                     <tr>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['التاريخ']}</td>
                         <td style="padding: 10px; border: 2px solid #000; color:{st_color}; font-weight: 900;">{r['الحالة']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #16a34a; font-size: 16px;">{p_curr:,.1f}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['مستوى الطالب']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 800;">{r['ملاحظات']}</td>
                     </tr>
                     """
+                session_html_rows += f"""
+                <tr style="background-color: #f1f5f9;">
+                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 16px;">الإجمالي الكلي المستحق للحصص:</td>
+                    <td style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 18px; color: #b91c1c;">{total_cost:,.1f}</td>
+                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 800; font-size: 15px;">نظام الدفع المعتمد: {pay_val}</td>
+                </tr>
+                """
             else:
-                session_html_rows = "<tr><td colspan='4' style='padding: 15px; font-weight: 800; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
+                session_html_rows = "<tr><td colspan='5' style='padding: 15px; font-weight: 800; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
 
             teacher_img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
 
-            # صفحة تقرير ولي الأمر الشاملة للطباعة
+            # قالب PDF الجاهز للطباعة
             parent_report_html = f"""<!DOCTYPE html>
             <html dir="rtl" lang="ar">
             <head>
@@ -1016,7 +1026,7 @@ with tab4:
                         {teacher_img_tag}
                         <div>
                             <h2 class="brand-name">البشمهندس X الرياضة 📐</h2>
-                            <p class="brand-sub">تقرير التقييم الدوري الشامل لولي الأمر (مستوى الطالب - الحضور - الواجبات - الاختبارات)</p>
+                            <p class="brand-sub">تقرير التقييم الدوري والحساب المالي الشامل لولي الأمر</p>
                             <p style="margin: 2px 0; color: #000000; font-size: 15px; font-weight: 800;"><b>المنهج والمرحلة:</b> {curr_val} — {group_val}</p>
                         </div>
                     </div>
@@ -1027,25 +1037,25 @@ with tab4:
                 </div>
 
                 <div class="parent-notice">
-                    📌 <b>رسالة لولي الأمر الفاضل:</b> نحرص دائماً على إحاطة سيادتكم بالمستوى الفعلي للطالب أولاً بأول؛ من أجل التعاون المستمر نحو الوصول لأعلى درجات الفهم والتفوق بإذن الله.
+                    📌 <b>رسالة لولي الأمر الفاضل:</b> نحرص دائماً على إحاطة سيادتكم بالمستوى الفعلي للطالب أولاً بأول، وتفاصيل الحساب المالي للحصص، من أجل التعاون المستمر نحو التفوق بإذن الله.
                 </div>
 
                 <table class="stats-box">
                     <tr>
-                        <th>إجمالي الحصص المنفذة</th>
+                        <th>إجمالي الحصص</th>
                         <th>مرات الحضور</th>
                         <th>مرات الغياب</th>
                         <th>نسبة الالتزام بالحضور</th>
-                        <th>المستوى الدراسي العام</th>
-                        <th>معدل الاختبارات الدورية</th>
+                        <th>إجمالي الحساب المستحق</th>
+                        <th>المستوى العام</th>
                     </tr>
                     <tr>
                         <td style="font-weight: 900;">{total_sessions_cnt}</td>
                         <td style="color: #0f766e; font-weight: 900;">{att_cnt}</td>
                         <td style="color: #b91c1c; font-weight: 900;">{abs_cnt}</td>
                         <td style="font-weight: 900; color: #0052cc;">{att_percentage:.1f}%</td>
+                        <td style="font-weight: 900; font-size: 17px; color: #b91c1c;">{total_cost:,.1f}</td>
                         <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
-                        <td style="font-weight: 900; color: #16a34a;">{exam_percentage:.1f}%</td>
                     </tr>
                 </table>
 
@@ -1062,11 +1072,12 @@ with tab4:
                     {ass_html_rows}
                 </table>
 
-                <div class="section-title">2. سجل الحضور وتقييم أداء الحصص:</div>
+                <div class="section-title">2. سجل الحضور وتفاصيل سعر كل حصة:</div>
                 <table class="table-main">
                     <tr>
                         <th>التاريخ</th>
                         <th>حالة الحضور</th>
+                        <th>سعر الحصة</th>
                         <th>مستوى الطالب بالحصة</th>
                         <th>ملاحظات التفاعل والاستيعاب</th>
                     </tr>
@@ -1086,7 +1097,7 @@ with tab4:
                 mime="text/html",
             )
 
-# ----------------- تبويب 5: حسابات الطلاب المسجلين -----------------
+# ----------------- تبويب 6: حسابات الطلاب المسجلين -----------------
 with tab_users:
     st.subheader("👥 قائمة حسابات الطلاب المسجلين وكلمات المرور:")
     st.write("يمكنك الاطلاع على كلمات مرور الطلاب لمساعدتهم في حال نسيانها:")
