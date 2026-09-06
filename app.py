@@ -108,17 +108,6 @@ def get_image_base64(path):
     return ""
 
 
-st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
-uploaded_photo = st.sidebar.file_uploader(
-    "ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"]
-)
-if uploaded_photo is not None:
-    with open(IMG_NAME, "wb") as f:
-        f.write(uploaded_photo.getbuffer())
-    found_img_path = IMG_NAME
-    st.sidebar.success("✓ تم حفظ صورتك بنجاح!")
-    st.rerun()
-
 img_b64 = get_image_base64(found_img_path)
 
 # ==================== التنسيق المتجاوب مع الوضع الفاتح والداكن ====================
@@ -133,7 +122,6 @@ st.markdown(
         text-align: right;
     }
 
-    /* البنر العلوي الأساسي ثابت وأنيق في الوضعين */
     .brand-banner {
         background: linear-gradient(135deg, #0b1f3a, #1e3c72) !important;
         padding: 24px 30px;
@@ -162,7 +150,6 @@ st.markdown(
         margin-top: 6px !important;
     }
 
-    /* تنسيق الأزرار المشترك */
     .stButton>button {
         background: #0052cc !important;
         color: #ffffff !important;
@@ -177,7 +164,6 @@ st.markdown(
         background: #003d99 !important;
     }
 
-    /* ---------------- 1. الوضع الفاتح (Light Mode) ---------------- */
     @media (prefers-color-scheme: light) {
         body, .stApp {
             background-color: #ffffff !important;
@@ -212,7 +198,6 @@ st.markdown(
         }
     }
 
-    /* ---------------- 2. الوضع الداكن (Dark Mode) ---------------- */
     @media (prefers-color-scheme: dark) {
         body, .stApp {
             background-color: #0e1117 !important;
@@ -289,9 +274,20 @@ query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
 # ==============================================================================
-# 1. واجهة الطالب
+# 1. واجهة الطالب (إخفاء الشريط الجانبي تماماً)
 # ==============================================================================
 if is_student_mode:
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"] { display: none !important; }
+            [data-testid="stSidebarCollapseButton"] { display: none !important; }
+            [data-testid="collapsedControl"] { display: none !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         f"""
     <div class="brand-banner" dir="rtl">
@@ -361,8 +357,19 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم الرئيسية
+# 2. لوحة تحكم المعلم الرئيسية (يظهر فيها الشريط الجانبي فقط)
 # ==============================================================================
+st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
+uploaded_photo = st.sidebar.file_uploader(
+    "ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"]
+)
+if uploaded_photo is not None:
+    with open(IMG_NAME, "wb") as f:
+        f.write(uploaded_photo.getbuffer())
+    found_img_path = IMG_NAME
+    st.sidebar.success("✓ تم حفظ صورتك بنجاح!")
+    st.rerun()
+
 if found_img_path and os.path.exists(found_img_path):
     st.sidebar.image(found_img_path, width=220)
 
@@ -753,7 +760,6 @@ with tab4:
                 else ""
             )
 
-            # صفحة الطباعة تظل بخلفية بيضاء وخط أسود داكن لضمان جودة الطباعة على الورق
             printable_html = f"""<!DOCTYPE html>
             <html dir="rtl" lang="ar">
             <head>
