@@ -12,6 +12,11 @@ try:
 except ImportError:
     paste_image_button = None
 
+try:
+    from streamlit_cropper import st_cropper
+except ImportError:
+    st_cropper = None
+
 FILE_NAME = "سجل_الغياب_والحصص.xlsx"
 IMG_NAME = "teacher.jpg"
 
@@ -250,13 +255,12 @@ st.markdown("""
         padding: 10px 24px;
     }
     .stButton>button:hover { background: #003d99 !important; }
-    .nav-btn-active {
-        background-color: #16a34a !important;
-        color: white !important;
+    .btn-danger>button {
+        background: #dc2626 !important;
+        color: #ffffff !important;
     }
-    .nav-btn-unanswered {
-        background-color: #ef4444 !important;
-        color: white !important;
+    .btn-danger>button:hover {
+        background: #b91c1c !important;
     }
     .call-btn-container {
         display: flex;
@@ -413,8 +417,8 @@ if is_student_mode:
                 st.session_state.logged_student = None
                 st.rerun()
 
-        # ==================== قسم الاختبارات التفاعلية بنظام الخطوات ====================
-        st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية التفاعلية المتاحة</div>", unsafe_allow_html=True)
+        # ==================== قسم الاختبارات ====================
+        st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية المتاحة</div>", unsafe_allow_html=True)
         my_grade = st_user.get("المجموعة/الصف", "")
         available_exams = st.session_state.exams_df[st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == my_grade.strip()].copy()
 
@@ -441,7 +445,6 @@ if is_student_mode:
                         solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
                         st.success(f"✅ لقد قمت بأداء هذا الاختبار مسبقاً بنتيجة: ({solved_score} من {solved_max})")
                     else:
-                        # نظام إدارة حالة الامتحان التفاعلي
                         exam_state_key = f"exam_state_{ex_id}"
                         if exam_state_key not in st.session_state:
                             st.session_state[exam_state_key] = {
@@ -479,7 +482,6 @@ if is_student_mode:
                                 cur_i = st_ex["cur_idx"]
                                 q_curr = questions[cur_i]
 
-                                # لوحة شبكة أرقام الأسئلة العلوية / الجانبية للتنقل
                                 st.markdown("##### 📌 خريطة أسئلة الاختبار (اضغط على رقم السؤال للذهاب إليه مباشرة):")
                                 nav_cols = st.columns(min(total_q, 10))
                                 for q_num_i in range(total_q):
@@ -498,7 +500,6 @@ if is_student_mode:
 
                                 st.write("---")
 
-                                # عرض السؤال الحالي
                                 q_type = q_curr.get("type", "موضوعي")
                                 st.markdown(f"### **سؤال {cur_i + 1} من {total_q}:**")
 
@@ -545,7 +546,6 @@ if is_student_mode:
 
                                 st.write("---")
 
-                                # أزرار التحكم (السابق - التالي - إنهاء الاختبار)
                                 c_prev, c_next, c_finish = st.columns([1, 1, 2])
 
                                 with c_prev:
@@ -562,7 +562,6 @@ if is_student_mode:
 
                                 with c_finish:
                                     if st.button("🏁 تسليم وإنهاء الاختبار", key=f"btn_finish_{ex_id}"):
-                                        # فحص الأسئلة غير المجابة
                                         unanswered_q = []
                                         for check_i in range(total_q):
                                             q_c = questions[check_i]
@@ -709,7 +708,7 @@ if is_student_mode:
     st.stop()
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم (مع ميزة قص الصور ومسحها بالكامل)
+# 2. لوحة تحكم المعلم (مع ميزة مسح الصور وقصها بالماوس تفاعلياً)
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -737,7 +736,7 @@ st.markdown(f"""
 <div class="brand-banner" dir="rtl">
     <div>
         <h1 class="brand-title">البشمهندس X الرياضة 📐</h1>
-        <p class="brand-subtitle">صانع الامتحانات التفاعلية • تعديل وقص الصور • تصحيح المقالي • تقارير أولياء الأمور</p>
+        <p class="brand-subtitle">صانع الامتحانات التفاعلية • قص ومسح الصور • تصحيح المقالي • تقارير أولياء الأمور</p>
     </div>
     {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
 </div>
@@ -755,12 +754,19 @@ tab_exam_maker, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, 
     "🖨️ تقرير ولي الأمر للطباعة",
 ])
 
-# ----------------- تبويب صانع الامتحانات (تعديل، قص، وحذف الصور) -----------------
+# ----------------- تبويب صانع الامتحانات (تعديل، قص مرئي بالماوس، ومسح فوري) -----------------
 with tab_exam_maker:
-    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / تحرير الصور وقصها</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / محرر الصور وقصها بالماوس</div>", unsafe_allow_html=True)
 
     if "temp_questions" not in st.session_state:
         st.session_state.temp_questions = []
+
+    # عدادات المفاتيح لإجبار الـ file_uploader على التفريغ عند المسح
+    if "q_img_reset_counter" not in st.session_state: st.session_state.q_img_reset_counter = 0
+    if "opt1_img_reset_counter" not in st.session_state: st.session_state.opt1_img_reset_counter = 0
+    if "opt2_img_reset_counter" not in st.session_state: st.session_state.opt2_img_reset_counter = 0
+    if "opt3_img_reset_counter" not in st.session_state: st.session_state.opt3_img_reset_counter = 0
+    if "opt4_img_reset_counter" not in st.session_state: st.session_state.opt4_img_reset_counter = 0
 
     if "pasted_q_img" not in st.session_state: st.session_state.pasted_q_img = ""
     if "pasted_opt1_img" not in st.session_state: st.session_state.pasted_opt1_img = ""
@@ -781,14 +787,14 @@ with tab_exam_maker:
             ex_term_input = st.selectbox("اختر الفصل الدراسي:*", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني", "مراجعة نهائية"])
             ex_time_input = st.number_input("مدة الامتحان (بالدقائق):", min_value=5, max_value=180, value=45, step=5)
 
-    with st.expander("📐 2. إدخال الأسئلة وتحرير وقص الصور", expanded=True):
+    with st.expander("📐 2. إدخال الأسئلة وتحرير وقص الصور بالماوس", expanded=True):
         q_count = len(st.session_state.temp_questions) + 1
         st.markdown(f"#### إضافة سؤال رقم {q_count}")
 
         q_type_choice = st.selectbox("نوع السؤال:", ["سؤال موضوعي (اختيار من متعدد)", "سؤال مقالي (خطوات حل ورفع صورة)"])
         is_mcq = "موضوعي" in q_type_choice
 
-        st.markdown("##### 📌 أ) صورة السؤال والتحكم فيها:")
+        st.markdown("##### 📌 أ) صورة السؤال:")
         col_qp1, col_qp2 = st.columns([1, 1])
         with col_qp1:
             if paste_image_button:
@@ -797,41 +803,39 @@ with tab_exam_maker:
                     st.session_state.pasted_q_img = pil_to_base64(paste_res.image_data)
                     st.success("✓ تم لصق صورة السؤال!")
         with col_qp2:
-            q_file_up = st.file_uploader("أو اسحب صورة السؤال هنا:", type=["jpg", "png", "jpeg"], key=f"upload_q_{q_count}")
+            q_file_up = st.file_uploader("أو اسحب صورة السؤال هنا:", type=["jpg", "png", "jpeg"], key=f"upload_q_{q_count}_{st.session_state.q_img_reset_counter}")
             if q_file_up is not None:
                 st.session_state.pasted_q_img = base64.b64encode(q_file_up.read()).decode()
 
-        # معاينة وقص ومسح صورة السؤال
+        # عرض ومسح وقص صورة السؤال
         if st.session_state.pasted_q_img:
-            col_v1, col_v2 = st.columns([3, 1])
-            with col_v1:
-                st.image(f"data:image/jpeg;base64,{st.session_state.pasted_q_img}", width=350)
-            with col_v2:
-                if st.button("🗑️ مسح صورة السؤال", key=f"del_q_img_{q_count}"):
+            st.write("---")
+            col_preview, col_del = st.columns([4, 1])
+            with col_preview:
+                st.markdown("**المعاينة الحالية لصورة السؤال:**")
+                st.image(f"data:image/jpeg;base64,{st.session_state.pasted_q_img}", width=400)
+            with col_del:
+                st.write("")
+                st.write("")
+                if st.button("🗑️ مسح الصورة بالكامل", key=f"del_q_main_btn_{q_count}"):
                     st.session_state.pasted_q_img = ""
+                    st.session_state.q_img_reset_counter += 1
+                    st.success("✓ تم مسح الصورة فوراً!")
                     st.rerun()
 
-            with st.expander("✂️ قص وتعديل هوامش صورة السؤال"):
+            # أداة القص المرئية بالماوس
+            with st.expander("✂️ أداة قص الصورة بالماوس مباشرة"):
                 pil_q = base64_to_pil(st.session_state.pasted_q_img)
                 if pil_q:
-                    w, h = pil_q.size
-                    crop_top = st.slider("اقتصاص من الأعلى (Top %):", 0, 80, 0, key=f"cr_t_{q_count}")
-                    crop_bottom = st.slider("اقتصاص من الأسفل (Bottom %):", 0, 80, 0, key=f"cr_b_{q_count}")
-                    crop_left = st.slider("اقتصاص من اليسار (Left %):", 0, 80, 0, key=f"cr_l_{q_count}")
-                    crop_right = st.slider("اقتصاص من اليمين (Right %):", 0, 80, 0, key=f"cr_r_{q_count}")
-
-                    if st.button("✂️ تطبيق القص على صورة السؤال", key=f"apply_crop_{q_count}"):
-                        box = (
-                            int(w * crop_left / 100),
-                            int(h * crop_top / 100),
-                            int(w * (1 - crop_right / 100)),
-                            int(h * (1 - crop_bottom / 100))
-                        )
-                        if box[2] > box[0] and box[3] > box[1]:
-                            cropped = pil_q.crop(box)
-                            st.session_state.pasted_q_img = pil_to_base64(cropped)
-                            st.success("✓ تم قص وتعديل الصورة بنجاح!")
+                    st.info("👇 حدد الجزء المطلوب قصه بالماوس من المربع ثم اضغط 'تأكيد القص':")
+                    if st_cropper:
+                        cropped_img = st_cropper(pil_q, realtime_update=True, box_color='#0052cc', aspect_ratio=None, key=f"cropper_q_{q_count}")
+                        if st.button("✂️ تأكيد واعتماد الجزء المقصوص", key=f"btn_confirm_crop_{q_count}"):
+                            st.session_state.pasted_q_img = pil_to_base64(cropped_img)
+                            st.success("✓ تم تطبيق القص على الصورة بنجاح!")
                             st.rerun()
+                    else:
+                        st.warning("أضف `streamlit-cropper` في ملف requirements.txt لتفعيل القص بالماوس.")
 
         q_text_input = st.text_area("نص السؤال المكتوب (اختياري):", placeholder="مثال: أوجد قيمة س الموضحة بالرسم:")
 
@@ -840,73 +844,77 @@ with tab_exam_maker:
 
         if is_mcq:
             st.write("---")
-            st.markdown("##### 🎯 ب) خيارات الإجابة الأربعة:")
-
-            # مصفوفة لمعالجة الخيارات الأربعة ومسح صورها
-            opts_names = ["الأول (أ)", "الثاني (ب)", "الثالث (ج)", "الرابع (د)"]
-            keys_opts = ["pasted_opt1_img", "pasted_opt2_img", "pasted_opt3_img", "pasted_opt4_img"]
+            st.markdown("##### 🎯 ب) خيارات الإجابة الأربعة ومسح صورها:")
 
             # الخيار 1
             st.markdown("**الخيار الأول (أ):**")
-            co1_a, co1_b, co1_c = st.columns([2, 2, 1])
+            co1_a, co1_b, co1_c = st.columns([3, 2, 1])
             with co1_a: opt1_txt = st.text_input("نص الخيار (أ):", key=f"t_opt1_{q_count}")
             with co1_b:
                 if paste_image_button:
                     p1 = paste_image_button("📋 لصق صورة (أ)", key=f"p_opt1_{q_count}")
                     if p1.image_data is not None: st.session_state.pasted_opt1_img = pil_to_base64(p1.image_data)
-                f1 = st.file_uploader("أو ارفع صورة (أ):", type=["jpg", "png", "jpeg"], key=f"u_opt1_{q_count}")
+                f1 = st.file_uploader("ارفع صورة (أ):", type=["jpg", "png", "jpeg"], key=f"u_opt1_{q_count}_{st.session_state.opt1_img_reset_counter}")
                 if f1 is not None: st.session_state.pasted_opt1_img = base64.b64encode(f1.read()).decode()
             with co1_c:
-                if st.session_state.pasted_opt1_img and st.button("🗑️ مسح", key=f"del_o1_{q_count}"):
+                st.write("")
+                if st.session_state.pasted_opt1_img and st.button("🗑️ مسح الصورة", key=f"del_o1_{q_count}"):
                     st.session_state.pasted_opt1_img = ""
+                    st.session_state.opt1_img_reset_counter += 1
                     st.rerun()
             if st.session_state.pasted_opt1_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt1_img}", width=180)
 
             # الخيار 2
             st.markdown("**الخيار الثاني (ب):**")
-            co2_a, co2_b, co2_c = st.columns([2, 2, 1])
+            co2_a, co2_b, co2_c = st.columns([3, 2, 1])
             with co2_a: opt2_txt = st.text_input("نص الخيار (ب):", key=f"t_opt2_{q_count}")
             with co2_b:
                 if paste_image_button:
                     p2 = paste_image_button("📋 لصق صورة (ب)", key=f"p_opt2_{q_count}")
                     if p2.image_data is not None: st.session_state.pasted_opt2_img = pil_to_base64(p2.image_data)
-                f2 = st.file_uploader("أو ارفع صورة (ب):", type=["jpg", "png", "jpeg"], key=f"u_opt2_{q_count}")
+                f2 = st.file_uploader("ارفع صورة (ب):", type=["jpg", "png", "jpeg"], key=f"u_opt2_{q_count}_{st.session_state.opt2_img_reset_counter}")
                 if f2 is not None: st.session_state.pasted_opt2_img = base64.b64encode(f2.read()).decode()
             with co2_c:
-                if st.session_state.pasted_opt2_img and st.button("🗑️ مسح", key=f"del_o2_{q_count}"):
+                st.write("")
+                if st.session_state.pasted_opt2_img and st.button("🗑️ مسح الصورة", key=f"del_o2_{q_count}"):
                     st.session_state.pasted_opt2_img = ""
+                    st.session_state.opt2_img_reset_counter += 1
                     st.rerun()
             if st.session_state.pasted_opt2_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt2_img}", width=180)
 
             # الخيار 3
             st.markdown("**الخيار الثالث (ج):**")
-            co3_a, co3_b, co3_c = st.columns([2, 2, 1])
+            co3_a, co3_b, co3_c = st.columns([3, 2, 1])
             with co3_a: opt3_txt = st.text_input("نص الخيار (ج):", key=f"t_opt3_{q_count}")
             with co3_b:
                 if paste_image_button:
                     p3 = paste_image_button("📋 لصق صورة (ج)", key=f"p_opt3_{q_count}")
                     if p3.image_data is not None: st.session_state.pasted_opt3_img = pil_to_base64(p3.image_data)
-                f3 = st.file_uploader("أو ارفع صورة (ج):", type=["jpg", "png", "jpeg"], key=f"u_opt3_{q_count}")
+                f3 = st.file_uploader("ارفع صورة (ج):", type=["jpg", "png", "jpeg"], key=f"u_opt3_{q_count}_{st.session_state.opt3_img_reset_counter}")
                 if f3 is not None: st.session_state.pasted_opt3_img = base64.b64encode(f3.read()).decode()
             with co3_c:
-                if st.session_state.pasted_opt3_img and st.button("🗑️ مسح", key=f"del_o3_{q_count}"):
+                st.write("")
+                if st.session_state.pasted_opt3_img and st.button("🗑️ مسح الصورة", key=f"del_o3_{q_count}"):
                     st.session_state.pasted_opt3_img = ""
+                    st.session_state.opt3_img_reset_counter += 1
                     st.rerun()
             if st.session_state.pasted_opt3_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt3_img}", width=180)
 
             # الخيار 4
             st.markdown("**الخيار الرابع (د):**")
-            co4_a, co4_b, co4_c = st.columns([2, 2, 1])
+            co4_a, co4_b, co4_c = st.columns([3, 2, 1])
             with co4_a: opt4_txt = st.text_input("نص الخيار (د):", key=f"t_opt4_{q_count}")
             with co4_b:
                 if paste_image_button:
                     p4 = paste_image_button("📋 لصق صورة (د)", key=f"p_opt4_{q_count}")
                     if p4.image_data is not None: st.session_state.pasted_opt4_img = pil_to_base64(p4.image_data)
-                f4 = st.file_uploader("أو ارفع صورة (د):", type=["jpg", "png", "jpeg"], key=f"u_opt4_{q_count}")
+                f4 = st.file_uploader("ارفع صورة (د):", type=["jpg", "png", "jpeg"], key=f"u_opt4_{q_count}_{st.session_state.opt4_img_reset_counter}")
                 if f4 is not None: st.session_state.pasted_opt4_img = base64.b64encode(f4.read()).decode()
             with co4_c:
-                if st.session_state.pasted_opt4_img and st.button("🗑️ مسح", key=f"del_o4_{q_count}"):
+                st.write("")
+                if st.session_state.pasted_opt4_img and st.button("🗑️ مسح الصورة", key=f"del_o4_{q_count}"):
                     st.session_state.pasted_opt4_img = ""
+                    st.session_state.opt4_img_reset_counter += 1
                     st.rerun()
             if st.session_state.pasted_opt4_img: st.image(f"data:image/jpeg;base64,{st.session_state.pasted_opt4_img}", width=180)
 
@@ -936,6 +944,11 @@ with tab_exam_maker:
                 st.session_state.pasted_opt2_img = ""
                 st.session_state.pasted_opt3_img = ""
                 st.session_state.pasted_opt4_img = ""
+                st.session_state.q_img_reset_counter += 1
+                st.session_state.opt1_img_reset_counter += 1
+                st.session_state.opt2_img_reset_counter += 1
+                st.session_state.opt3_img_reset_counter += 1
+                st.session_state.opt4_img_reset_counter += 1
                 st.success(f"✓ تم حفظ السؤال رقم {q_count} بنجاح!")
                 st.rerun()
 
