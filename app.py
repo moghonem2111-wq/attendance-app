@@ -299,85 +299,6 @@ st.markdown("""
         margin: 15px 0;
     }
 
-    /* بنر كورسات منصة درسلي المطول والمخصص */
-    .darssly-banner {
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        border-radius: 16px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-    }
-    .darssly-title {
-        color: #ffffff !important;
-        font-size: 24px !important;
-        font-weight: 900 !important;
-        margin: 0 0 8px 0 !important;
-        text-align: center !important;
-    }
-    .darssly-sub {
-        color: #e0e7ff !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        margin-bottom: 20px !important;
-        text-align: center !important;
-    }
-    .darssly-card {
-        background: #ffffff;
-        border-radius: 14px;
-        padding: 16px 20px;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-right: 6px solid #4f46e5;
-    }
-    .darssly-card-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    .darssly-card-icon {
-        font-size: 32px;
-        background: #e0e7ff;
-        width: 55px;
-        height: 55px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-    }
-    .darssly-card-title {
-        color: #1e1b4b !important;
-        font-size: 18px !important;
-        font-weight: 900 !important;
-        margin: 0 !important;
-    }
-    .darssly-card-desc {
-        color: #64748b !important;
-        font-size: 14px !important;
-        font-weight: 800 !important;
-        margin: 3px 0 0 0 !important;
-    }
-    .darssly-card-btn {
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        color: #ffffff !important;
-        padding: 10px 22px;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 900;
-        text-decoration: none !important;
-        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
-        transition: transform 0.2s ease;
-        white-space: nowrap;
-    }
-    .darssly-card-btn:hover {
-        transform: translateY(-2px);
-        background: linear-gradient(135deg, #4338ca, #6d28d9);
-    }
-
-    /* أيقونات السوشيال ميديا */
     .social-top-container {
         display: flex;
         gap: 12px;
@@ -452,8 +373,6 @@ st.markdown("""
         div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 900 !important; font-size: 26px !important; }
         .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
         .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
-        .darssly-card { background: #1e232d; border-color: #334155; }
-        .darssly-card-title { color: #ffffff !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -479,47 +398,6 @@ if is_student_mode:
         </div>
         {'<img src="data:image/jpeg;base64,' + img_b64 + '" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover;">' if img_b64 else ''}
     </div>
-    """, unsafe_allow_html=True)
-
-    # بنر كورسات منصة درسلي (Darssly) المطول والمخصص بالصور والزر الواضح
-    st.markdown("""
-        <div class="darssly-banner" dir="rtl">
-            <h3 class="darssly-title">📢 اشترك الآن في كورسات الرياضيات على منصة درسلي (Darssly)</h3>
-            <p class="darssly-sub">اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>
-            
-            <div class="darssly-card">
-                <div class="darssly-card-info">
-                    <div class="darssly-card-icon">📖</div>
-                    <div>
-                        <h4 class="darssly-card-title">رياضيات الصف الأول الإعدادي</h4>
-                        <p class="darssly-card-desc">شرح كامل، تمارين، واختبارات دورية مع البشمهندس محمد غنيم</p>
-                    </div>
-                </div>
-                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww" target="_blank" class="darssly-card-btn">معرفة تفاصيل الاشتراك 👈</a>
-            </div>
-
-            <div class="darssly-card">
-                <div class="darssly-card-info">
-                    <div class="darssly-card-icon">📘</div>
-                    <div>
-                        <h4 class="darssly-card-title">رياضيات الصف الثاني الإعدادي</h4>
-                        <p class="darssly-card-desc">متابعة شاملة، تبسيط المناهج، وأسئلة تفاعلية مميزة</p>
-                    </div>
-                </div>
-                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw" target="_blank" class="darssly-card-btn">معرفة تفاصيل الاشتراك 👈</a>
-            </div>
-
-            <div class="darssly-card">
-                <div class="darssly-card-info">
-                    <div class="darssly-card-icon">📐</div>
-                    <div>
-                        <h4 class="darssly-card-title">رياضيات الصف الثالث الإعدادي (الشهادة الإعدادية)</h4>
-                        <p class="darssly-card-desc">تأسيس قوي، مراجعات نهائية، وضمان الدرجة النهائية بإذن الله</p>
-                    </div>
-                </div>
-                <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw" target="_blank" class="darssly-card-btn">معرفة تفاصيل الاشتراك 👈</a>
-            </div>
-        </div>
     """, unsafe_allow_html=True)
 
     if "logged_student" not in st.session_state:
@@ -590,7 +468,6 @@ if is_student_mode:
                     <h3 style="margin: 0; color: #0052cc;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
                     <p style="margin: 4px 0 10px 0; font-weight: 900;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                     
-                    <!-- أيقونات السوشيال ميديا في الأعلى -->
                     <div class="social-top-container">
                         <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
                         <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg fill="#ffffff" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
@@ -605,6 +482,47 @@ if is_student_mode:
             if st.button("🚪 خروج"):
                 st.session_state.logged_student = None
                 st.rerun()
+
+        # اشتراكات منصة درسلي المطولة للطالب
+        st.markdown("""
+            <div class="darssly-banner" dir="rtl">
+                <h3 class="darssly-title">📢 اشترك الآن في كورسات الرياضيات على منصة درسلي (Darssly)</h3>
+                <p class="darssly-sub">اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>
+                
+                <div class="darssly-card">
+                    <div class="darssly-card-info">
+                        <div class="darssly-card-icon">📖</div>
+                        <div>
+                            <h4 class="darssly-card-title">رياضيات الصف الأول الإعدادي</h4>
+                            <p class="darssly-card-desc">شرح كامل، تمارين، واختبارات دورية مع البشمهندس محمد غنيم</p>
+                        </div>
+                    </div>
+                    <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans?fbclid=IwY2xjawUKZOBwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe9bKTqqqGR-Dm5vuexgnPWzsVYzOxhf0apYaJrKgsvqstKjjwojK94y6SkXE_aem_s6Zn4zipvtVUTsL6u7T4ww" target="_blank" class="darssly-card-btn">معرفة تفاصيل الاشتراك 👈</a>
+                </div>
+
+                <div class="darssly-card">
+                    <div class="darssly-card-info">
+                        <div class="darssly-card-icon">📘</div>
+                        <div>
+                            <h4 class="darssly-card-title">رياضيات الصف الثاني الإعدادي</h4>
+                            <p class="darssly-card-desc">متابعة شاملة، تبسيط المناهج، وأسئلة تفاعلية مميزة</p>
+                        </div>
+                    </div>
+                    <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans?fbclid=IwY2xjawUKZSFwZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeV3ubjKouoEGuz4whFUVEraSk1byAy7b3Mm6DipOCFjFTI9bFIn4o3xHzkGI_aem_AtBFlzF8bD1TSjD6fNW5uw" target="_blank" class="darssly-card-btn">معرفة تفاصيل الاشتراك 👈</a>
+                </div>
+
+                <div class="darssly-card">
+                    <div class="darssly-card-info">
+                        <div class="darssly-card-icon">📐</div>
+                        <div>
+                            <h4 class="darssly-card-title">رياضيات الصف الثالث الإعدادي (الشهادة الإعدادية)</h4>
+                            <p class="darssly-card-desc">تأسيس قوي، مراجعات نهائية، وضمان الدرجة النهائية بإذن الله</p>
+                        </div>
+                    </div>
+                    <a href="https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans?fbclid=IwY2xjawUKZT1wZG9mAWV4dG4DYWVtAjEwAGJyaWQRMTlWRlpNM3FsN3ViUTA1blBzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe-zyDmeptpawIByu0yeN8QqfHqYDVlWgOVHoQI-Thweh_tYxL17oQONjII7w_aem_bEcNaJAAnCRbg7a77YDWxw" target="_blank" class="darssly-card-btn">معرفة تفاصيل الاشتراك 👈</a>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
         # ==================== قسم الاختبارات التفاعلية ====================
         st.markdown("<div class='vertical-section-header'>✍️ أولاً: الاختبارات الإلكترونية التفاعلية المتاحة</div>", unsafe_allow_html=True)
