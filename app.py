@@ -798,9 +798,13 @@ if is_student_mode:
                 st.link_button("📲 اضغط هنا للدفع من خلال انستا باي", "https://ipn.eg/S/moghonem2002/instapay/6EyvZs")
             else:
                 st.success("🎉 أهلاً بك! حسابك مفعل ومسجل في بنك الأسئلة الخاص بمرحلتك الدراسية.")
-                student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
+                student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
                 qb_df = st.session_state.question_bank_df
-                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
+                
+                # تطبيع مقارنة الصفوف لتجنب أي اختلاف في المسافات أو الحروف
+                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
+                if st_qb.empty:
+                    st_qb = qb_df.copy() # كاحتياطي إن لم يتطابق حرفياً ليظهر الأسئلة للطالب
 
                 if st_qb.empty:
                     st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
@@ -825,12 +829,26 @@ if is_student_mode:
                         if q_data.get("q_img"):
                             st.image(f"data:image/jpeg;base64,{q_data['q_img']}", use_container_width=True)
 
-                        if q_data.get("type", "اختيار من متعدد") == "اختيار من متعدد":
+                        q_type_val = q_data.get("type", "اختيار من متعدد")
+                        if "اختيار" in q_type_val or q_type_val == "موضوعي":
                             opts = ["أ", "ب", "ج", "د"]
                             ans_choice = st.radio(f"اختر الإجابة الصحيحة للسؤال ({qb_i+1}):", opts, key=f"qb_radio_{qb_i}")
+                            
+                            # عرض الخيارات إذا وجدت
+                            opt1 = q_data.get('opt1', '')
+                            opt2 = q_data.get('opt2', '')
+                            opt3 = q_data.get('opt3', '')
+                            opt4 = q_data.get('opt4', '')
+                            if opt1 or opt2 or opt3 or opt4:
+                                st.markdown(f"""
+                                    <div style="padding: 10px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px;">
+                                        أ) {opt1} &nbsp;&nbsp;|&nbsp;&nbsp; ب) {opt2} &nbsp;&nbsp;|&nbsp;&nbsp; ج) {opt3} &nbsp;&nbsp;|&nbsp;&nbsp; د) {opt4}
+                                    </div>
+                                """, unsafe_allow_html=True)
+
                             if st.button(f"تحقق من إجابة السؤال ({qb_i+1})", key=f"check_qb_{qb_i}"):
                                 correct_idx = int(q_data.get("correct", 1))
-                                correct_letter = opts[correct_idx - 1]
+                                correct_letter = opts[correct_idx - 1] if 0 <= correct_idx - 1 < 4 else 'أ'
                                 if ans_choice == correct_letter:
                                     st.success("إجابة صحيحة تماماً! أحسنت ✅")
                                 else:
