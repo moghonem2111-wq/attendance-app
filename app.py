@@ -1378,22 +1378,20 @@ with tab_exam_maker:
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
 
-# --- لوحة بنك الأسئلة المتقدمة (مطابقة لنظام الاختبارات) ---
+# --- لوحة بنك الأسئلة المتقدمة (مطابقة لنظام الاختبارات وبدون إظهار الخيارات في المقالي) ---
 with tab_question_bank:
     st.subheader("📚 بنك الأسئلة الشامل (إضافة أسئلة اختر ومقالي بصور ومواصفات كاملة):")
 
     if "qb_q_img" not in st.session_state: st.session_state.qb_q_img = ""
-    if "qb_o1_img" not in st.session_state: st.session_state.qb_o1_img = ""
-    if "qb_o2_img" not in st.session_state: st.session_state.qb_o2_img = ""
-    if "qb_o3_img" not in st.session_state: st.session_state.qb_o3_img = ""
-    if "qb_o4_img" not in st.session_state: st.session_state.qb_o4_img = ""
     if "qb_ver" not in st.session_state: st.session_state.qb_ver = 0
 
     with st.form("add_qbank_form"):
         qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qbc_c")
         qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qbc_g")
         qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qbc_s")
+        
         qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qbc_t")
+        is_qbank_mcq = (qb_type == "اختيار من متعدد")
 
         st.markdown("##### 📌 أ) صورة السؤال (اختياري):")
         qb_file_up = st.file_uploader("رفع صورة السؤال:", type=["jpg", "png", "jpeg"], key=f"qbc_img_up_{st.session_state.qb_ver}")
@@ -1412,7 +1410,7 @@ with tab_question_bank:
         qb_opt1, qb_opt2, qb_opt3, qb_opt4 = "", "", "", ""
         qb_correct = 1
 
-        if qb_type == "اختيار من متعدد":
+        if is_qbank_mcq:
             st.markdown("---")
             st.markdown("##### 🎯 ب) خيارات الاختيار من متعدد:")
             qb_opt1 = st.text_input("الخيار (أ):", key="qbc_o1")
@@ -1432,11 +1430,11 @@ with tab_question_bank:
                     "type": qb_type,
                     "text": qb_text.strip(),
                     "q_img": st.session_state.qb_q_img,
-                    "opt1": qb_opt1.strip(),
-                    "opt2": qb_opt2.strip(),
-                    "opt3": qb_opt3.strip(),
-                    "opt4": qb_opt4.strip(),
-                    "correct": qb_correct,
+                    "opt1": qb_opt1.strip() if is_qbank_mcq else "",
+                    "opt2": qb_opt2.strip() if is_qbank_mcq else "",
+                    "opt3": qb_opt3.strip() if is_qbank_mcq else "",
+                    "opt4": qb_opt4.strip() if is_qbank_mcq else "",
+                    "correct": qb_correct if is_qbank_mcq else 1,
                     "points": qb_points
                 }
                 new_qbank_row = {
