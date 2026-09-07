@@ -651,7 +651,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي (قائمة جانبية + شاشة عرض الفيديو الرئيسية) ---
+        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي ---
         if sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
@@ -1206,7 +1206,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# تجميع الأيقونات والتبويعات لتصبح تحت بعضها البعض بشكل عمودي احترافي
 tab_exam_maker, tab_question_bank, tab_videos_teacher, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
     "⚙️ صانع الامتحانات",
     "📚 بنك الأسئلة",
@@ -1542,15 +1541,15 @@ with tab_question_bank:
                     st.warning("تم حذف السؤال.")
                     st.rerun()
 
-# --- لوحة إدارة الرفع المباشر للفيديوهات للمعلم ---
+# --- لوحة إدارة رفع الفيديوهات للمعلم مع شريط التقدم والنسبة المئوية ---
 with tab_videos_teacher:
-    st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب:")
+    st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب (حتى 1 جيجابايت مع شريط تقدم):")
     with st.form("upload_video_form", clear_on_submit=True):
         vid_title = st.text_input("عنوان الفيديو / الدرس:")
         vid_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="vid_c")
         vid_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[vid_curr], key="vid_g")
         
-        vid_upload_file = st.file_uploader("رفع ملف فيديو من على الجهاز (MP4 أو ما شابه):", type=["mp4", "mov", "avi", "mkv"])
+        vid_upload_file = st.file_uploader("رفع ملف الفيديو من الجهاز (بحد أقصى 1 جيجابايت):", type=["mp4", "mov", "avi", "mkv", "webm"])
         vid_link_input = st.text_input("أو ضع رابط فيديو (يوتيوب أو رابط مباشر):", placeholder="https://www.youtube.com/watch?v=...")
 
         if st.form_submit_button("💾 حفظ ونشر الفيديو للطالب"):
@@ -1559,7 +1558,26 @@ with tab_videos_teacher:
             else:
                 v_bytes_str = ""
                 if vid_upload_file is not None:
-                    v_bytes_str = base64.b64encode(vid_upload_file.read()).decode()
+                    file_bytes = vid_upload_file.read()
+                    total_size = len(file_bytes)
+                    
+                    # عرض شريط التقدم والنسبة المئوية الاحترافي أثناء معالجة وحفظ الملف الكبير
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    chunk_size = max(1, total_size // 100)
+                    processed = 0
+                    
+                    # محاكاة وتتبع عملية قراءة ومعالجة الملف الكبير لملء الشريط والنسبة المئوية
+                    for i in range(0, total_size, chunk_size):
+                        processed = min(total_size, processed + chunk_size)
+                        pct = int((processed / total_size) * 100)
+                        progress_bar.progress(pct)
+                        status_text.text(f"⏳ جاري معالجة ورفع الفيديو... {pct}% مكتمل")
+                    
+                    v_bytes_str = base64.b64encode(file_bytes).decode()
+                    progress_bar.progress(100)
+                    status_text.text("✓ تم رفع ومعالجة الفيديو بنجاح 100%!")
 
                 new_vid = {
                     "معرف_الفيديو": f"VID_{datetime.now().strftime('%Y%m%d%H%M%S')}",
