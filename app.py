@@ -203,7 +203,8 @@ st.markdown(f"""
     input, textarea, select {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
-        color: #0f172a !important;
+        color: {text_color} !important;
+        background-color: {card_bg} !important;
     }}
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {{
@@ -233,10 +234,21 @@ st.markdown(f"""
         background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff !important; padding: 14px 20px; border-radius: 10px; margin-top: 25px; margin-bottom: 15px; font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 10px;
     }}
     
+    /* أزرار عامة باللون الأخضر */
     .stButton>button {{
         background: #10b981 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; border: none !important; border-radius: 10px; font-weight: 900 !important; font-size: 16px !important; padding: 12px 22px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); width: 100% !important;
     }}
     .stButton>button:hover {{ background: #059669 !important; }}
+
+    /* أزرار تسجيل الدخول وإنشاء الحساب باللون الأحمر وكتابة بيضاء */
+    div.stFormSubmitButton > button, div.row-widget.stButton > button:nth-of-type(1) {{
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }}
+    div.stFormSubmitButton > button:hover {{
+        background-color: #b91c1c !important;
+    }}
 
     .stLinkButton>a {{
         background-color: #dc2626 !important;
@@ -859,7 +871,7 @@ if is_student_mode:
                     pct_val = (score_val / max_val * 100) if max_val > 0 else 0
                     with st.expander(f"📝 {ex_rec['عنوان التكليف']} — النتيجة: ({score_val} / {max_val})"):
                         st.markdown(f"""
-                            <div style="background:#dc2626; border:3px solid #b91c1c; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.15); margin-bottom:20px;">
+                            <div style="background:#dc2626; border:3px solid #b91c1c; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-bottom:20px;">
                                 <h2 style="color:#ffffff; margin-bottom:8px; font-size:26px;">🎓 شهادة إتمام الاختبار</h2>
                                 <p style="font-size:20px; color:#ffffff; margin: 5px 0;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
                                 <p style="font-size:18px; color:#f8fafc; margin: 5px 0;"><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
