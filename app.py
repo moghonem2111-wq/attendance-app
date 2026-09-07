@@ -249,7 +249,6 @@ st.markdown(f"""
         background-color: {bg_color} !important;
     }}
 
-    /* إجبار القوائم المنسدلة وخانات الإدخال على ظهور نصوص سوداء واضحة بخلفية بيضاء */
     input, textarea, select, div[data-baseweb="select"] > div {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
@@ -1518,7 +1517,7 @@ with tab_question_bank:
 
         if st.session_state.qb_q_img:
             st.image(f"data:image/jpeg;base64,{st.session_state.qb_q_img}", width=350)
-            if st.button("🗑️ مسح صورة السؤال", key="del_qbc_img"):
+            if st.form_submit_button("🗑️ مسح صورة السؤال"):
                 st.session_state.qb_q_img = ""
                 st.session_state.qb_ver += 1
                 st.rerun()
