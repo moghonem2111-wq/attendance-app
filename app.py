@@ -256,6 +256,33 @@ st.markdown(f"""
         background-color: #ffffff !important;
     }}
 
+    /* إصلاح خلفية ونصوص التقويم المنبثق (Date Input Calendar) ليكون واضحاً وبلون أبيض وأسود نقي */
+    div[data-baseweb="popover"], div[role="dialog"], div[aria-label*="Choose a date"], div[aria-label*="Calendar"] {{
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }}
+    div[data-baseweb="calendar"] *, div[data-baseweb="popover"] * {{
+        color: #0f172a !important;
+        background-color: transparent !important;
+    }}
+    div[data-baseweb="calendar"] button {{
+        color: #0f172a !important;
+        background-color: #f1f5f9 !important;
+        border-radius: 6px !important;
+        font-weight: 900 !important;
+    }}
+    div[data-baseweb="calendar"] button:hover {{
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+    }}
+    /* زر اليوم المحدد أو المختار */
+    aria-selected="true" {{
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+    }}
+
     div[data-baseweb="popover"], div[role="listbox"] div {{
         background-color: #ffffff !important;
         color: #0f172a !important;
@@ -299,21 +326,36 @@ st.markdown(f"""
     }}
     
     .stButton>button {{
-        background: #10b981 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; border: none !important; border-radius: 10px; font-weight: 900 !important; font-size: 16px !important; padding: 12px 22px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); width: 100% !important;
+        background: #f1f5f9 !important; 
+        color: #0f172a !important; 
+        -webkit-text-fill-color: #0f172a !important; 
+        border: 2px solid #cbd5e1 !important; 
+        border-radius: 12px; 
+        font-weight: 900 !important; 
+        font-size: 16px !important; 
+        padding: 12px 22px; 
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); 
+        width: 100% !important;
     }}
-    .stButton>button:hover {{ background: #059669 !important; }}
+    .stButton>button:hover {{ 
+        background: #0f172a !important; 
+        color: #ffffff !important; 
+        -webkit-text-fill-color: #ffffff !important; 
+        border-color: #0f172a !important; 
+    }}
 
     div.stFormSubmitButton > button, div.row-widget.stButton > button:nth-of-type(1) {{
-        background-color: #dc2626 !important;
+        background-color: #0f172a !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
+        border: none !important;
     }}
     div.stFormSubmitButton > button:hover {{
-        background-color: #b91c1c !important;
+        background-color: #334155 !important;
     }}
 
     .stLinkButton>a {{
-        background-color: #dc2626 !important;
+        background-color: #0f172a !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
         font-family: 'Cairo', sans-serif !important;
@@ -323,31 +365,31 @@ st.markdown(f"""
         text-align: center !important;
         display: block !important;
         padding: 10px 15px !important;
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border: none !important;
         text-decoration: none !important;
     }}
     .stLinkButton>a:hover {{
-        background-color: #b91c1c !important;
+        background-color: #334155 !important;
         color: #ffffff !important;
     }}
 
     .exam-top-bar {{
-        background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900; display: flex; justify-content: space-between; align-items: center;
+        background-color: #334155; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900; display: flex; justify-content: space-between; align-items: center;
     }}
     .exam-card-box {{
         background: {card_bg}; border: 1px solid {card_border}; border-radius: 0 0 12px 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; color: {text_color} !important;
     }}
 
     .chat-bubble-student {{
-        background-color: #0284c7; color: #ffffff; padding: 14px 18px; border-radius: 14px 14px 0 14px; margin-bottom: 12px; max-width: 78%; margin-right: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #0369a1;
+        background-color: #334155; color: #ffffff; padding: 14px 18px; border-radius: 14px 14px 0 14px; margin-bottom: 12px; max-width: 78%; margin-right: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #1e293b;
     }}
     .chat-bubble-teacher {{
-        background-color: #059669; color: #ffffff; padding: 14px 18px; border-radius: 14px 14px 14px 0; margin-bottom: 12px; max-width: 78%; margin-left: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #047857;
+        background-color: #0f172a; color: #ffffff; padding: 14px 18px; border-radius: 14px 14px 14px 0; margin-bottom: 12px; max-width: 78%; margin-left: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #000000;
     }}
 
     .darssly-box {{
-        background: linear-gradient(135deg, #059669, #10b981); border-radius: 16px; padding: 24px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3); border: 2px solid rgba(255, 255, 255, 0.25); color: #ffffff !important;
+        background: linear-gradient(135deg, #0f172a, #334155); border-radius: 16px; padding: 24px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); border: 2px solid rgba(255, 255, 255, 0.25); color: #ffffff !important;
     }}
     .darssly-box * {{ color: #ffffff !important; }}
 
@@ -355,9 +397,9 @@ st.markdown(f"""
         background: {card_bg}; border: 2px solid {card_border}; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); margin-bottom: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;
     }}
     .course-icon-box {{
-        font-size: 45px; background: #065f46; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px auto; border: 2px solid #10b981;
+        font-size: 45px; background: #0f172a; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px auto; border: 2px solid #334155; color: #ffffff !important;
     }}
-    .course-title {{ color: #059669 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }}
+    .course-title {{ color: #0f172a !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }}
     .course-desc {{ color: {text_color} !important; font-size: 14px !important; font-weight: 800 !important; opacity: 0.9; margin-bottom: 15px !important; }}
 
     .social-top-container {{
@@ -377,7 +419,7 @@ st.markdown(f"""
 
     .call-btn-container {{ display: flex; justify-content: center; margin-top: 25px; margin-bottom: 15px; width: 100%; }}
     .call-btn {{
-        display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff !important; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 900; text-decoration: none !important; border: 2px solid #ffffff;
+        display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: #0f172a; color: #ffffff !important; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 900; text-decoration: none !important; border: 2px solid #ffffff;
     }}
     .social-footer-box {{
         margin-top: 25px; padding: 20px 0; border-top: 1px solid rgba(150, 150, 150, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;
@@ -396,7 +438,7 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
+    nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #0f172a; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
     col_nav1, col_nav2 = st.columns([2, 1.5])
     with col_nav1:
@@ -441,8 +483,8 @@ if is_student_mode:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-                st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+                st.markdown("<h1 style='color: #0f172a; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+                st.markdown("<div style='background: #0f172a; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
                 st.markdown("""
@@ -470,8 +512,8 @@ if is_student_mode:
                 if img_b64:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <div style="position: absolute; width: 240px; height: 240px; background: #059669; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
-                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <div style="position: absolute; width: 240px; height: 240px; background: #0f172a; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
+                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #0f172a; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -618,8 +660,8 @@ if is_student_mode:
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(f"""
-                <div style="background: {card_bg}; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid {card_border};">
-                    <h3 style="margin: 0; color: #059669; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
+                <div style="background: {card_bg}; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #0f172a; margin-bottom: 20px; border: 1px solid {card_border};">
+                    <h3 style="margin: 0; color: #0f172a; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
                     <p style="margin: 4px 0 10px 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
@@ -681,7 +723,7 @@ if is_student_mode:
                 with col_sidebar:
                     st.markdown(f"""
                         <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin:0 0 10px 0; color:#059669; font-size:18px;">📚 محتوى الدروس</h4>
+                            <h4 style="margin:0 0 10px 0; color:#0f172a; font-size:18px;">📚 محتوى الدروس</h4>
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -701,7 +743,7 @@ if is_student_mode:
 
                 with col_main_vid:
                     st.markdown(f"""
-                        <div style="background:linear-gradient(135deg, #059669, #10b981); color:#ffffff; padding:15px 20px; border-radius:10px; margin-bottom:15px;">
+                        <div style="background:linear-gradient(135deg, #0f172a, #334155); color:#ffffff; padding:15px 20px; border-radius:10px; margin-bottom:15px;">
                             <h3 style="margin:0; color:#ffffff; font-size:20px;">📺 {selected_row['عنوان_الفيديو']}</h3>
                         </div>
                     """, unsafe_allow_html=True)
@@ -736,7 +778,7 @@ if is_student_mode:
                         for _, c_row in vid_comments.iterrows():
                             st.markdown(f"""
                                 <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:10px; padding:12px 15px; margin-bottom:10px;">
-                                    <p style="margin:0; font-size:14px; color:#0284c7;"><b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
+                                    <p style="margin:0; font-size:14px; color:#334155;"><b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
                                     <p style="margin:5px 0 0 0; font-size:16px;">{c_row['نص_التعليق']}</p>
                                 </div>
                             """, unsafe_allow_html=True)
@@ -766,8 +808,8 @@ if is_student_mode:
             if sub_status != "مشترك":
                 st.warning("🔒 عذراً، بنك الأسئلة مغلق ويحتاج إلى اشتراك خاص بمرحلتك الدراسية بقيمة **100 جنيه** فقط.")
                 st.markdown(f"""
-                    <div style="background:{card_bg}; border:2px solid #dc2626; border-radius:15px; padding:25px; margin-bottom:20px;">
-                        <h3 style="color:#dc2626; margin-top:0;">💳 تعليمات الاشتراك في بنك الأسئلة:</h3>
+                    <div style="background:{card_bg}; border:2px solid #0f172a; border-radius:15px; padding:25px; margin-bottom:20px;">
+                        <h3 style="color:#0f172a; margin-top:0;">💳 تعليمات الاشتراك في بنك الأسئلة:</h3>
                         <p style="font-size:18px;">1. قم بالدفع بقيمة <b>100 جنيه</b> عبر تطبيق InstaPay باستخدام زر الدفع السريع بالأسفل.</p>
                         <p style="font-size:18px;">2. اكتب رقم هاتفك المحول منه، وكود التحقق (OTP)، وارفق صورة اسكرين (إيصال) الدفع لتأكيد طلبك.</p>
                     </div>
@@ -801,10 +843,9 @@ if is_student_mode:
                 student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
                 qb_df = st.session_state.question_bank_df
                 
-                # تطبيع مقارنة الصفوف لتجنب أي اختلاف في المسافات أو الحروف
                 st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
                 if st_qb.empty:
-                    st_qb = qb_df.copy() # كاحتياطي إن لم يتطابق حرفياً ليظهر الأسئلة للطالب
+                    st_qb = qb_df.copy()
 
                 if st_qb.empty:
                     st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
@@ -834,7 +875,6 @@ if is_student_mode:
                             opts = ["أ", "ب", "ج", "د"]
                             ans_choice = st.radio(f"اختر الإجابة الصحيحة للسؤال ({qb_i+1}):", opts, key=f"qb_radio_{qb_i}")
                             
-                            # عرض الخيارات إذا وجدت
                             opt1 = q_data.get('opt1', '')
                             opt2 = q_data.get('opt2', '')
                             opt3 = q_data.get('opt3', '')
@@ -903,7 +943,7 @@ if is_student_mode:
                             solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
                             pct_old = (solved_score / solved_max * 100) if solved_max > 0 else 0
                             st.markdown(f"""
-                                <div style="background:#dc2626; border:3px solid #b91c1c; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-bottom:20px;">
+                                <div style="background:#0f172a; border:3px solid #000000; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-bottom:20px;">
                                     <h2 style="color:#ffffff; margin-bottom:8px; font-size:26px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
                                     <p style="font-size:20px; color:#ffffff; margin: 5px 0;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
                                     <p style="font-size:18px; color:#f8fafc; margin: 5px 0;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
@@ -914,7 +954,7 @@ if is_student_mode:
                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                 </div>
                             """, unsafe_allow_html=True)
-                            st.markdown(f"<div style='background:#fef2f2; padding:18px; border-radius:12px; border:1px solid #dc2626; margin-top:10px; color:#991b1b; font-size:16px;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='background:#f8fafc; padding:18px; border-radius:12px; border:1px solid #0f172a; margin-top:10px; color:#0f172a; font-size:16px;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
                         else:
                             exam_state_key = f"exam_state_{ex_id}"
                             if exam_state_key not in st.session_state:
@@ -931,13 +971,13 @@ if is_student_mode:
 
                             if not st_ex["started"]:
                                 st.markdown(f"""
-                                    <div style="background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900;">
+                                    <div style="background-color: #334155; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900;">
                                         {ex_title}
                                     </div>
                                     <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:0 0 10px 10px; padding:25px; margin-bottom:25px; color:{text_color};">
                                         <p style="color:{text_color}; font-size:17px;"><b>الوصف:</b> {ex_desc}</p>
-                                        <p style="color: #b91c1c; font-weight: 900; font-size:16px;">⚠️ مدة الامتحان ({ex_time} دقيقة)، عند انتهاء الوقت ينتهي الامتحان تلقائياً.</p>
-                                        <p style="color: #b91c1c; font-weight: 900; font-size:16px;">⚠️ تم تحديد محاولة واحدة فقط لهذا الإمتحان.</p>
+                                        <p style="color: #0f172a; font-weight: 900; font-size:16px;">⚠️ مدة الامتحان ({ex_time} دقيقة)، عند انتهاء الوقت ينتهي الامتحان تلقائياً.</p>
+                                        <p style="color: #0f172a; font-weight: 900; font-size:16px;">⚠️ تم تحديد محاولة واحدة فقط لهذا الإمتحان.</p>
                                 """, unsafe_allow_html=True)
 
                                 input_pass = ""
@@ -985,7 +1025,7 @@ if is_student_mode:
                                         st_ex["show_confirm_submit"] = True
 
                                     st.markdown(f"""
-                                        <div style="background-color: #f97316; color: #ffffff; padding: 12px 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size:18px;">
+                                        <div style="background-color: #334155; color: #ffffff; padding: 12px 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size:18px;">
                                             <span>{ex_title}</span>
                                             <span>⏱️ الوقت المتبقي: {rem_mins:02d}:{rem_s:02d}</span>
                                         </div>
@@ -1117,7 +1157,7 @@ if is_student_mode:
                                             st.session_state.pop(exam_state_key, None)
                                             
                                             st.markdown(f"""
-                                                <div style="background:#dc2626; border:3px solid #b91c1c; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-top:20px;">
+                                                <div style="background:#0f172a; border:3px solid #000000; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-top:20px;">
                                                     <h2 style="color:#ffffff; margin-bottom:8px; font-size:26px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
                                                     <p style="font-size:20px; color:#ffffff; margin: 5px 0;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
                                                     <p style="font-size:18px; color:#f8fafc; margin: 5px 0;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
@@ -1125,11 +1165,11 @@ if is_student_mode:
                                                         {pct:.0f}%
                                                     </div>
                                                     <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
-                                                    <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
+                                                    <p style="margin-top:10px; font-size:15px; color:#f8fafc;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
                                             """, unsafe_allow_html=True)
-                                            st.markdown(f"<div style='background:#fef2f2; padding:18px; border-radius:12px; border:1px solid #dc2626; margin-top:15px; color:#991b1b; font-size:16px;'><b>تفاصيل الإجابات الصحيحة والخاطئة:</b><br>{note_msg}</div>", unsafe_allow_html=True)
+                                            st.markdown(f"<div style='background:#f8fafc; padding:18px; border-radius:12px; border:1px solid #0f172a; margin-top:15px; color:#0f172a; font-size:16px;'><b>تفاصيل الإجابات الصحيحة والخاطئة:</b><br>{note_msg}</div>", unsafe_allow_html=True)
                                             st.rerun()
                                     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1181,7 +1221,7 @@ if is_student_mode:
                     pct_val = (score_val / max_val * 100) if max_val > 0 else 0
                     with st.expander(f"📝 {ex_rec['عنوان التكليف']} — النتيجة: ({score_val} / {max_val})"):
                         st.markdown(f"""
-                            <div style="background:#dc2626; border:3px solid #b91c1c; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-bottom:20px;">
+                            <div style="background:#0f172a; border:3px solid #000000; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.2); margin-bottom:20px;">
                                 <h2 style="color:#ffffff; margin-bottom:8px; font-size:26px;">🎓 شهادة إتمام الاختبار</h2>
                                 <p style="font-size:20px; color:#ffffff; margin: 5px 0;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
                                 <p style="font-size:18px; color:#f8fafc; margin: 5px 0;"><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
@@ -1685,8 +1725,8 @@ with tab_videos_teacher:
         for c_idx, c_row in vc_state.iterrows():
             st.markdown(f"""
                 <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:10px; padding:15px; margin-bottom:12px;">
-                    <p style="margin:0; color:#10b981; font-size:16px;"><b>درس: {c_row['عنوان_الفيديو']}</b></p>
-                    <p style="margin:4px 0; color:#0284c7; font-size:14px;">الطالب: <b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
+                    <p style="margin:0; color:#0f172a; font-size:16px;"><b>درس: {c_row['عنوان_الفيديو']}</b></p>
+                    <p style="margin:4px 0; color:#334155; font-size:14px;">الطالب: <b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
                     <p style="margin:8px 0 0 0; font-size:16px;">{c_row['نص_التعليق']}</p>
                 </div>
             """, unsafe_allow_html=True)
@@ -1964,15 +2004,15 @@ with tab_cards:
                 col_c1, col_c2, col_c3, col_c4 = st.columns([3, 2, 2, 2])
                 with col_c1:
                     st.markdown(f"""
-                        <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
+                        <h4 style="margin: 0; color: #0f172a;">{st_name}</h4>
                         <p style="margin: 3px 0; font-size: 14px; font-weight: 900;">{st_curr} — {st_grade}</p>
                         <p style="margin: 0; font-size: 13px; color: #64748b;">تاريخ التسجيل: {st_date} | كلمة المرور: <b>{st_pass}</b></p>
-                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #0284c7;"><b>{bank_badge}</b></p>
+                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #0f172a;"><b>{bank_badge}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c2:
                     st.markdown(f"""
                         <p style="margin:0; font-size:14px; font-weight:900;">حضور: <b>{attended_st_sessions}/{total_st_sessions}</b></p>
-                        <p style="margin:0; font-size:14px; font-weight:900; color:#b91c1c;">إجمالي السعر: <b>{total_st_cost:,.1f}</b></p>
+                        <p style="margin:0; font-size:14px; font-weight:900; color:#0f172a;">إجمالي السعر: <b>{total_st_cost:,.1f}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c3:
                     st_sessions_html = f"""<!DOCTYPE html>
@@ -2218,10 +2258,10 @@ with tab3:
             total_due = s_r["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not s_r.empty else 0.0
 
             st.markdown(f"""
-                <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:10px;">
-                    <h4 style="color:#059669; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
+                <div style="background:{card_bg}; border:2px solid #0f172a; border-radius:12px; padding:20px; margin-bottom:10px;">
+                    <h4 style="color:#0f172a; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
                     <p style="font-size:16px; margin:5px 0; color:#0f172a;"><b>حالة التسجيل:</b> {reg_state} | <b>المرحلة/الصف:</b> {grade_val} ({curr_val})</p>
-                    <p style="font-size:16px; margin:5px 0; color:#0f172a;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#dc2626;">{total_due:,.1f} جنيه</span></p>
+                    <p style="font-size:16px; margin:5px 0; color:#0f172a;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#0f172a;">{total_due:,.1f} جنيه</span></p>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -2416,11 +2456,11 @@ with tab4:
                     ass_html_rows += f"""
                     <tr>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['التاريخ']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['النوع']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0f172a;">{r['النوع']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['عنوان التكليف']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['الدرجة المحصلة']} / {r['الدرجة العظمى']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['حالة التسليم']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #047857;">{r['ملاحظات وتوجيهات']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #334155;">{r['ملاحظات وتوجيهات']}</td>
                     </tr>
                     """
             else:
@@ -2429,28 +2469,28 @@ with tab4:
             session_html_rows = ""
             if not st_sessions.empty:
                 for _, r in st_sessions.iterrows():
-                    st_color = "#0f766e" if r["الحالة"] == "حاضر" else ("#b91c1c" if r["الحالة"] == "غائب" else "#b45309")
+                    st_color = "#0f172a" if r["الحالة"] == "حاضر" else ("#334155" if r["الحالة"] == "غائب" else "#64748b")
                     p_curr = float(r.get('سعر الحصة', 0)) if pd.notnull(r.get('سعر الحصة')) else 0.0
                     session_html_rows += f"""
                     <tr>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['التاريخ']}</td>
                         <td style="padding: 10px; border: 2px solid #000; color:{st_color}; font-weight: 900;">{r['الحالة']}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #16a34a; font-size: 17px;">{p_curr:,.1f}</td>
-                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['مستوى الطالب']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0f172a; font-size: 17px;">{p_curr:,.1f}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #334155;">{r['مستوى الطالب']}</td>
                         <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['ملاحظات']}</td>
                     </tr>
                     """
                 session_html_rows += f"""
                 <tr style="background-color: #f1f5f9;">
                     <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 17px;">الإجمالي الكلي المستحق للحصص:</td>
-                    <td style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 19px; color: #b91c1c;">{total_cost:,.1f}</td>
+                    <td style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 19px; color: #0f172a;">{total_cost:,.1f}</td>
                     <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 16px;">نظام الدفع المعتمد: {pay_val}</td>
                 </tr>
                 """
             else:
                 session_html_rows = "<tr><td colspan='5' style='padding: 15px; font-weight: 900; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
 
-            teacher_img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
+            teacher_img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0f172a; object-fit: cover;">' if img_b64 else ""
 
             parent_report_html = f"""<!DOCTYPE html>
             <html dir="rtl" lang="ar">
@@ -2460,14 +2500,14 @@ with tab4:
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@800;900&display=swap');
                     body {{ font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 30px; color: #000000 !important; background-color: #ffffff !important; font-weight: 900; }}
-                    .header-box {{ border-bottom: 3px solid #0052cc; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }}
-                    .brand-name {{ color: #0052cc; margin: 0; font-size: 32px; font-weight: 900; }}
+                    .header-box {{ border-bottom: 3px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }}
+                    .brand-name {{ color: #0f172a; margin: 0; font-size: 32px; font-weight: 900; }}
                     .brand-sub {{ color: #000000; margin: 4px 0; font-size: 16px; font-weight: 900; }}
-                    .parent-notice {{ background-color: #f0fdf4; border: 2px solid #16a34a; padding: 12px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 17px; font-weight: 900; color: #14532d; }}
+                    .parent-notice {{ background-color: #f8fafc; border: 2px solid #0f172a; padding: 12px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 17px; font-weight: 900; color: #0f172a; }}
                     .stats-box {{ width: 100%; border-collapse: collapse; margin-bottom: 25px; }}
                     .stats-box th, .stats-box td {{ border: 2px solid #000000; padding: 10px; text-align: center; font-size: 16px; font-weight: 900; }}
                     .stats-box th {{ background: #f1f5f9; color: #000000; font-weight: 900; }}
-                    .section-title {{ margin-top: 25px; margin-bottom: 10px; color: #0052cc; font-size: 20px; font-weight: 900; border-bottom: 2px solid #0052cc; padding-bottom: 6px; display: inline-block; }}
+                    .section-title {{ margin-top: 25px; margin-bottom: 10px; color: #0f172a; font-size: 20px; font-weight: 900; border-bottom: 2px solid #0f172a; padding-bottom: 6px; display: inline-block; }}
                     .table-main {{ width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; margin-bottom: 20px; }}
                     .table-main th {{ background-color: #f8fafc; color: #000000; font-weight: 900; font-size: 16px; padding: 10px; border: 2px solid #000000; }}
                     .footer-note {{ margin-top: 35px; text-align: center; color: #000000; font-size: 16px; font-weight: 900; border-top: 2px solid #000000; padding-top: 15px; }}
@@ -2484,7 +2524,7 @@ with tab4:
                         </div>
                     </div>
                     <div style="text-align: left;">
-                        <h2 style="color: #0052cc; margin: 0; font-size: 26px; font-weight: 900;">الطالب: {selected_student}</h2>
+                        <h2 style="color: #0f172a; margin: 0; font-size: 26px; font-weight: 900;">الطالب: {selected_student}</h2>
                         <p style="margin: 5px 0 0 0; color: #000000; font-size: 15px; font-weight: 900;">تاريخ إصدار التقرير: {date.today()}</p>
                     </div>
                 </div>
@@ -2494,11 +2534,11 @@ with tab4:
                     </tr>
                     <tr>
                         <td style="font-weight: 900;">{total_sessions_cnt}</td>
-                        <td style="color: #0f766e; font-weight: 900;">{att_cnt}</td>
-                        <td style="color: #b91c1c; font-weight: 900;">{abs_cnt}</td>
-                        <td style="font-weight: 900; color: #0052cc;">{att_percentage:.1f}%</td>
-                        <td style="font-weight: 900; font-size: 18px; color: #b91c1c;">{total_cost:,.1f}</td>
-                        <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
+                        <td style="color: #0f172a; font-weight: 900;">{att_cnt}</td>
+                        <td style="color: #334155; font-weight: 900;">{abs_cnt}</td>
+                        <td style="font-weight: 900; color: #0f172a;">{att_percentage:.1f}%</td>
+                        <td style="font-weight: 900; font-size: 18px; color: #0f172a;">{total_cost:,.1f}</td>
+                        <td style="color: #0f172a; font-weight: 900;">{level_val}</td>
                     </tr>
                 </table>
                 <div class="section-title">1. تقرير الواجبات المنزلية والاختبارات الدورية:</div>
