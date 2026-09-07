@@ -184,11 +184,13 @@ st.markdown("""
         font-family: 'Cairo', sans-serif !important;
         font-weight: 900 !important;
         letter-spacing: 0.3px !important;
+        color: #0f172a !important;
     }
 
     input, textarea, select {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
+        color: #0f172a !important;
     }
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
@@ -429,22 +431,6 @@ st.markdown("""
         width: 100%;
     }
     .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; }
-
-    @media (prefers-color-scheme: light) {
-        body, .stApp { background-color: #ffffff !important; }
-        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
-    }
-    @media (prefers-color-scheme: dark) {
-        body, .stApp { background-color: #0e1117 !important; }
-        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
-        .darssly-navbar { background: #1e232d !important; border-color: #334155 !important; }
-        .exam-card-box { background: #1e232d !important; border-color: #334155 !important; }
-        .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
-        .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
-        .course-card { background: #1e232d !important; border-color: #334155 !important; }
-        .course-title { color: #34d399 !important; }
-        .course-desc { color: #9ca3af !important; }
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -504,7 +490,7 @@ if is_student_mode:
             with col_hero_txt:
                 st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
                 st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #0f172a;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
@@ -653,7 +639,7 @@ if is_student_mode:
         with col_vid2:
             st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
-        # ==================== لوحة خدمات الطالب (أيقونات تحت بعضها تماماً) ====================
+        # ==================== لوحة خدمات الطالب ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; margin-bottom: 15px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
@@ -676,7 +662,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مطابقة تماماً لشكل الصور المرفقة
+        # 1. صفحة الاختبارات (النص باللون الأسود الواضح وساعة العد التنازلي التفاعلية وشكل الشهادة)
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
             available_exams = st.session_state.exams_df.copy()
@@ -705,16 +691,16 @@ if is_student_mode:
                             st.markdown(f"""
                                 <div style="background:#ffffff; border:2px solid #10b981; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.08); margin-bottom:20px;">
                                     <h2 style="color:#059669; margin-bottom:5px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
-                                    <p style="font-size:19px; color:#1e293b;"><b>{st_user['اسم الطالب']}</b></p>
-                                    <p style="font-size:16px; color:#475569;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
+                                    <p style="font-size:19px; color:#0f172a;"><b>{st_user['اسم الطالب']}</b></p>
+                                    <p style="font-size:16px; color:#0f172a;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:28px; font-weight:900; color:#059669;">
                                         {pct_old:.0f}%
                                     </div>
                                     <p style="font-size:18px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
-                                    <p style="margin-top:15px; font-size:14px; color:#64748b;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
+                                    <p style="margin-top:15px; font-size:14px; color:#0f172a;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                 </div>
                             """, unsafe_allow_html=True)
-                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:10px;'><b>تفاصيل الإجابات السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:10px; color:#0f172a;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
                         else:
                             exam_state_key = f"exam_state_{ex_id}"
                             if exam_state_key not in st.session_state:
@@ -724,31 +710,32 @@ if is_student_mode:
                                     "answers_mcq": {},
                                     "essay_texts": {},
                                     "essay_imgs": {},
+                                    "start_time": None
                                 }
 
                             st_ex = st.session_state[exam_state_key]
 
                             if not st_ex["started"]:
-                                # واجهة إدخال البيانات المماثلة تماماً للصور المطلوبة
                                 st.markdown(f"""
                                     <div style="background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900;">
                                         {ex_title}
                                     </div>
                                     <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:25px; margin-bottom:25px;">
-                                        <p><b>الوصف:</b> {ex_desc}</p>
+                                        <p style="color:#0f172a;"><b>الوصف:</b> {ex_desc}</p>
                                         <p style="color: #b91c1c; font-weight: 900;">⚠️ مدة الامتحان ({ex_time} دقيقة)، عند انتهاء الوقت ينتهي الامتحان تلقائياً.</p>
                                         <p style="color: #b91c1c; font-weight: 900;">⚠️ تم تحديد محاولة واحدة فقط لهذا الإمتحان.</p>
                                 """, unsafe_allow_html=True)
 
                                 input_pass = ""
                                 if ex_pass and ex_pass != "nan" and ex_pass != "":
-                                    input_pass = st.text_input("🔑 كلمة المرور:", type="password", key=f"start_pass_{ex_id}")
+                                    input_pass = st.text_input("🔑 أُدخل رقم السر (كلمة المرور):", type="password", key=f"start_pass_{ex_id}")
                                 
                                 if st.button("🚀 دخول الامتحان", key=f"btn_start_ex_{ex_id}"):
                                     if ex_pass and ex_pass != "nan" and ex_pass != "" and input_pass.strip() != ex_pass:
                                         st.error("كلمة مرور الامتحان غير صحيحة.")
                                     else:
                                         st_ex["started"] = True
+                                        st_ex["start_time"] = datetime.now()
                                         st.rerun()
                                 st.markdown("</div>", unsafe_allow_html=True)
                             else:
@@ -772,23 +759,29 @@ if is_student_mode:
                                     cur_i = st_ex["cur_idx"]
                                     q_curr = questions[cur_i]
 
-                                    # رأس الامتحان الاحترافي المطابق لصورة الطالب
+                                    # حساب الوقت المتبقي بالساعة التفاعلية
+                                    elapsed_secs = (datetime.now() - st_ex["start_time"]).seconds if st_ex["start_time"] else 0
+                                    total_allowed_secs = ex_time * 60
+                                    remaining_secs = max(0, total_allowed_secs - elapsed_secs)
+                                    rem_mins = remaining_secs // 60
+                                    rem_s = remaining_secs % 60
+
                                     st.markdown(f"""
                                         <div style="background-color: #f97316; color: #ffffff; padding: 12px 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 900;">
                                             <span>{ex_title}</span>
-                                            <span>⏱️ {ex_time}:00</span>
+                                            <span>⏱️ الوقت المتبقي: {rem_mins:02d}:{rem_s:02d}</span>
                                         </div>
-                                        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:20px; margin-bottom:20px;">
-                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:900; color:#475569;">
-                                                <span>{st_user['اسم الطالب']}</span>
+                                        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:20px; margin-bottom:20px; color:#0f172a;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:900; color:#0f172a;">
+                                                <span>الطالب: {st_user['اسم الطالب']}</span>
                                                 <span>السؤال ({cur_i + 1} من {total_q}) — الدرجة: {q_curr['points']}</span>
                                             </div>
                                     """, unsafe_allow_html=True)
 
                                     if q_curr.get("text"):
-                                        st.markdown(f"**{q_curr['text']}**")
+                                        st.markdown(f"<span style='color:#0f172a;'><b>{q_curr['text']}</b></span>", unsafe_allow_html=True)
                                     
-                                    # عرض صورة السؤال (سكرين شوت بدقة كاملة)
+                                    # عرض صورة السؤال (سكرين شوت)
                                     if q_curr.get("q_img"):
                                         st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", use_container_width=True)
 
@@ -812,12 +805,24 @@ if is_student_mode:
                                                     st.rerun()
                                             with col_opt_content:
                                                 st.markdown(f"""
-                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:10px 15px; margin-bottom:10px;">
-                                                        <b>({lbl})</b> {t_val}
+                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:10px 15px; margin-bottom:10px; color:#0f172a;">
+                                                        <b style="color:#0f172a;">({lbl})</b> <span style="color:#0f172a;">{t_val}</span>
                                                     </div>
                                                 """, unsafe_allow_html=True)
                                                 if i_val:
                                                     st.image(f"data:image/jpeg;base64,{i_val}", width=280)
+
+                                        saved_choice = st_ex["answers_mcq"].get(cur_i, None)
+                                        radio_idx = (saved_choice - 1) if saved_choice in [1, 2, 3, 4] else None
+
+                                        sel_ans = st.radio(
+                                            "اختر إجابتك لهذا السؤال:",
+                                            options=[1, 2, 3, 4],
+                                            index=radio_idx if radio_idx is not None else 0,
+                                            format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})",
+                                            key=f"cur_radio_{ex_id}_{cur_i}"
+                                        )
+                                        st_ex["answers_mcq"][cur_i] = sel_ans
 
                                     else:
                                         st.info("✍️ اكتب خطوات الحل أو ارفع صورة الحل من كشكولك:")
@@ -848,10 +853,11 @@ if is_student_mode:
                                                 st.rerun()
 
                                     with c_finish:
-                                        if st.button("💾 حفظ ومتابعة", key=f"btn_finish_{ex_id}"):
+                                        if st.button("🏁 إنهاء الامتحان", key=f"btn_finish_{ex_id}"):
                                             st_ex["show_confirm_submit"] = True
 
                                     if st_ex.get("show_confirm_submit"):
+                                        st.write("")
                                         unanswered_list = [q_idx+1 for q_idx in range(total_q) if q_idx not in st_ex["answers_mcq"]]
                                         if unanswered_list:
                                             st.warning(f"⚠️ تنبيه: لقد نسيت الإجابة على الأسئلة الآتية: {unanswered_list}")
@@ -892,20 +898,19 @@ if is_student_mode:
                                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                                             st.session_state.pop(exam_state_key, None)
                                             
-                                            # شهادة النتيجة النهائية والدوائر المطابقة تماماً
                                             st.markdown(f"""
                                                 <div style="background:#ffffff; border:2px solid #10b981; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.08); margin-top:20px;">
                                                     <h2 style="color:#059669; margin-bottom:5px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
-                                                    <p style="font-size:19px; color:#1e293b;"><b>{st_user['اسم الطالب']}</b></p>
-                                                    <p style="font-size:16px; color:#475569;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
+                                                    <p style="font-size:19px; color:#0f172a;"><b>{st_user['اسم الطالب']}</b></p>
+                                                    <p style="font-size:16px; color:#0f172a;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:28px; font-weight:900; color:#059669;">
                                                         {pct:.0f}%
                                                     </div>
                                                     <p style="font-size:18px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
-                                                    <p style="margin-top:15px; font-size:14px; color:#64748b;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
+                                                    <p style="margin-top:15px; font-size:14px; color:#0f172a;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
                                             """, unsafe_allow_html=True)
-                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px;'><b>تفاصيل الإجابات الصحيحة والخاطئة:</b><br>{note_msg}</div>", unsafe_allow_html=True)
+                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px; color:#0f172a;'><b>تفاصيل الإجابات الصحيحة والخاطئة:</b><br>{note_msg}</div>", unsafe_allow_html=True)
                                             st.rerun()
                                     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -957,14 +962,14 @@ if is_student_mode:
                     pct_val = (score_val / max_val * 100) if max_val > 0 else 0
                     with st.expander(f"📝 {ex_rec['عنوان التكليف']} — النتيجة: ({score_val} / {max_val})"):
                         st.markdown(f"""
-                            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:20px; text-align:center; margin-bottom:15px;">
+                            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:20px; text-align:center; margin-bottom:15px; color:#0f172a;">
                                 <h3 style="color:#059669;">شهادة إتمام الاختبار</h3>
-                                <p><b>الطالب:</b> {st_user['اسم الطالب']}</p>
-                                <p><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
-                                <p><b>التاريخ:</b> {ex_rec['التاريخ']}</p>
+                                <p style="color:#0f172a;"><b>الطالب:</b> {st_user['اسم الطالب']}</p>
+                                <p style="color:#0f172a;"><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
+                                <p style="color:#0f172a;"><b>التاريخ:</b> {ex_rec['التاريخ']}</p>
                             </div>
                         """, unsafe_allow_html=True)
-                        st.markdown(f"**تفاصيل وتوجيهات الإجابة:**<br>{ex_rec['ملاحظات وتوجيهات']}", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color:#0f172a;'><b>تفاصيل وتوجيهات الإجابة:</b><br>{ex_rec['ملاحظات وتوجيهات']}</span>", unsafe_allow_html=True)
 
         # 5. الدردشة
         elif sub_page == "chat":
@@ -1301,7 +1306,7 @@ with tab_exam_maker:
             st.rerun()
 
     st.write("---")
-    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيارات التعديل الكاملة والطباعة):")
+    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيارات التعديل والإشراف):")
     if st.session_state.exams_df.empty:
         st.info("لا توجد امتحانات منشورة بعد.")
     else:
@@ -1314,10 +1319,10 @@ with tab_exam_maker:
                     edit_time = st.number_input("تعديل المدة (بالدقائق):", min_value=5, max_value=180, value=int(ex_r.get('مدة الامتحان بالدقائق', 30)))
                     
                     if st.form_submit_button("💾 حفظ تعديلات الامتحان"):
-                        st.session_state.exams_df.at[ex_i, "عنوان الامتحان"] = edit_title.strip()
-                        st.session_state.exams_df.at[ex_i, "وصف الامتحان"] = edit_desc.strip()
-                        st.session_state.exams_df.at[ex_i, "كلمة المرور"] = edit_pass.strip()
-                        st.session_state.exams_df.at[ex_i, "مدة الامتحان بالدقائق"] = edit_time
+                        st.session_state.exams_df.loc[ex_i, "عنوان الامتحان"] = str(edit_title.strip())
+                        st.session_state.exams_df.loc[ex_i, "وصف الامتحان"] = str(edit_desc.strip())
+                        st.session_state.exams_df.loc[ex_i, "كلمة المرور"] = str(edit_pass.strip())
+                        st.session_state.exams_df.loc[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                         st.success("✓ تم حفظ التعديلات بنجاح!")
                         st.rerun()
@@ -1366,7 +1371,7 @@ with tab_exam_maker:
                         st.warning("تم حذف الامتحان.")
                         st.rerun()
 
-# ----------------- تبويب درجات الاختبارات للمعلم (مع تصدير درجات الطلاب لملف Excel و PDF) -----------------
+# ----------------- تبويب درجات الاختبارات للمعلم -----------------
 with tab_exam_grades_teacher:
     st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
     exam_assessments = st.session_state.assessments_df[
