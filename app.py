@@ -238,6 +238,27 @@ st.markdown(f"""
     }}
     .stButton>button:hover {{ background: #059669 !important; }}
 
+    /* تخصيص أزرار الكورسات باللون الأحمر الجذاب والكتابة البيضاء المعبرة */
+    .stLinkButton>a {{
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: 900 !important;
+        font-size: 16px !important;
+        border-radius: 10px !important;
+        text-align: center !important;
+        display: block !important;
+        padding: 10px 15px !important;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        border: none !important;
+        text-decoration: none !important;
+    }}
+    .stLinkButton>a:hover {{
+        background-color: #b91c1c !important;
+        color: #ffffff !important;
+    }}
+
     .exam-top-bar {{
         background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 900;
     }}
@@ -279,7 +300,7 @@ st.markdown(f"""
     .whatsapp-bg {{ background-color: #25D366; }}
     .telegram-bg {{ background-color: #229ED9; }}
     .tiktok-bg   {{ background-color: #000000; border: 1px solid #444; }}
-    .youtube-bg  {{ background-color: #FF0000; }}
+    .youtube-bg  { background-color: #FF0000; }
 
     .call-btn-container {{ display: flex; justify-content: center; margin-top: 25px; margin-bottom: 15px; width: 100%; }}
     .call-btn {{
@@ -783,7 +804,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#059669;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
                                                     <p style="margin-top:15px; font-size:16px; color:#475569;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
                                             """, unsafe_allow_html=True)
