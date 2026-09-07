@@ -106,6 +106,7 @@ COL_ASSESSMENTS = ["التاريخ", "اسم الطالب", "النوع", "عن�
 COL_MESSAGES = ["التاريخ_والوقت", "اسم الطالب", "المرسل", "نص الرسالة", "الصورة_base64"]
 COL_EXAMS = ["معرف_الامتحان", "عنوان الامتحان", "وصف الامتحان", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "المادة", "الفصل الدراسي", "مدة الامتحان بالدقائق", "الأسئلة_JSON", "تاريخ الإنشاء"]
 COL_ESSAYS = ["معرف_الحل", "معرف_الامتحان", "عنوان الامتحان", "اسم الطالب", "رقم السؤال", "نص السؤال", "إجابة الطالب النصية", "صورة الحل_base64", "درجة السؤال", "الدرجة المرصودة", "حالة التصحيح", "ملاحظات المعلم", "تاريخ الحل"]
+COL_BOOKINGS = ["تاريخ_الحجز", "اسم الطالب", "المنهج_الدولة", "المرحلة_الصف", "رقم_الهاتف", "رقم_ولي_الأمر", "الحالة"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -114,6 +115,7 @@ def load_all_data():
     messages_df = pd.DataFrame(columns=COL_MESSAGES)
     exams_df = pd.DataFrame(columns=COL_EXAMS)
     essays_df = pd.DataFrame(columns=COL_ESSAYS)
+    bookings_df = pd.DataFrame(columns=COL_BOOKINGS)
 
     if os.path.exists(FILE_NAME):
         try:
@@ -125,6 +127,7 @@ def load_all_data():
                 if "Messages" in xls.sheet_names: messages_df = pd.read_excel(xls, "Messages")
                 if "Exams" in xls.sheet_names: exams_df = pd.read_excel(xls, "Exams")
                 if "Essays" in xls.sheet_names: essays_df = pd.read_excel(xls, "Essays")
+                if "Bookings" in xls.sheet_names: bookings_df = pd.read_excel(xls, "Bookings")
         except Exception:
             pass
 
@@ -140,10 +143,12 @@ def load_all_data():
         if col not in exams_df.columns: exams_df[col] = ""
     for col in COL_ESSAYS:
         if col not in essays_df.columns: essays_df[col] = ""
+    for col in COL_BOOKINGS:
+        if col not in bookings_df.columns: bookings_df[col] = ""
 
-    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df
+    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df):
     with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
@@ -151,15 +156,17 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         messages_df.to_excel(writer, sheet_name="Messages", index=False)
         exams_df.to_excel(writer, sheet_name="Exams", index=False)
         essays_df.to_excel(writer, sheet_name="Essays", index=False)
+        bookings_df.to_excel(writer, sheet_name="Bookings", index=False)
 
 if "users_df" not in st.session_state:
-    u_df, s_df, a_df, m_df, e_df, es_df = load_all_data()
+    u_df, s_df, a_df, m_df, e_df, es_df, b_df = load_all_data()
     st.session_state.users_df = u_df
     st.session_state.sessions_df = s_df
     st.session_state.assessments_df = a_df
     st.session_state.messages_df = m_df
     st.session_state.exams_df = e_df
     st.session_state.essays_df = es_df
+    st.session_state.bookings_df = b_df
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
@@ -189,7 +196,8 @@ def delete_student_completely(student_name_to_del):
     st.session_state.assessments_df = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.messages_df = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
-    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+    st.session_state.bookings_df = st.session_state.bookings_df[st.session_state.bookings_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
+    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
 
 is_dark = st.session_state.dark_mode
 bg_color = "#0e1117" if is_dark else "#ffffff"
@@ -462,6 +470,32 @@ if is_student_mode:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
+            # --- قسم حجز الدروس أونلاين ---
+            st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
+            with st.form("online_booking_form", clear_on_submit=True):
+                book_name = st.text_input("اسم الطالب بالكامل:")
+                book_curr = st.selectbox("اختر المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="book_c")
+                book_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[book_curr], key="book_g")
+                book_phone = st.text_input("رقم هاتف الطالب:")
+                book_parent_phone = st.text_input("رقم تليفون ولي الأمر:")
+                
+                if st.form_submit_button("🚀 إرسال طلب حجز الدرس أونلاين"):
+                    if not book_name.strip() or not book_phone.strip():
+                        st.error("يرجى كتابة اسم الطالب ورقم الهاتف على الأقل.")
+                    else:
+                        new_booking = {
+                            "تاريخ_الحجز": str(date.today()),
+                            "اسم الطالب": book_name.strip(),
+                            "المنهج_الدولة": book_curr,
+                            "المرحلة_الصف": book_grade,
+                            "رقم_الهاتف": book_phone.strip(),
+                            "رقم_ولي_الأمر": book_parent_phone.strip(),
+                            "الحالة": "قيد المتابعة"
+                        }
+                        st.session_state.bookings_df = pd.concat([st.session_state.bookings_df, pd.DataFrame([new_booking])], ignore_index=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                        st.success("✓ تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً لتأكيد الموعد.")
+
         elif st.session_state.page_view == "login":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب:</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
@@ -522,7 +556,7 @@ if is_student_mode:
                                 "تاريخ التسجيل": str(date.today()), "الحالة_حظر": "نشط",
                             }
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                             st.session_state.logged_student = new_user
                             st.query_params["role"] = "student"
                             st.query_params["st_name"] = new_user["اسم الطالب"]
@@ -589,7 +623,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
+        # 1. صفحة الاختبارات
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -826,7 +860,7 @@ if is_student_mode:
                                                 "ملاحظات وتوجيهات": note_msg,
                                             }
                                             st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                                             st.session_state.pop(exam_state_key, None)
                                             
                                             st.markdown(f"""
@@ -863,7 +897,7 @@ if is_student_mode:
                         "مستوى الطالب": "قيد التقييم", "ملاحظات": f"تقييم الحصة: {selected_rating}",
                     }
                     st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                     st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
 
         # 3. درجات الواجبات
@@ -934,7 +968,7 @@ if is_student_mode:
                             "المرسل": "student", "نص الرسالة": msg_text.strip(), "الصورة_base64": img_str,
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                         st.rerun()
 
@@ -1226,7 +1260,7 @@ with tab_exam_maker:
                 "تاريخ الإنشاء": str(date.today()),
             }
             st.session_state.exams_df = pd.concat([st.session_state.exams_df, pd.DataFrame([new_ex])], ignore_index=True)
-            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
             st.session_state.temp_questions = []
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
@@ -1250,7 +1284,7 @@ with tab_exam_maker:
                         st.session_state.exams_df.loc[ex_i, "كلمة المرور"] = str(edit_pass).strip()
                         st.session_state.exams_df.loc[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
                         
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.success("✓ تم حفظ التعديلات بنجاح!")
                         st.rerun()
 
@@ -1296,7 +1330,7 @@ with tab_exam_maker:
                 with col_pr2:
                     if st.button("حذف هذا الامتحان 🗑️", key=f"del_ex_btn_{ex_i}"):
                         st.session_state.exams_df = st.session_state.exams_df.drop(ex_i).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.warning("تم حذف الامتحان.")
                         st.rerun()
 
@@ -1317,7 +1351,7 @@ with tab_exam_grades_teacher:
             if st.button("🚨 تأكيد حذف سجل الامتحان المختار"):
                 real_idx = exam_assessments.loc[sel_del_exam_idx].name
                 st.session_state.assessments_df = st.session_state.assessments_df.drop(real_idx).reset_index(drop=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                 st.success("✓ تم حذف النتيجة بنجاح!")
                 st.rerun()
 
@@ -1425,13 +1459,13 @@ with tab_essay_grade:
                             st.session_state.assessments_df.at[ass_idx, "ملاحظات وتوجيهات"] = f"تم تصحيح المقالي: +{awarded_score} درجة. {teacher_feedback}"
 
                         st.session_state.essays_df = essays
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.success(f"✓ تم رصد درجة الطالب ({st_name}) بنجاح!")
                         st.rerun()
 
                     if delete_essay:
                         st.session_state.essays_df = essays.drop(es_idx).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.warning("⚠️ تم مسح إجابة المقالي بنجاح.")
                         st.rerun()
 
@@ -1474,12 +1508,28 @@ with tab_chat:
                             "المرسل": "teacher", "نص الرسالة": reply_text.strip(), "الصورة_base64": "",
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_rep])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.success("تم إرسال الرد للبشمهندس بنجاح!")
                         st.rerun()
 
 with tab_cards:
     st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
+    
+    # قسم طلبات الحجز أونلاين الجديدة
+    bookings_df_state = st.session_state.bookings_df
+    if not bookings_df_state.empty:
+        st.markdown("#### 📅 طلبات حجز الدروس أونلاين الواردة:")
+        st.dataframe(bookings_df_state, use_container_width=True)
+        with st.expander("🗑️ حذف طلب حجز محدد"):
+            del_book_opts = {bi: f"{br['اسم الطالب']} - {br['المرحلة_الصف']} ({br['رقم_الهاتف']})" for bi, br in bookings_df_state.iterrows()}
+            sel_del_book = st.selectbox("اختر الطلب المراد حذفه:", options=list(del_book_opts.keys()), format_func=lambda x: del_book_opts[x], key="sel_del_book")
+            if st.button("🚨 تأكيد حذف طلب الحجز المختار"):
+                st.session_state.bookings_df = bookings_df_state.drop(sel_del_book).reset_index(drop=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                st.success("✓ تم حذف طلب الحجز بنجاح!")
+                st.rerun()
+        st.write("---")
+
     all_known_students = sorted(list(set(
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -1582,21 +1632,21 @@ with tab_cards:
                             del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
                             if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
                                 st.session_state.assessments_df = st.session_state.assessments_df.drop(del_grade_choice).reset_index(drop=True)
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                                 st.success("✓ تم مسح الدرجة بنجاح!")
                                 st.rerun()
 
                 if is_banned:
                     if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
                         st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                         st.success(f"تم فك حظر {st_name}!")
                         st.rerun()
                 else:
                     if st.button("حظر 🚫", key=f"ban_{idx}"):
                         if not u_row.empty:
                             st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                             st.warning(f"تم حظر {st_name}.")
                             st.rerun()
                 
@@ -1636,7 +1686,7 @@ with tab1:
                     "نظام الدفع": payment_type, "مستوى الطالب": student_level, "ملاحظات": notes.strip(),
                 }
                 st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
 
 with tab_hw:
@@ -1670,7 +1720,7 @@ with tab_hw:
                     "حالة التسليم": ass_status, "ملاحظات وتوجيهات": ass_notes.strip(),
                 }
                 st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                 st.success(f"✓ تم رصد {ass_type} بنجاح للطالب ({ass_student})!")
 
     st.write("---")
@@ -1727,14 +1777,14 @@ with tab2:
                 df.at[selected_idx, "مستوى الطالب"] = edit_level
                 df.at[selected_idx, "ملاحظات"] = edit_notes.strip()
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                 st.success("✓ تم تحديث بيانات الحصة بنجاح!")
                 st.rerun()
 
             if delete_btn:
                 df = df.drop(selected_idx).reset_index(drop=True)
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
                 st.warning("⚠️ تم حذف السجل.")
                 st.rerun()
 
@@ -1777,6 +1827,7 @@ with tab3:
             st.session_state.messages_df.to_excel(writer, sheet_name="Messages", index=False)
             st.session_state.exams_df.to_excel(writer, sheet_name="Exams", index=False)
             st.session_state.essays_df.to_excel(writer, sheet_name="Essays", index=False)
+            st.session_state.bookings_df.to_excel(writer, sheet_name="Bookings", index=False)
 
         st.download_button(
             label="📥 تصدير ملف Excel الشامل (مستخدمين + حصص + واجبات + امتحانات + مقالي)",
