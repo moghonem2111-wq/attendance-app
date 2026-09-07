@@ -176,63 +176,183 @@ def delete_student_completely(student_name_to_del):
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
 
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
+    
+    html, body, [class*="css"], p, span, label, div, button, h1, h2, h3, h4, h5, h6 {
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.4px !important;
+        font-size: 17px !important;
+    }
+
+    input, textarea, select {
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+    }
+
+    body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
+        direction: rtl;
+        text-align: right;
+    }
+    
+    .darssly-navbar {
+        background: #1e232d;
+        padding: 14px 25px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid #334155;
+    }
+    .navbar-brand { display: flex; align-items: center; gap: 15px; }
+    .navbar-title-group h3 { margin: 0 !important; color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; }
+    .navbar-title-group p { margin: 2px 0 0 0 !important; color: #cbd5e1 !important; font-size: 14px !important; font-weight: 800 !important; }
+
+    .exam-builder-header {
+        background-color: #f59e0b;
+        color: #ffffff !important;
+        padding: 16px 22px;
+        border-radius: 10px 10px 0 0;
+        font-size: 22px;
+        font-weight: 900;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .vertical-section-header {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: #ffffff !important;
+        padding: 14px 20px;
+        border-radius: 10px;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        font-size: 20px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .stButton>button {
+        background: #10b981 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        border: none !important;
+        border-radius: 10px;
+        font-weight: 900 !important;
+        font-size: 18px !important;
+        padding: 14px 24px;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        width: 100% !important;
+    }
+    .stButton>button:hover { background: #059669 !important; }
+
+    .exam-top-bar {
+        background-color: #f97316;
+        color: #ffffff;
+        padding: 15px 25px;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 20px;
+        font-weight: 900;
+    }
+    .exam-card-box {
+        background: #1e232d;
+        border: 1px solid #334155;
+        border-radius: 0 0 12px 12px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+        color: #f8fafc !important;
+    }
+
+    .chat-bubble-student {
+        background-color: #075985;
+        color: #f0f9ff;
+        padding: 14px 18px;
+        border-radius: 14px 14px 0 14px;
+        margin-bottom: 12px;
+        max-width: 78%;
+        margin-right: auto;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        border: 1px solid #0284c7;
+    }
+    .chat-bubble-teacher {
+        background-color: #065f46;
+        color: #ecfdf5;
+        padding: 14px 18px;
+        border-radius: 14px 14px 14px 0;
+        margin-bottom: 12px;
+        max-width: 78%;
+        margin-left: auto;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        border: 1px solid #059669;
+    }
+
+    .darssly-box {
+        background: linear-gradient(135deg, #059669, #10b981);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .course-card {
+        background: #1e232d;
+        border: 2px solid #334155;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+    .course-icon-box {
+        font-size: 45px;
+        background: #065f46;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto 15px auto;
+        border: 2px solid #10b981;
+    }
+    .course-title { color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }
+    .course-desc { color: #cbd5e1 !important; font-size: 15px !important; font-weight: 800 !important; margin-bottom: 15px !important; }
+
+    .call-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff !important; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 900; text-decoration: none !important;
+    }
+    .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; color: #f8fafc; }
+    </style>
+""", unsafe_allow_html=True)
+
 query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
+# ==============================================================================
+# 1. واجهة الطالب
+# ==============================================================================
 if is_student_mode:
     st.markdown("""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
-        html, body, [class*="css"], p, span, label, div, button, h1, h2, h3, h4, h5, h6 {
-            font-family: 'Cairo', sans-serif !important;
-            font-weight: 900 !important;
-            color: #0f172a !important;
-            direction: rtl;
-            text-align: right;
-        }
-        .stButton>button {
-            background: #10b981 !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 10px;
-            font-weight: 900 !important;
-            font-size: 16px !important;
-            padding: 12px 22px;
-            width: 100% !important;
-        }
-        .darssly-navbar {
-            background: #ffffff;
-            padding: 12px 25px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e2e8f0;
-        }
-        .navbar-brand { display: flex; align-items: center; gap: 15px; }
-        .navbar-title-group h3 { margin: 0 !important; color: #10b981 !important; font-size: 18px !important; }
-        .navbar-title-group p { margin: 2px 0 0 0 !important; color: #64748b !important; font-size: 12px !important; }
-        .exam-top-bar {
-            background-color: #f97316; color: #ffffff; padding: 15px 25px;
-            border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 900;
-        }
-        .exam-card-box {
-            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px;
-        }
-        .darssly-box {
-            background: linear-gradient(135deg, #059669, #10b981); border-radius: 16px; padding: 24px; margin-bottom: 25px; color: #ffffff !important;
-        }
-        .course-card {
-            background: #ffffff; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); margin-bottom: 20px;
-        }
-        .course-icon-box {
-            font-size: 45px; background: #f0fdf4; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px auto; border: 2px solid #10b981;
-        }
-        .call-btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff !important; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 900; text-decoration: none !important;
-        }
+            [data-testid="stSidebar"], [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"] { display: none !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -277,9 +397,9 @@ if is_student_mode:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-                st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #334155;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown("<h1 style='color: #34d399; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+                st.markdown("<div style='background: #065f46; color: #ecfdf5; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: #f8fafc;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
@@ -295,7 +415,7 @@ if is_student_mode:
                 if img_b64:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <div style="position: absolute; width: 240px; height: 240px; background: #d1fae5; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
+                            <div style="position: absolute; width: 240px; height: 240px; background: #065f46; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
                             <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
@@ -303,8 +423,8 @@ if is_student_mode:
             st.write("---")
 
             st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
 
             courses_grid = [
                 ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
@@ -332,7 +452,7 @@ if is_student_mode:
             st.markdown('</div>', unsafe_allow_html=True)
 
         elif st.session_state.page_view == "login":
-            st.markdown("### 🔐 تسجيل دخول الطالب:")
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>🔐 تسجيل دخول الطالب:</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
                 login_name = st.text_input("اسم الطالب المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
@@ -361,7 +481,7 @@ if is_student_mode:
                         st.error("اسم الطالب أو الرقم السري غير صحيح.")
 
         elif st.session_state.page_view == "register":
-            st.markdown("### ✨ إنشاء حساب طالب جديد:")
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
             with st.form("student_register_form"):
                 reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
@@ -410,9 +530,9 @@ if is_student_mode:
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(f"""
-                <div style="background: #ffffff; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                    <h3 style="margin: 0; color: #059669;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: #0f172a;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
+                <div style="background: #1e232d; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid #334155;">
+                    <h3 style="margin: 0; color: #34d399; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
+                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: #f8fafc; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
         with col_u2:
@@ -427,8 +547,9 @@ if is_student_mode:
         with col_vid2:
             st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
 
+        # ==================== لوحة خدمات الطالب ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; margin-bottom: 15px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; margin-bottom: 15px; color: #f8fafc; font-size: 16px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
         if st.button("✍️ الاختبارات الإلكترونية التفاعلية", use_container_width=True):
             st.session_state.student_sub_page = "exams"
@@ -449,8 +570,9 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
+        # 1. صفحة الاختبارات مع شهادة واضحة بخلفية بيضاء ونصوص سوداء عريضة ومقروءة
         if sub_page == "exams":
-            st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
 
             if available_exams.empty:
@@ -475,18 +597,18 @@ if is_student_mode:
                             solved_max = already_solved.iloc[-1]["الدرجة العظمى"]
                             pct_old = (solved_score / solved_max * 100) if solved_max > 0 else 0
                             st.markdown(f"""
-                                <div style="background:#ffffff; border:2px solid #10b981; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.08); margin-bottom:20px;">
-                                    <h2 style="color:#059669; margin-bottom:5px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
-                                    <p style="font-size:19px; color:#0f172a;"><b>{st_user['اسم الطالب']}</b></p>
-                                    <p style="font-size:16px; color:#0f172a;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
-                                    <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:28px; font-weight:900; color:#059669;">
+                                <div style="background:#ffffff; border:3px solid #10b981; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.15); margin-bottom:20px;">
+                                    <h2 style="color:#059669; margin-bottom:8px; font-size:26px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
+                                    <p style="font-size:20px; color:#0f172a; margin: 5px 0;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
+                                    <p style="font-size:18px; color:#334155; margin: 5px 0;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
+                                    <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#059669;">
                                         {pct_old:.0f}%
                                     </div>
-                                    <p style="font-size:18px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
-                                    <p style="margin-top:15px; font-size:14px; color:#0f172a;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
+                                    <p style="font-size:19px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
+                                    <p style="margin-top:15px; font-size:16px; color:#475569;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                 </div>
                             """, unsafe_allow_html=True)
-                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:10px; color:#0f172a;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='background:#f0fdf4; padding:18px; border-radius:12px; border:1px solid #10b981; margin-top:10px; color:#0f172a; font-size:16px;'><b>تفاصيل إجاباتك السابقة:</b><br>{already_solved.iloc[-1]['ملاحظات وتوجيهات']}</div>", unsafe_allow_html=True)
                         else:
                             exam_state_key = f"exam_state_{ex_id}"
                             if exam_state_key not in st.session_state:
@@ -507,9 +629,9 @@ if is_student_mode:
                                         {ex_title}
                                     </div>
                                     <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:25px; margin-bottom:25px; color:#0f172a;">
-                                        <p style="color:#0f172a;"><b>الوصف:</b> {ex_desc}</p>
-                                        <p style="color: #b91c1c; font-weight: 900;">⚠️ مدة الامتحان ({ex_time} دقيقة)، عند انتهاء الوقت ينتهي الامتحان تلقائياً.</p>
-                                        <p style="color: #b91c1c; font-weight: 900;">⚠️ تم تحديد محاولة واحدة فقط لهذا الإمتحان.</p>
+                                        <p style="color:#0f172a; font-size:17px;"><b>الوصف:</b> {ex_desc}</p>
+                                        <p style="color: #b91c1c; font-weight: 900; font-size:16px;">⚠️ مدة الامتحان ({ex_time} دقيقة)، عند انتهاء الوقت ينتهي الامتحان تلقائياً.</p>
+                                        <p style="color: #b91c1c; font-weight: 900; font-size:16px;">⚠️ تم تحديد محاولة واحدة فقط لهذا الإمتحان.</p>
                                 """, unsafe_allow_html=True)
 
                                 input_pass = ""
@@ -557,19 +679,19 @@ if is_student_mode:
                                         st_ex["show_confirm_submit"] = True
 
                                     st.markdown(f"""
-                                        <div style="background-color: #f97316; color: #ffffff; padding: 12px 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 900;">
+                                        <div style="background-color: #f97316; color: #ffffff; padding: 12px 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size:18px;">
                                             <span>{ex_title}</span>
                                             <span>⏱️ الوقت المتبقي: {rem_mins:02d}:{rem_s:02d}</span>
                                         </div>
                                         <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:20px; margin-bottom:20px; color:#0f172a;">
-                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:900; color:#0f172a;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:900; color:#0f172a; font-size:17px;">
                                                 <span style="color:#0f172a;">الطالب: {st_user['اسم الطالب']}</span>
                                                 <span style="color:#0f172a;">السؤال ({cur_i + 1} من {total_q}) — الدرجة: {q_curr['points']}</span>
                                             </div>
                                     """, unsafe_allow_html=True)
 
                                     if q_curr.get("text"):
-                                        st.markdown(f"<span style='color:#0f172a;'><b>{q_curr['text']}</b></span>", unsafe_allow_html=True)
+                                        st.markdown(f"<span style='color:#0f172a; font-size:18px;'><b>{q_curr['text']}</b></span>", unsafe_allow_html=True)
                                     
                                     if q_curr.get("q_img"):
                                         st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", use_container_width=True)
@@ -594,8 +716,8 @@ if is_student_mode:
                                                     st.rerun()
                                             with col_opt_content:
                                                 st.markdown(f"""
-                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:10px 15px; margin-bottom:10px; color:#0f172a;">
-                                                        <b style="color:#0f172a;">({lbl})</b> <span style="color:#0f172a;">{t_val}</span>
+                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:12px 18px; margin-bottom:10px; color:#0f172a;">
+                                                        <b style="color:#0f172a; font-size:18px;">({lbl})</b> <span style="color:#0f172a; font-size:18px;">{t_val}</span>
                                                     </div>
                                                 """, unsafe_allow_html=True)
                                                 if i_val:
@@ -688,23 +810,24 @@ if is_student_mode:
                                             st.session_state.pop(exam_state_key, None)
                                             
                                             st.markdown(f"""
-                                                <div style="background:#ffffff; border:2px solid #10b981; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.08); margin-top:20px;">
-                                                    <h2 style="color:#059669; margin-bottom:5px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
-                                                    <p style="font-size:19px; color:#0f172a;"><b>{st_user['اسم الطالب']}</b></p>
-                                                    <p style="font-size:16px; color:#0f172a;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
-                                                    <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:28px; font-weight:900; color:#059669;">
+                                                <div style="background:#ffffff; border:3px solid #10b981; border-radius:20px; padding:35px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.15); margin-top:20px;">
+                                                    <h2 style="color:#059669; margin-bottom:8px; font-size:26px;">🎓 شهادة إتمام الاختبار والنتيجة النهائية</h2>
+                                                    <p style="font-size:20px; color:#0f172a; margin: 5px 0;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
+                                                    <p style="font-size:18px; color:#334155; margin: 5px 0;">اجتاز بنجاح امتحان: <b>{ex_title}</b></p>
+                                                    <div style="width:130px; height:130px; border-radius:50%; border:10px solid #10b981; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#059669;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:18px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
-                                                    <p style="margin-top:15px; font-size:14px; color:#0f172a;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#0f172a;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="margin-top:15px; font-size:16px; color:#475569;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
                                             """, unsafe_allow_html=True)
-                                            st.markdown(f"<div style='background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #10b981; margin-top:15px; color:#0f172a;'><b>تفاصيل الإجابات الصحيحة والخاطئة:</b><br>{note_msg}</div>", unsafe_allow_html=True)
+                                            st.markdown(f"<div style='background:#f0fdf4; padding:18px; border-radius:12px; border:1px solid #10b981; margin-top:15px; color:#0f172a; font-size:16px;'><b>تفاصيل الإجابات الصحيحة والخاطئة:</b><br>{note_msg}</div>", unsafe_allow_html=True)
                                             st.rerun()
                                     st.markdown("</div>", unsafe_allow_html=True)
 
+        # 2. صفحة الحضور
         elif sub_page == "attendance":
-            st.markdown("<h3 style='color: #0f172a;'>📝 تسجيل حضور حصة اليوم وتقييمها:</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>📝 تسجيل حضور حصة اليوم وتقييمها:</h3>", unsafe_allow_html=True)
             with st.form("logged_student_att_form", clear_on_submit=True):
                 st_date = st.date_input("تاريخ الحصة:", value=date.today())
                 selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", [
@@ -722,8 +845,9 @@ if is_student_mode:
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                     st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
 
+        # 3. درجات الواجبات
         elif sub_page == "hw_grades":
-            st.markdown("<h3 style='color: #0f172a;'>📊 متابعة درجات الواجبات المنزلية:</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>📊 متابعة درجات الواجبات المنزلية:</h3>", unsafe_allow_html=True)
             my_assessments = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("واجب", na=False))
@@ -733,8 +857,9 @@ if is_student_mode:
             else:
                 st.dataframe(my_assessments[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
+        # 4. درجات الاختبارات مع شهادة وتفاصيل صح/خطأ
         elif sub_page == "exam_grades":
-            st.markdown("<h3 style='color: #0f172a;'>📈 متابعة درجات الاختبارات والكويزات وتفاصيل الإجابات:</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>📈 متابعة درجات الاختبارات والكويزات وتفاصيل الإجابات:</h3>", unsafe_allow_html=True)
             my_exams = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("اختبار|كويز", na=False))
@@ -749,16 +874,17 @@ if is_student_mode:
                     with st.expander(f"📝 {ex_rec['عنوان التكليف']} — النتيجة: ({score_val} / {max_val})"):
                         st.markdown(f"""
                             <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; padding:20px; text-align:center; margin-bottom:15px; color:#0f172a;">
-                                <h3 style="color:#059669;">شهادة إتمام الاختبار</h3>
-                                <p style="color:#0f172a;"><b>الطالب:</b> {st_user['اسم الطالب']}</p>
-                                <p style="color:#0f172a;"><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
-                                <p style="color:#0f172a;"><b>التاريخ:</b> {ex_rec['التاريخ']}</p>
+                                <h3 style="color:#059669; font-size:24px;">شهادة إتمام الاختبار</h3>
+                                <p style="color:#0f172a; font-size:18px;"><b>الطالب: {st_user['اسم الطالب']}</b></p>
+                                <p style="color:#0f172a; font-size:18px;"><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
+                                <p style="color:#0f172a; font-size:16px;"><b>التاريخ:</b> {ex_rec['التاريخ']}</p>
                             </div>
                         """, unsafe_allow_html=True)
-                        st.markdown(f"<span style='color:#0f172a;'><b>تفاصيل وتوجيهات الإجابة:</b><br>{ex_rec['ملاحظات وتوجيهات']}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color:#0f172a; font-size:16px;'><b>تفاصيل وتوجيهات الإجابة:</b><br>{ex_rec['ملاحظات وتوجيهات']}</span>", unsafe_allow_html=True)
 
+        # 5. الدردشة
         elif sub_page == "chat":
-            st.markdown("<h3 style='color: #0f172a;'>💬 مركز الدردشة والدعم المباشر:</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>💬 مركز الدردشة والدعم المباشر:</h3>", unsafe_allow_html=True)
             student_name_key = st_user["اسم الطالب"].strip()
             chat_history = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key].copy()
 
@@ -794,7 +920,7 @@ if is_student_mode:
     st.markdown("""
         <div class="call-btn-container">
             <a href="tel:01016361440" class="call-btn">
-                <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:#ffffff;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
                 <span>للتواصل مع م / محمد غنيم: 01016361440</span>
             </a>
         </div>
@@ -806,7 +932,7 @@ if is_student_mode:
                 <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-footer tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
                 <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-footer youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
             </div>
-            <div class="rights-text" style="color: #0f172a;">جميع الحقوق محفوظة لدي م / محمد غنيم 2026</div>
+            <div class="rights-text">جميع الحقوق محفوظة لدي م / محمد غنيم 2026</div>
         </div>
     """, unsafe_allow_html=True)
     st.stop()
@@ -1098,10 +1224,10 @@ with tab_exam_maker:
                     edit_time = st.number_input("تعديل المدة (بالدقائق):", min_value=5, max_value=180, value=int(ex_r.get('مدة الامتحان بالدقائق', 30)))
                     
                     if st.form_submit_button("💾 حفظ تعديلات الامتحان"):
-                        st.session_state.exams_df.at[ex_i, "عنوان الامتحان"] = str(edit_title).strip()
-                        st.session_state.exams_df.at[ex_i, "وصف الامتحان"] = str(edit_desc).strip()
-                        st.session_state.exams_df.at[ex_i, "كلمة المرور"] = str(edit_pass).strip()
-                        st.session_state.exams_df.at[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
+                        st.session_state.exams_df.loc[ex_i, "عنوان الامتحان"] = str(edit_title).strip()
+                        st.session_state.exams_df.loc[ex_i, "وصف الامتحان"] = str(edit_desc).strip()
+                        st.session_state.exams_df.loc[ex_i, "كلمة المرور"] = str(edit_pass).strip()
+                        st.session_state.exams_df.loc[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
                         
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                         st.success("✓ تم حفظ التعديلات بنجاح!")
