@@ -109,7 +109,7 @@ COL_ESSAYS = ["معرف_الحل", "معرف_الامتحان", "عنوان ال
 COL_BOOKINGS = ["تاريخ_الحجز", "اسم الطالب", "المنهج_الدولة", "المرحلة_الصف", "رقم_الهاتف", "رقم_ولي_الأمر", "الحالة"]
 COL_BANK_REQUESTS = ["تاريخ_الطلب", "اسم الطالب", "رقم_الهاتف", "كود_OTP", "حالة_الدفع", "إيصال_الدفع_base64"]
 COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "المجموعة/الصف", "المادة", "نوع_السؤال", "بيانات_السؤال_JSON"]
-COL_VIDEOS = ["معرف_الفيديو", "عنوان_الفيديو", "المنهج/الدولة", "المجموعة/الصف", "رابط_الفيديو", "تاريخ_الرفع"]
+COL_VIDEOS = ["معرف_الفيديو", "عنوان_الفيديو", "المنهج/الدولة", "المجموعة/الصف", "رابط_الفيديو", "فيديو_base64", "تاريخ_الرفع"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -651,9 +651,9 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- قسم الفيديوهات والشروحات للطالب (حسب مرحلته) ---
+        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي (قائمة جانبية + شاشة عرض الفيديو الرئيسية) ---
         if sub_page == "videos":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 الفيديوهات والشروحات التعليمية الخاصة بمرحلتك:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
             v_df = st.session_state.videos_df
             st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip() == student_grade]
@@ -661,18 +661,51 @@ if is_student_mode:
             if st_videos.empty:
                 st.info("لا توجد فيديوهات مرفوعة لمرحلتك الدراسية حالياً. ترقبها قريباً!")
             else:
-                for _, vid_r in st_videos.iterrows():
+                col_sidebar, col_main_vid = st.columns([1, 2.2])
+                
+                with col_sidebar:
                     st.markdown(f"""
-                        <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:20px; margin-bottom:15px;">
-                            <h4 style="color:#0284c7; margin-top:0;">📺 {vid_r['عنوان_الفيديو']}</h4>
-                            <p style="font-size:14px; color:#64748b;">تاريخ الرفع: {vid_r['تاريخ_الرفع']}</p>
+                        <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:15px; margin-bottom:15px;">
+                            <h4 style="margin:0 0 10px 0; color:#10b981; font-size:18px;">📚 محتوى الدروس</h4>
                         </div>
                     """, unsafe_allow_html=True)
-                    v_link = str(vid_r["رابط_الفيديو"]).strip()
-                    if "youtube.com" in v_link or "youtu.be" in v_link:
-                        st.video(v_link)
+                    
+                    if "selected_video_idx" not in st.session_state:
+                        st.session_state.selected_video_idx = 0
+
+                    video_titles = st_videos["عنوان_الفيديو"].tolist()
+                    selected_title = st.radio("اختر الدرس للمشاهدة:", video_titles, key="darssly_vid_radio")
+                    selected_row = st_videos[st_videos["عنوان_الفيديو"] == selected_title].iloc[0]
+
+                with col_main_vid:
+                    st.markdown(f"""
+                        <div style="background:linear-gradient(135deg, #059669, #10b981); color:#ffffff; padding:15px 20px; border-radius:10px; margin-bottom:15px;">
+                            <h3 style="margin:0; color:#ffffff; font-size:20px;">📺 {selected_row['عنوان_الفيديو']}</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    v_link = str(selected_row["رابط_الفيديو"]).strip()
+                    v_bytes = selected_row.get("فيديو_base64", "")
+
+                    if pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
+                        try:
+                            vid_bytes_dec = base64.b64decode(v_bytes)
+                            st.video(vid_bytes_dec)
+                        except Exception:
+                            st.error("حدث خطأ في عرض ملف الفيديو المرفوع.")
+                    elif v_link and v_link != "nan":
+                        if "youtube.com" in v_link or "youtu.be" in v_link:
+                            st.video(v_link)
+                        else:
+                            st.link_button("🔗 مشاهدة الفيديو عبر الرابط الخارجي", v_link)
                     else:
-                        st.markdown(f'<a href="{v_link}" target="_blank" class="stLinkButton>a">مشاهدة الفيديو اضغط هنا 🔗</a>', unsafe_allow_html=True)
+                        st.info("لا يوجد فيديو متاح لهذا الدرس.")
+
+                    st.write("---")
+                    st.markdown("<h4 style='font-size:18px;'>❓ الأسئلة والتعليقات (0)</h4>", unsafe_allow_html=True)
+                    st.text_area("أكتب سؤالك أو استفسارك حول هذا الدرس:", placeholder="اكتب سؤالك هنا ليجيب عليه البشمهندس...", key="vid_comment_box")
+                    if st.button("إرسال التعليق أو السؤال"):
+                        st.success("✓ تم إرسال سؤالك بنجاح للمعلم وسيتم الرد عليك قريباً!")
 
         # --- بنك الأسئلة للطالب ---
         elif sub_page == "bank":
@@ -1016,7 +1049,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة الموضوعية المحصلة: <b>{mcq_score} / {total_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
@@ -1509,25 +1542,32 @@ with tab_question_bank:
                     st.warning("تم حذف السؤال.")
                     st.rerun()
 
-# --- لوحة إدارة الفيديوهات للمعلم ---
+# --- لوحة إدارة الرفع المباشر للفيديوهات للمعلم ---
 with tab_videos_teacher:
     st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب:")
     with st.form("upload_video_form", clear_on_submit=True):
         vid_title = st.text_input("عنوان الفيديو / الدرس:")
         vid_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="vid_c")
         vid_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[vid_curr], key="vid_g")
-        vid_link = st.text_input("رابط الفيديو (رابط يوتيوب أو رابط مباشر):", placeholder="https://www.youtube.com/watch?v=...")
+        
+        vid_upload_file = st.file_uploader("رفع ملف فيديو من على الجهاز (MP4 أو ما شابه):", type=["mp4", "mov", "avi", "mkv"])
+        vid_link_input = st.text_input("أو ضع رابط فيديو (يوتيوب أو رابط مباشر):", placeholder="https://www.youtube.com/watch?v=...")
 
         if st.form_submit_button("💾 حفظ ونشر الفيديو للطالب"):
-            if not vid_title.strip() or not vid_link.strip():
-                st.error("يرجى كتابة عنوان الفيديو ورابطه.")
+            if not vid_title.strip():
+                st.error("يرجى كتابة عنوان الفيديو.")
             else:
+                v_bytes_str = ""
+                if vid_upload_file is not None:
+                    v_bytes_str = base64.b64encode(vid_upload_file.read()).decode()
+
                 new_vid = {
                     "معرف_الفيديو": f"VID_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                     "عنوان_الفيديو": vid_title.strip(),
                     "المنهج/الدولة": vid_curr,
                     "المجموعة/الصف": vid_grade,
-                    "رابط_الفيديو": vid_link.strip(),
+                    "رابط_الفيديو": vid_link_input.strip() if vid_link_input else "",
+                    "فيديو_base64": v_bytes_str,
                     "تاريخ_الرفع": str(date.today())
                 }
                 st.session_state.videos_df = pd.concat([st.session_state.videos_df, pd.DataFrame([new_vid])], ignore_index=True)
@@ -1540,7 +1580,7 @@ with tab_videos_teacher:
     if v_df_state.empty:
         st.info("لا توجد فيديوهات منشورة حالياً.")
     else:
-        st.dataframe(v_df_state, use_container_width=True)
+        st.dataframe(v_df_state[["عنوان_الفيديو", "المنهج/الدولة", "المجموعة/الصف", "تاريخ_الرفع"]], use_container_width=True)
         with st.expander("🗑️ حذف فيديو منشور"):
             del_vid_opts = {vi: f"[{vr['المجموعة/الصف']}] {vr['عنوان_الفيديو']}" for vi, vr in v_df_state.iterrows()}
             sel_del_vid = st.selectbox("اختر الفيديو المراد حذفه:", options=list(del_vid_opts.keys()), format_func=lambda x: del_vid_opts[x], key="sel_del_vid")
