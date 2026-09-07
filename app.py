@@ -431,6 +431,22 @@ st.markdown("""
         width: 100%;
     }
     .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; }
+
+    @media (prefers-color-scheme: light) {
+        body, .stApp { background-color: #ffffff !important; }
+        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+        body, .stApp { background-color: #0e1117 !important; }
+        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
+        .darssly-navbar { background: #1e232d !important; border-color: #334155 !important; }
+        .exam-card-box { background: #1e232d !important; border-color: #334155 !important; }
+        .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
+        .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
+        .course-card { background: #1e232d !important; border-color: #334155 !important; }
+        .course-title { color: #34d399 !important; }
+        .course-desc { color: #9ca3af !important; }
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -662,7 +678,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات (النص باللون الأسود الواضح وساعة العد التنازلي التفاعلية وشكل الشهادة)
+        # 1. صفحة الاختبارات (النص باللون الأسود وعداد التوقيت المباشر وشكل الشهادة)
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
             available_exams = st.session_state.exams_df.copy()
@@ -759,7 +775,6 @@ if is_student_mode:
                                     cur_i = st_ex["cur_idx"]
                                     q_curr = questions[cur_i]
 
-                                    # حساب الوقت المتبقي بالساعة التفاعلية
                                     elapsed_secs = (datetime.now() - st_ex["start_time"]).seconds if st_ex["start_time"] else 0
                                     total_allowed_secs = ex_time * 60
                                     remaining_secs = max(0, total_allowed_secs - elapsed_secs)
@@ -781,7 +796,6 @@ if is_student_mode:
                                     if q_curr.get("text"):
                                         st.markdown(f"<span style='color:#0f172a;'><b>{q_curr['text']}</b></span>", unsafe_allow_html=True)
                                     
-                                    # عرض صورة السؤال (سكرين شوت)
                                     if q_curr.get("q_img"):
                                         st.image(f"data:image/jpeg;base64,{q_curr['q_img']}", use_container_width=True)
 
@@ -1290,12 +1304,12 @@ with tab_exam_maker:
                 "معرف_الامتحان": f"EX_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                 "عنوان الامتحان": ex_title_input.strip(),
                 "وصف الامتحان": ex_desc_input.strip(),
-                "كلمة المرور": ex_pass_input.strip(),
+                "كلمة المرور": str(ex_pass_input).strip(),
                 "المنهج/الدولة": ex_curr_input,
                 "المجموعة/الصف": ex_grade_input,
                 "المادة": ex_subject_input,
                 "الفصل الدراسي": ex_term_input,
-                "مدة الامتحان بالدقائق": ex_time_input,
+                "مدة الامتحان بالدقائق": int(ex_time_input),
                 "الأسئلة_JSON": json.dumps(st.session_state.temp_questions, ensure_ascii=False),
                 "تاريخ الإنشاء": str(date.today()),
             }
@@ -1306,7 +1320,7 @@ with tab_exam_maker:
             st.rerun()
 
     st.write("---")
-    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيارات التعديل والإشراف):")
+    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيارات التعديل والإشراف والأسئلة):")
     if st.session_state.exams_df.empty:
         st.info("لا توجد امتحانات منشورة بعد.")
     else:
@@ -1319,10 +1333,10 @@ with tab_exam_maker:
                     edit_time = st.number_input("تعديل المدة (بالدقائق):", min_value=5, max_value=180, value=int(ex_r.get('مدة الامتحان بالدقائق', 30)))
                     
                     if st.form_submit_button("💾 حفظ تعديلات الامتحان"):
-                        st.session_state.exams_df.loc[ex_i, "عنوان الامتحان"] = str(edit_title.strip())
-                        st.session_state.exams_df.loc[ex_i, "وصف الامتحان"] = str(edit_desc.strip())
-                        st.session_state.exams_df.loc[ex_i, "كلمة المرور"] = str(edit_pass.strip())
-                        st.session_state.exams_df.loc[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
+                        st.session_state.exams_df.at[ex_i, "عنوان الامتحان"] = str(edit_title).strip()
+                        st.session_state.exams_df.at[ex_i, "وصف الامتحان"] = str(edit_desc).strip()
+                        st.session_state.exams_df.at[ex_i, "كلمة المرور"] = str(edit_pass).strip()
+                        st.session_state.exams_df.at[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                         st.success("✓ تم حفظ التعديلات بنجاح!")
                         st.rerun()
@@ -1331,6 +1345,8 @@ with tab_exam_maker:
                     q_list = json.loads(ex_r["الأسئلة_JSON"])
                 except Exception:
                     q_list = []
+                
+                st.write(f"**عدد الأسئلة الحالية في هذا الامتحان:** {len(q_list)} سؤال")
                 
                 pdf_html = f"""<!DOCTYPE html>
                 <html dir="rtl" lang="ar">
