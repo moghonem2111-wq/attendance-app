@@ -249,11 +249,20 @@ st.markdown(f"""
         background-color: {bg_color} !important;
     }}
 
-    input, textarea, select {{
+    /* إجبار القوائم المنسدلة وخانات الإدخال على ظهور نصوص سوداء واضحة بخلفية بيضاء */
+    input, textarea, select, div[data-baseweb="select"] > div {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
         color: #0f172a !important;
         background-color: #ffffff !important;
+    }}
+
+    div[data-baseweb="popover"], div[role="listbox"] div {{
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+    }}
+    div[role="option"] span, div[role="option"] div {{
+        color: #0f172a !important;
     }}
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {{
