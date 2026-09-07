@@ -1049,7 +1049,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة الموضوعية المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
@@ -1541,7 +1541,7 @@ with tab_question_bank:
                     st.warning("تم حذف السؤال.")
                     st.rerun()
 
-# --- لوحة إدارة رفع الفيديوهات للمعلم مع شريط التقدم والنسبة المئوية ---
+# --- لوحة إدارة الرفع المباشر للفيديوهات للمعلم ---
 with tab_videos_teacher:
     st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب (حتى 1 جيجابايت مع شريط تقدم):")
     with st.form("upload_video_form", clear_on_submit=True):
@@ -1561,14 +1561,12 @@ with tab_videos_teacher:
                     file_bytes = vid_upload_file.read()
                     total_size = len(file_bytes)
                     
-                    # عرض شريط التقدم والنسبة المئوية الاحترافي أثناء معالجة وحفظ الملف الكبير
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     
                     chunk_size = max(1, total_size // 100)
                     processed = 0
                     
-                    # محاكاة وتتبع عملية قراءة ومعالجة الملف الكبير لملء الشريط والنسبة المئوية
                     for i in range(0, total_size, chunk_size):
                         processed = min(total_size, processed + chunk_size)
                         pct = int((processed / total_size) * 100)
