@@ -203,7 +203,7 @@ st.markdown(f"""
     input, textarea, select {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
-        color: {text_color} !important;
+        color: #0f172a !important;
         background-color: {card_bg} !important;
     }}
 
@@ -234,13 +234,11 @@ st.markdown(f"""
         background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff !important; padding: 14px 20px; border-radius: 10px; margin-top: 25px; margin-bottom: 15px; font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 10px;
     }}
     
-    /* أزرار عامة باللون الأخضر */
     .stButton>button {{
         background: #10b981 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; border: none !important; border-radius: 10px; font-weight: 900 !important; font-size: 16px !important; padding: 12px 22px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); width: 100% !important;
     }}
     .stButton>button:hover {{ background: #059669 !important; }}
 
-    /* أزرار تسجيل الدخول وإنشاء الحساب باللون الأحمر وكتابة بيضاء */
     div.stFormSubmitButton > button, div.row-widget.stButton > button:nth-of-type(1) {{
         background-color: #dc2626 !important;
         color: #ffffff !important;
@@ -271,7 +269,7 @@ st.markdown(f"""
     }}
 
     .exam-top-bar {{
-        background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 900;
+        background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900; display: flex; justify-content: space-between; align-items: center;
     }}
     .exam-card-box {{
         background: {card_bg}; border: 1px solid {card_border}; border-radius: 0 0 12px 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; color: {text_color} !important;
@@ -568,7 +566,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع شهادة باللون الأحمر ونصوص بيضاء عريضة
+        # 1. صفحة الاختبارات مع إزالة أرقام الاختيارات السفلى والتفاعل بالكامل عبر النقر على المستطيل ودعم الأسئلة المقالية
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -699,47 +697,32 @@ if is_student_mode:
                                         opts_labels = ["أ", "ب", "ج", "د"]
                                         saved_choice = st_ex["answers_mcq"].get(cur_i, None)
 
+                                        st.markdown(f"<p style='color:{text_color}; font-size:16px; margin-top:10px;'><b>اختر إجابتك (اضغط على الخيار المناسب):</b></p>", unsafe_allow_html=True)
+                                        
                                         for opt_idx, lbl in enumerate(opts_labels, 1):
                                             t_val = q_curr.get(f"opt{opt_idx}", "")
                                             i_val = q_curr.get(f"opt{opt_idx}_img", "")
                                             
                                             is_selected = (saved_choice == opt_idx)
-                                            bg_opt = "#e0e7ff" if is_selected else card_bg
-                                            border_opt = "#4f46e5" if is_selected else card_border
+                                            bg_opt = "#10b981" if is_selected else card_bg
+                                            fg_opt = "#ffffff" if is_selected else text_color
+                                            border_opt = "#059669" if is_selected else card_border
                                             
-                                            col_opt_radio, col_opt_content = st.columns([0.12, 0.88])
-                                            with col_opt_radio:
-                                                if st.button(f"{opt_idx}", key=f"opt_btn_{ex_id}_{cur_i}_{opt_idx}"):
-                                                    st_ex["answers_mcq"][cur_i] = opt_idx
-                                                    st.rerun()
-                                            with col_opt_content:
-                                                st.markdown(f"""
-                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:10px 15px; margin-bottom:10px; color:{text_color};">
-                                                        <b style="color:{text_color}; font-size:18px;">({lbl})</b> <span style="color:{text_color}; font-size:18px;">{t_val}</span>
-                                                    </div>
-                                                """, unsafe_allow_html=True)
-                                                if i_val:
-                                                    st.image(f"data:image/jpeg;base64,{i_val}", width=280)
+                                            btn_label = f"({lbl}) {t_val}" if t_val else f"الخيار ({lbl})"
+                                            if st.button(btn_label, key=f"opt_box_btn_{ex_id}_{cur_i}_{opt_idx}", use_container_width=True):
+                                                st_ex["answers_mcq"][cur_i] = opt_idx
+                                                st.rerun()
 
-                                        saved_choice = st_ex["answers_mcq"].get(cur_i, None)
-                                        radio_idx = (saved_choice - 1) if saved_choice in [1, 2, 3, 4] else None
-
-                                        sel_ans = st.radio(
-                                            "اختر إجابتك لهذا السؤال:",
-                                            options=[1, 2, 3, 4],
-                                            index=radio_idx if radio_idx is not None else 0,
-                                            format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})",
-                                            key=f"cur_radio_{ex_id}_{cur_i}"
-                                        )
-                                        st_ex["answers_mcq"][cur_i] = sel_ans
+                                            if i_val:
+                                                st.image(f"data:image/jpeg;base64,{i_val}", width=280)
 
                                     else:
-                                        st.info("✍️ اكتب خطوات الحل أو ارفع صورة الحل من كشكولك:")
+                                        st.markdown(f"<p style='color:{text_color}; font-size:16px;'><b>✍️ سؤال مقالي:</b> اكتب خطوات الحل أو ارفع صورة الحل من كشكولك ليتم تصحيحها من قبل المعلم.</p>", unsafe_allow_html=True)
                                         prev_essay_txt = st_ex["essay_texts"].get(cur_i, "")
                                         in_essay_txt = st.text_area("خطوات الحل المكتوبة:", value=prev_essay_txt, key=f"essay_input_txt_{ex_id}_{cur_i}")
                                         st_ex["essay_texts"][cur_i] = in_essay_txt
 
-                                        up_essay_img = st.file_uploader("📷 إرفاق صورة الحل:", type=["jpg", "png", "jpeg"], key=f"essay_input_img_{ex_id}_{cur_i}")
+                                        up_essay_img = st.file_uploader("📷 إرفاق صورة الحل (من كشكولك):", type=["jpg", "png", "jpeg"], key=f"essay_input_img_{ex_id}_{cur_i}")
                                         if up_essay_img is not None:
                                             st_ex["essay_imgs"][cur_i] = base64.b64encode(up_essay_img.read()).decode()
 
@@ -769,7 +752,7 @@ if is_student_mode:
                                         st.write("")
                                         unanswered_list = [q_idx+1 for q_idx in range(total_q) if q_idx not in st_ex["answers_mcq"]]
                                         if unanswered_list:
-                                            st.warning(f"⚠️ تنبيه: لقد نسيت الإجابة على الأسئلة الآتية: {unanswered_list}")
+                                            st.warning(f"⚠️ تنبيه: لقد نسيت الإجابة على الأسئلة الموضوعية الآتية: {unanswered_list}")
                                         
                                         if st.button("✅ انهاء الامتحان ومشاهدة النتيجة", key=f"confirm_final_{ex_id}"):
                                             mcq_score = 0.0
@@ -789,9 +772,27 @@ if is_student_mode:
                                                         detailed_report += f"<br>سؤال {q_idx+1}: إجابة صحيحة ✅"
                                                     else:
                                                         detailed_report += f"<br>سؤال {q_idx+1}: إجابة خاطئة ❌ (الصحيحة: الخيار {['أ', 'ب', 'ج', 'د'][correct_ans-1]})"
+                                                else:
+                                                    # تسجيل إجابة السؤال المقالي لكنترول المعلم
+                                                    new_essay_sub = {
+                                                        "معرف_الحل": f"ANS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{q_idx}",
+                                                        "معرف_الامتحان": ex_id,
+                                                        "عنوان الامتحان": ex_title,
+                                                        "اسم الطالب": st_user["اسم الطالب"],
+                                                        "رقم السؤال": q_idx + 1,
+                                                        "نص السؤال": q.get("text", "سؤال مقالي مصور"),
+                                                        "إجابة الطالب النصية": st_ex["essay_texts"].get(q_idx, ""),
+                                                        "صورة الحل_base64": st_ex["essay_imgs"].get(q_idx, ""),
+                                                        "درجة السؤال": q_pts,
+                                                        "الدرجة المرصودة": 0.0,
+                                                        "حالة التصحيح": "قيد التصحيح من المعلم",
+                                                        "ملاحظات المعلم": "",
+                                                        "تاريخ الحل": str(date.today()),
+                                                    }
+                                                    st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_essay_sub])], ignore_index=True)
 
                                             pct = (mcq_score / total_max * 100) if total_max > 0 else 0
-                                            note_msg = f"الدرجة: {mcq_score}/{total_max}. التفاصيل: {detailed_report}"
+                                            note_msg = f"الدرجة الموضوعية: {mcq_score}/{total_max} (السؤال المقالي قيد المراجعة). التفاصيل: {detailed_report}"
 
                                             new_ass = {
                                                 "التاريخ": str(date.today()),
@@ -815,7 +816,8 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة الموضوعية المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
                                             """, unsafe_allow_html=True)
