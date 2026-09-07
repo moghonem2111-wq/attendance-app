@@ -2131,9 +2131,8 @@ with tab2:
                 st.rerun()
 
 with tab3:
-    st.subheader("نظرة شاملة على السجلات وإحصائيات الطلاب")
+    st.subheader("📊 نظرة شاملة على السجلات وإحصائيات الطلاب")
     
-    # دمج الطلاب المسجلين وطلاب الحصص لعمل جدول شامل لجميع الطلاب
     all_students_master = sorted(list(set(
         [str(s).strip() for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [str(s).strip() for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -2143,13 +2142,39 @@ with tab3:
     if not all_students_master:
         st.info("لا توجد بيانات طلاب مسجلة حتى الآن.")
     else:
+        # اختيار اسم طالب لعرض تفاصيله وإمكانية طباعة تقريره PDF
+        selected_master_student = st.selectbox("🔍 اختر طالباً لعرض بياناته التفصيلية وإصدار تقريره:", options=all_students_master)
+        
+        if selected_master_student:
+            u_r = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_master_student]
+            s_r = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == selected_master_student]
+            a_r = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == selected_master_student]
+
+            reg_state = "نعم (مسجل على المنصة)" if not u_r.empty else "لا (مسجل يدويًا)"
+            grade_val = u_r.iloc[0].get("المجموعة/الصف", "-") if not u_r.empty else (s_r.iloc[-1].get("المجموعة/الصف", "-") if not s_r.empty else "-")
+            curr_val = u_r.iloc[0].get("المنهج/الدولة", "-") if not u_r.empty else (s_r.iloc[-1].get("المنهج/الدولة", "-") if not s_r.empty else "-")
+            total_sess = len(s_r)
+            attended_sess = len(s_r[s_r["الحالة"] == "حاضر"])
+            total_due = s_r["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not s_r.empty else 0.0
+
+            st.markdown(f"""
+                <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:20px;">
+                    <h4 style="color:#10b981; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
+                    <p style="font-size:16px; margin:5px 0;"><b>حالة التسجيل:</b> {reg_state} | <b>المرحلة/الصف:</b> {grade_val} ({curr_val})</p>
+                    <p style="font-size:16px; margin:5px 0;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#dc2626;">{total_due:,.1f} جنيه</span></p>
+                </div>
+            """, unsafe_allow_html=True)
+
+        st.write("---")
+        st.markdown("### 📋 جدول ملخص الطلاب الشامل:")
+        
         master_data_list = []
         for st_name in all_students_master:
             u_r = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_name]
             s_r = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == st_name]
             a_r = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name]
             
-            is_registered = "نعم (مسجل على المنصة)" if not u_r.empty else "لا (مسجل يدويًا بالسجلات)"
+            is_registered = "نعم (مسجل على المنصة)" if not u_r.empty else "لا (مسجل يدويًا)"
             grade_val = u_r.iloc[0].get("المجموعة/الصف", "-") if not u_r.empty else (s_r.iloc[-1].get("المجموعة/الصف", "-") if not s_r.empty else "-")
             total_sess = len(s_r)
             attended_sess = len(s_r[s_r["الحالة"] == "حاضر"])
@@ -2200,7 +2225,7 @@ with tab4:
     if not all_names:
         st.info("لا توجد بيانات كافية لإصدار التقرير بعد.")
     else:
-        selected_student = st.selectbox("اختر الطالب لإصدار وطباعة تقريره:", all_names)
+        selected_student = st.selectbox("اختر الطالب لإصدار وطباعة تقريره بصيغة PDF:", all_names)
 
         if selected_student:
             st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
