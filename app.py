@@ -589,7 +589,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات
+        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -1383,13 +1383,14 @@ with tab_essay_grade:
             img_b64_ans = es_row.get("صورة الحل_base64", "")
             q_max = float(es_row.get("درجة السؤال", 1.0))
             status = str(es_row.get("حالة التصحيح", "قيد التصحيح من المعلم"))
-            t_feedback = str(es_row.get("ملاحظات المعلم", ""))
-            if t_feedback == "nan": t_feedback = ""
+            
+            raw_fb = es_row.get("ملاحظات المعلم", "")
+            t_feedback = str(raw_fb) if pd.notnull(raw_fb) and str(raw_fb) != "nan" else ""
 
             with st.expander(f"📌 حل الطالب: {st_name} — {ex_name} (س {q_num}) | [{status}]"):
                 st.markdown(f"**نص السؤال:** {q_text}")
                 st.markdown(f"**إجابة الطالب المكتوبة:**")
-                st.write(ans_txt if pd.notnull(ans_txt) and str(ans_txt).strip() and str(ans_txt) != "nan" else "لم يكتب نصاً (أرفق صورة بالأسفل)")
+                st.write(str(ans_txt) if pd.notnull(ans_txt) and str(ans_txt).strip() and str(ans_txt) != "nan" else "لم يكتب نصاً (أرفق صورة بالأسفل)")
 
                 if pd.notnull(img_b64_ans) and str(img_b64_ans).strip() and str(img_b64_ans) != "nan":
                     st.markdown("**📷 صورة خطوات الحل المرفوعة من الطالب:**")
@@ -1402,10 +1403,16 @@ with tab_essay_grade:
                     with c_g2:
                         teacher_feedback = st.text_input("ملاحظات المعلم وتوجيهه للطالب:", value=t_feedback)
 
-                    if st.form_submit_button("💾 اعتماد ورصد الدرجة للطالب"):
+                    c_sub1, c_sub2 = st.columns(2)
+                    with c_sub1:
+                        submit_grade = st.form_submit_button("💾 اعتماد ورصد الدرجة للطالب")
+                    with c_sub2:
+                        delete_essay = st.form_submit_button("🗑️ مسح وإلغاء هذه الإجابة المقالية")
+
+                    if submit_grade:
                         essays.at[es_idx, "الدرجة المرصودة"] = awarded_score
                         essays.at[es_idx, "حالة التصحيح"] = "تم التصحيح والاعتماد"
-                        essays.at[es_idx, "ملاحظات المعلم"] = teacher_feedback.strip()
+                        essays.at[es_idx, "ملاحظات المعلم"] = str(teacher_feedback).strip()
 
                         match_ass = st.session_state.assessments_df[
                             (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name.strip())
@@ -1420,6 +1427,12 @@ with tab_essay_grade:
                         st.session_state.essays_df = essays
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                         st.success(f"✓ تم رصد درجة الطالب ({st_name}) بنجاح!")
+                        st.rerun()
+
+                    if delete_essay:
+                        st.session_state.essays_df = essays.drop(es_idx).reset_index(drop=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        st.warning("⚠️ تم مسح إجابة المقالي بنجاح.")
                         st.rerun()
 
 with tab_chat:
