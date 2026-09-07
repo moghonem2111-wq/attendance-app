@@ -183,14 +183,12 @@ st.markdown("""
     html, body, [class*="css"], p, span, label, div, button, h1, h2, h3, h4, h5, h6 {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 900 !important;
-        letter-spacing: 0.4px !important;
-        font-size: 17px !important;
+        letter-spacing: 0.3px !important;
     }
 
     input, textarea, select {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
-        font-size: 16px !important;
     }
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
@@ -200,7 +198,7 @@ st.markdown("""
     
     .darssly-navbar {
         background: #1e232d;
-        padding: 14px 25px;
+        padding: 12px 25px;
         border-radius: 14px;
         display: flex;
         align-items: center;
@@ -210,8 +208,8 @@ st.markdown("""
         border: 1px solid #334155;
     }
     .navbar-brand { display: flex; align-items: center; gap: 15px; }
-    .navbar-title-group h3 { margin: 0 !important; color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; }
-    .navbar-title-group p { margin: 2px 0 0 0 !important; color: #cbd5e1 !important; font-size: 14px !important; font-weight: 800 !important; }
+    .navbar-title-group h3 { margin: 0 !important; color: #34d399 !important; font-size: 18px !important; font-weight: 900 !important; }
+    .navbar-title-group p { margin: 2px 0 0 0 !important; color: #cbd5e1 !important; font-size: 12px !important; font-weight: 800 !important; }
 
     .exam-builder-header {
         background-color: #f59e0b;
@@ -246,8 +244,8 @@ st.markdown("""
         border: none !important;
         border-radius: 10px;
         font-weight: 900 !important;
-        font-size: 18px !important;
-        padding: 14px 24px;
+        font-size: 16px !important;
+        padding: 12px 22px;
         box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
         width: 100% !important;
     }
@@ -336,8 +334,64 @@ st.markdown("""
     .course-title { color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }
     .course-desc { color: #cbd5e1 !important; font-size: 15px !important; font-weight: 800 !important; margin-bottom: 15px !important; }
 
+    /* أيقونات التواصل الاجتماعي الاحترافية */
+    .social-top-container {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 10px;
+        justify-content: center;
+    }
+    .social-btn-top {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        text-decoration: none !important;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+        transition: transform 0.2s ease;
+    }
+    .social-btn-top:hover { transform: scale(1.12); }
+    .social-btn-top svg { width: 20px; height: 20px; fill: #ffffff; }
+
+    .facebook-bg { background-color: #1877F2; }
+    .whatsapp-bg { background-color: #25D366; }
+    .telegram-bg { background-color: #229ED9; }
+    .tiktok-bg   { background-color: #000000; border: 1px solid #444; }
+    .youtube-bg  { background-color: #FF0000; }
+
+    .call-btn-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
     .call-btn {
-        display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff !important; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 900; text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff !important;
+        padding: 14px 28px;
+        border-radius: 50px;
+        font-size: 18px;
+        font-weight: 900;
+        text-decoration: none !important;
+        border: 2px solid #ffffff;
+    }
+    .social-footer-box {
+        margin-top: 25px;
+        padding: 20px 0;
+        border-top: 1px solid rgba(150, 150, 150, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
     .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; color: #f8fafc; }
     </style>
@@ -401,6 +455,18 @@ if is_student_mode:
                 st.markdown("<div style='background: #065f46; color: #ecfdf5; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown("<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: #f8fafc;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
+                # أيقونات التواصل الاجتماعي في الواجهة الرئيسية
+                st.markdown("""
+                    <div class="social-top-container">
+                        <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                        <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
+                        <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-top telegram-bg"><svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
+                        <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-top tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
+                        <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                st.write("")
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
                     if st.button("🔐 تسجيل الدخول الآن"):
@@ -422,6 +488,7 @@ if is_student_mode:
 
             st.write("---")
 
+            # كورسات درسلي
             st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
             st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
             st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -570,7 +637,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع شهادة واضحة بخلفية بيضاء ونصوص سوداء عريضة ومقروءة
+        # 1. صفحة الاختبارات مع شهادة واضحة ومقروءة تماماً
         if sub_page == "exams":
             st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -716,7 +783,7 @@ if is_student_mode:
                                                     st.rerun()
                                             with col_opt_content:
                                                 st.markdown(f"""
-                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:12px 18px; margin-bottom:10px; color:#0f172a;">
+                                                    <div style="background:{bg_opt}; border:2px solid {border_opt}; border-radius:10px; padding:10px 15px; margin-bottom:10px; color:#0f172a;">
                                                         <b style="color:#0f172a; font-size:18px;">({lbl})</b> <span style="color:#0f172a; font-size:18px;">{t_val}</span>
                                                     </div>
                                                 """, unsafe_allow_html=True)
@@ -917,6 +984,7 @@ if is_student_mode:
                         st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                         st.rerun()
 
+    # أزرار وأيقونات التواصل في أسفل الصفحة
     st.markdown("""
         <div class="call-btn-container">
             <a href="tel:01016361440" class="call-btn">
@@ -926,11 +994,11 @@ if is_student_mode:
         </div>
         <div class="social-footer-box">
             <div class="social-footer-container">
-                <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-footer facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-                <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-footer whatsapp-bg"><svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
-                <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-footer telegram-bg"><svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
-                <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-footer tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
-                <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-footer youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+                <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
+                <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-top telegram-bg"><svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
+                <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-top tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
+                <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
             </div>
             <div class="rights-text">جميع الحقوق محفوظة لدي م / محمد غنيم 2026</div>
         </div>
