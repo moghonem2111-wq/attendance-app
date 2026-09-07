@@ -1541,7 +1541,7 @@ with tab_question_bank:
                     st.warning("تم حذف السؤال.")
                     st.rerun()
 
-# --- لوحة إدارة الرفع المباشر للفيديوهات للمعلم ---
+# --- لوحة إدارة الرفع المباشر للفيديوهات للمعلم مع شريط التقدم والنسبة المئوية ---
 with tab_videos_teacher:
     st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب (حتى 1 جيجابايت مع شريط تقدم):")
     with st.form("upload_video_form", clear_on_submit=True):
