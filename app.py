@@ -429,22 +429,6 @@ st.markdown("""
         width: 100%;
     }
     .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; }
-
-    @media (prefers-color-scheme: light) {
-        body, .stApp { background-color: #ffffff !important; }
-        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #0f172a !important; font-weight: 900 !important; }
-    }
-    @media (prefers-color-scheme: dark) {
-        body, .stApp { background-color: #0e1117 !important; }
-        p, span, label, h1, h2, h3, h4, h5, h6, .stMarkdown { color: #f8fafc !important; font-weight: 900 !important; }
-        .darssly-navbar { background: #1e232d !important; border-color: #334155 !important; }
-        .exam-card-box { background: #1e232d !important; border-color: #334155 !important; }
-        .chat-bubble-student { background-color: #075985; color: #f0f9ff; border-color: #0284c7; }
-        .chat-bubble-teacher { background-color: #065f46; color: #ecfdf5; border-color: #059669; }
-        .course-card { background: #1e232d !important; border-color: #334155 !important; }
-        .course-title { color: #34d399 !important; }
-        .course-desc { color: #9ca3af !important; }
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -504,7 +488,7 @@ if is_student_mode:
             with col_hero_txt:
                 st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
                 st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #0f172a;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
@@ -636,9 +620,9 @@ if is_student_mode:
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(f"""
-                <div style="background: rgba(16, 185, 129, 0.08); padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px;">
+                <div style="background: #ffffff; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid #e2e8f0;">
                     <h3 style="margin: 0; color: #059669;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-                    <p style="margin: 4px 0 10px 0; font-weight: 900;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
+                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: #0f172a;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
         with col_u2:
@@ -655,7 +639,7 @@ if is_student_mode:
 
         # ==================== لوحة خدمات الطالب ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; margin-bottom: 15px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; margin-bottom: 15px; color: #0f172a;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
         if st.button("✍️ الاختبارات الإلكترونية التفاعلية", use_container_width=True):
             st.session_state.student_sub_page = "exams"
@@ -676,9 +660,9 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع تايمر مستقر وحفظ الجلسة والتمرير السلس
+        # 1. صفحة الاختبارات مع خلفية بيضاء صافية وخطوط سوداء واضحة وتايمر تداولي متصل
         if sub_page == "exams":
-            st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
+            st.markdown("<h3 style='color: #0f172a;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
 
             if available_exams.empty:
@@ -734,7 +718,7 @@ if is_student_mode:
                                     <div style="background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; font-size: 20px; font-weight: 900;">
                                         {ex_title}
                                     </div>
-                                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:25px; margin-bottom:25px;">
+                                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:25px; margin-bottom:25px; color:#0f172a;">
                                         <p style="color:#0f172a;"><b>الوصف:</b> {ex_desc}</p>
                                         <p style="color: #b91c1c; font-weight: 900;">⚠️ مدة الامتحان ({ex_time} دقيقة)، عند انتهاء الوقت ينتهي الامتحان تلقائياً.</p>
                                         <p style="color: #b91c1c; font-weight: 900;">⚠️ تم تحديد محاولة واحدة فقط لهذا الإمتحان.</p>
@@ -773,7 +757,7 @@ if is_student_mode:
                                     cur_i = st_ex["cur_idx"]
                                     q_curr = questions[cur_i]
 
-                                    # حساب الوقت المستمر حتى لو رستر الموقع
+                                    # حساب الوقت المستمر مع استمرارية الجلسة
                                     start_dt = datetime.strptime(st_ex["start_time_str"], "%Y-%m-%d %H:%M:%S") if st_ex.get("start_time_str") else datetime.now()
                                     elapsed_secs = (datetime.now() - start_dt).seconds
                                     total_allowed_secs = ex_time * 60
@@ -792,8 +776,8 @@ if is_student_mode:
                                         </div>
                                         <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:0 0 10px 10px; padding:20px; margin-bottom:20px; color:#0f172a;">
                                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-weight:900; color:#0f172a;">
-                                                <span>الطالب: {st_user['اسم الطالب']}</span>
-                                                <span>السؤال ({cur_i + 1} من {total_q}) — الدرجة: {q_curr['points']}</span>
+                                                <span style="color:#0f172a;">الطالب: {st_user['اسم الطالب']}</span>
+                                                <span style="color:#0f172a;">السؤال ({cur_i + 1} من {total_q}) — الدرجة: {q_curr['points']}</span>
                                             </div>
                                     """, unsafe_allow_html=True)
 
@@ -934,7 +918,7 @@ if is_student_mode:
 
         # 2. صفحة الحضور
         elif sub_page == "attendance":
-            st.markdown("### 📝 تسجيل حضور حصة اليوم وتقييمها:")
+            st.markdown("<h3 style='color: #0f172a;'>📝 تسجيل حضور حصة اليوم وتقييمها:</h3>", unsafe_allow_html=True)
             with st.form("logged_student_att_form", clear_on_submit=True):
                 st_date = st.date_input("تاريخ الحصة:", value=date.today())
                 selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", [
@@ -954,7 +938,7 @@ if is_student_mode:
 
         # 3. درجات الواجبات
         elif sub_page == "hw_grades":
-            st.markdown("### 📊 متابعة درجات الواجبات المنزلية:")
+            st.markdown("<h3 style='color: #0f172a;'>📊 متابعة درجات الواجبات المنزلية:</h3>", unsafe_allow_html=True)
             my_assessments = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("واجب", na=False))
@@ -966,7 +950,7 @@ if is_student_mode:
 
         # 4. درجات الاختبارات مع شهادة وتفاصيل صح/خطأ
         elif sub_page == "exam_grades":
-            st.markdown("### 📈 متابعة درجات الاختبارات والكويزات وتفاصيل الإجابات:")
+            st.markdown("<h3 style='color: #0f172a;'>📈 متابعة درجات الاختبارات والكويزات وتفاصيل الإجابات:</h3>", unsafe_allow_html=True)
             my_exams = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("اختبار|كويز", na=False))
@@ -980,7 +964,7 @@ if is_student_mode:
                     pct_val = (score_val / max_val * 100) if max_val > 0 else 0
                     with st.expander(f"📝 {ex_rec['عنوان التكليف']} — النتيجة: ({score_val} / {max_val})"):
                         st.markdown(f"""
-                            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:20px; text-align:center; margin-bottom:15px; color:#0f172a;">
+                            <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; padding:20px; text-align:center; margin-bottom:15px; color:#0f172a;">
                                 <h3 style="color:#059669;">شهادة إتمام الاختبار</h3>
                                 <p style="color:#0f172a;"><b>الطالب:</b> {st_user['اسم الطالب']}</p>
                                 <p style="color:#0f172a;"><b>النتيجة:</b> {pct_val:.0f}% ({score_val} من {max_val})</p>
@@ -991,7 +975,7 @@ if is_student_mode:
 
         # 5. الدردشة
         elif sub_page == "chat":
-            st.markdown("### 💬 مركز الدردشة والدعم المباشر:")
+            st.markdown("<h3 style='color: #0f172a;'>💬 مركز الدردشة والدعم المباشر:</h3>", unsafe_allow_html=True)
             student_name_key = st_user["اسم الطالب"].strip()
             chat_history = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key].copy()
 
@@ -1337,10 +1321,12 @@ with tab_exam_maker:
                     edit_time = st.number_input("تعديل المدة (بالدقائق):", min_value=5, max_value=180, value=int(ex_r.get('مدة الامتحان بالدقائق', 30)))
                     
                     if st.form_submit_button("💾 حفظ تعديلات الامتحان"):
-                        st.session_state.exams_df.at[ex_i, "عنوان الامتحان"] = str(edit_title).strip()
-                        st.session_state.exams_df.at[ex_i, "وصف الامتحان"] = str(edit_desc).strip()
-                        st.session_state.exams_df.at[ex_i, "كلمة المرور"] = str(edit_pass).strip()
-                        st.session_state.exams_df.at[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
+                        # تحديث آمن بدون أخطاء نوع البيانات
+                        st.session_state.exams_df.loc[st.session_state.exams_df["معرف_الامتحان"] == ex_r["معرف_الامتحان"], "عنوان الامتحان"] = str(edit_title).strip()
+                        st.session_state.exams_df.loc[st.session_state.exams_df["معرف_الامتحان"] == ex_r["معرف_الامتحان"], "وصف الامتحان"] = str(edit_desc).strip()
+                        st.session_state.exams_df.loc[st.session_state.exams_df["معرف_الامتحان"] == ex_r["معرف_الامتحان"], "كلمة المرور"] = str(edit_pass).strip()
+                        st.session_state.exams_df.loc[st.session_state.exams_df["معرف_الامتحان"] == ex_r["معرف_الامتحان"], "مدة الامتحان بالدقائق"] = int(edit_time)
+                        
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                         st.success("✓ تم حفظ التعديلات بنجاح!")
                         st.rerun()
