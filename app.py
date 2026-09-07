@@ -108,6 +108,7 @@ COL_EXAMS = ["معرف_الامتحان", "عنوان الامتحان", "وصف
 COL_ESSAYS = ["معرف_الحل", "معرف_الامتحان", "عنوان الامتحان", "اسم الطالب", "رقم السؤال", "نص السؤال", "إجابة الطالب النصية", "صورة الحل_base64", "درجة السؤال", "الدرجة المرصودة", "حالة التصحيح", "ملاحظات المعلم", "تاريخ الحل"]
 COL_BOOKINGS = ["تاريخ_الحجز", "اسم الطالب", "المنهج_الدولة", "المرحلة_الصف", "رقم_الهاتف", "رقم_ولي_الأمر", "الحالة"]
 COL_BANK_REQUESTS = ["تاريخ_الطلب", "اسم الطالب", "رقم_الهاتف", "كود_OTP", "حالة_الدفع", "إيصال_الدفع_base64"]
+COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "المجموعة/الصف", "المادة", "نوع_السؤال", "نص_السؤال", "الخيارات_أو_الإجابة", "درجة_السؤال"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -118,6 +119,7 @@ def load_all_data():
     essays_df = pd.DataFrame(columns=COL_ESSAYS)
     bookings_df = pd.DataFrame(columns=COL_BOOKINGS)
     bank_requests_df = pd.DataFrame(columns=COL_BANK_REQUESTS)
+    question_bank_df = pd.DataFrame(columns=COL_QUESTION_BANK)
 
     if os.path.exists(FILE_NAME):
         try:
@@ -131,6 +133,7 @@ def load_all_data():
                 if "Essays" in xls.sheet_names: essays_df = pd.read_excel(xls, "Essays")
                 if "Bookings" in xls.sheet_names: bookings_df = pd.read_excel(xls, "Bookings")
                 if "BankRequests" in xls.sheet_names: bank_requests_df = pd.read_excel(xls, "BankRequests")
+                if "QuestionBank" in xls.sheet_names: question_bank_df = pd.read_excel(xls, "QuestionBank")
         except Exception:
             pass
 
@@ -150,10 +153,12 @@ def load_all_data():
         if col not in bookings_df.columns: bookings_df[col] = ""
     for col in COL_BANK_REQUESTS:
         if col not in bank_requests_df.columns: bank_requests_df[col] = ""
+    for col in COL_QUESTION_BANK:
+        if col not in question_bank_df.columns: question_bank_df[col] = ""
 
-    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df
+    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df):
     with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
@@ -163,9 +168,10 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         essays_df.to_excel(writer, sheet_name="Essays", index=False)
         bookings_df.to_excel(writer, sheet_name="Bookings", index=False)
         bank_requests_df.to_excel(writer, sheet_name="BankRequests", index=False)
+        question_bank_df.to_excel(writer, sheet_name="QuestionBank", index=False)
 
 if "users_df" not in st.session_state:
-    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df = load_all_data()
+    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df = load_all_data()
     st.session_state.users_df = u_df
     st.session_state.sessions_df = s_df
     st.session_state.assessments_df = a_df
@@ -174,6 +180,7 @@ if "users_df" not in st.session_state:
     st.session_state.essays_df = es_df
     st.session_state.bookings_df = b_df
     st.session_state.bank_requests_df = br_df
+    st.session_state.question_bank_df = qb_df
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
@@ -205,7 +212,7 @@ def delete_student_completely(student_name_to_del):
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.bookings_df = st.session_state.bookings_df[st.session_state.bookings_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.bank_requests_df = st.session_state.bank_requests_df[st.session_state.bank_requests_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
-    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
 
 is_dark = st.session_state.dark_mode
 bg_color = "#0e1117" if is_dark else "#ffffff"
@@ -501,7 +508,7 @@ if is_student_mode:
                             "الحالة": "قيد المتابعة"
                         }
                         st.session_state.bookings_df = pd.concat([st.session_state.bookings_df, pd.DataFrame([new_booking])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.success("✓ تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً لتأكيد الموعد.")
 
         elif st.session_state.page_view == "login":
@@ -564,7 +571,7 @@ if is_student_mode:
                                 "تاريخ التسجيل": str(date.today()), "الحالة_حظر": "نشط", "حالة_الاشتراك_البنك": "غير مشترك"
                             }
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                             st.session_state.logged_student = new_user
                             st.query_params["role"] = "student"
                             st.query_params["st_name"] = new_user["اسم الطالب"]
@@ -634,11 +641,10 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- قسم بنك الأسئلة (مغلق باشتراك 100 جنيه وفودافون كاش) ---
+        # --- قسم بنك الأسئلة للطالب ---
         if sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
-            # التحقق من حالة الاشتراك في بنك الأسئلة للطالب الحالي
             curr_user_row = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()]
             sub_status = curr_user_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not curr_user_row.empty else "غير مشترك"
 
@@ -671,29 +677,35 @@ if is_student_mode:
                                 "إيصال_الدفع_base64": rcpt_str
                             }
                             st.session_state.bank_requests_df = pd.concat([st.session_state.bank_requests_df, pd.DataFrame([new_req])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                             st.success("✓ تم إرسال طلب اشتراكك بنجاح! سيقوم المعلم بمراجعة الإيصال وتفعيل حسابك خلال دقائق.")
                 
-                # زر فتح رابط فودافون كاش مباشرة
                 st.link_button("📲 اضغط هنا للدفع السريع عبر فودافون كاش (*9#)", "tel:*9*01016361440*100%23")
             else:
-                st.success("🎉أهلاً بك! حسابك مفعل ومسجل في بنك الأسئلة الخاص بمرحلتك الدراسية.")
-                st.info(f"المرحلة الدراسية الخاصة بك: **{st_user.get('المجموعة/الصف', '')}**")
-                
-                # جلب أسئلة بنك الأسئلة الخاصة بمرحلة الطالب أو المنهج العام
+                st.success("🎉 أهلاً بك! حسابك مفعل ومسجل في بنك الأسئلة الخاص بمرحلتك الدراسية.")
                 student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
-                bank_exams = st.session_state.exams_df[st.session_state.exams_df["المجموعة/الصف"].astype(str).str.strip() == student_grade]
+                qb_df = st.session_state.question_bank_df
+                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip() == student_grade]
 
-                if bank_exams.empty:
-                    st.info("لا توجد اختبارات أو أسئلة في بنك الأسئلة لمرحلتك حالياً. ترقبها قريباً!")
+                if st_qb.empty:
+                    st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
                 else:
-                    for _, bex in bank_exams.iterrows():
-                        with st.expander(f"📝 اختبار بنك الأسئلة: {bex['عنوان الامتحان']} (المادة: {bex['المادة']})"):
-                            st.write(f"**الوصف:** {bex['وصف الامتحان']}")
-                            st.write(f"**المدة المحددة:** {bex['مدة الامتحان بالدقائق']} دقيقة")
-                            if st.button(f"ابدأ حل اختبار بنك الأسئلة لـ {bex['عنوان الامتحان']}", key=f"start_bank_{bex['معرف_الامتحان']}"):
-                                st.session_state.student_sub_page = "exams"
-                                st.rerun()
+                    for qb_i, qb_r in st_qb.iterrows():
+                        st.markdown(f"""
+                            <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:20px; margin-bottom:15px;">
+                                <p style="font-size:18px; color:{text_color};"><b>سؤال ({qb_i+1}) - الدرجة: {qb_r['درجة_السؤال']}</b></p>
+                                <p style="font-size:17px; color:{text_color};">{qb_r['نص_السؤال']}</p>
+                                <p style="font-size:15px; color:#059669;"><b>نوع السؤال:</b> {qb_r['نوع_السؤال']} | <b>المادة:</b> {qb_r['المادة']}</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        ans_key = f"qb_ans_{qb_i}"
+                        user_ans_input = st.text_input(f"أدخل إجابتك للسؤال ({qb_i+1}):", key=ans_key)
+                        if st.button(f"تحقق من إجابة السؤال ({qb_i+1})", key=f"check_qb_{qb_i}"):
+                            correct_ans = str(qb_r.get("الخيارات_أو_الإجابة", "")).strip()
+                            if user_ans_input.strip() == correct_ans:
+                                st.success("إجابة صحيحة تماماً! أحسنت ✅")
+                            else:
+                                st.error(f"إجابة خاطئة ❌. الإجابة الصحيحة هي: {correct_ans}")
 
         # 2. صفحة الاختبارات
         elif sub_page == "exams":
@@ -931,7 +943,7 @@ if is_student_mode:
                                                 "ملاحظات وتوجيهات": note_msg,
                                             }
                                             st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                                             st.session_state.pop(exam_state_key, None)
                                             
                                             st.markdown(f"""
@@ -968,7 +980,7 @@ if is_student_mode:
                         "مستوى الطالب": "قيد التقييم", "ملاحظات": f"تقييم الحصة: {selected_rating}",
                     }
                     st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                     st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
 
         # 3. درجات الواجبات
@@ -1022,7 +1034,7 @@ if is_student_mode:
                         content = msg.get("نص الرسالة", "")
                         img_data = msg.get("الصورة_base64", "")
                         if sender == "student":
-                            st.markdown(f"<div class='chat-bubble-student'><b>أنت ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='chat-bubble-student'><b>الطالب ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
                         else:
                             st.markdown(f"<div class='chat-bubble-teacher'><b>البشمهندس محمد غنيم ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
                         if pd.notnull(img_data) and str(img_data).strip():
@@ -1039,7 +1051,7 @@ if is_student_mode:
                             "المرسل": "student", "نص الرسالة": msg_text.strip(), "الصورة_base64": img_str,
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                         st.rerun()
 
@@ -1098,17 +1110,19 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-tab_exam_maker, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
-    "⚙️ صانع الامتحانات المصورة",
+# ترتيب الأيقونات والتبويعات لتصبح تحت بعضها البعض بشكل عمودي واحترافي
+tab_exam_maker, tab_question_bank, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
+    "⚙️ صانع الامتحانات",
+    "📚 بنك الأسئلة",
     "📈 درجات الاختبارات",
-    "📝 تصحيح المقالي والصور",
-    "💬 مركز الدردشة والرسائل",
-    "👥 بطاقات الطلاب والتحكم",
+    "📝 تصحيح المقالي",
+    "💬 الدردشة والرسائل",
+    "👥 بطاقات الطلاب والاتصال",
     "📝 رصد حصة جديدة",
     "📚 رصد واجب يدوي",
     "✏️ تعديل السجلات",
     "📊 السجلات الشاملة",
-    "🖨️ تقرير ولي الأمر للطباعة",
+    "🖨️ تقرير ولي الأمر",
 ])
 
 with tab_exam_maker:
@@ -1331,79 +1345,56 @@ with tab_exam_maker:
                 "تاريخ الإنشاء": str(date.today()),
             }
             st.session_state.exams_df = pd.concat([st.session_state.exams_df, pd.DataFrame([new_ex])], ignore_index=True)
-            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
             st.session_state.temp_questions = []
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
 
+# --- لوحة تحكم بنك الأسئلة (للمعلم) ---
+with tab_question_bank:
+    st.subheader("📚 إدارة بنك الأسئلة وإضافة أسئلة للمراحل الدراسية:")
+    with st.form("add_question_bank_form", clear_on_submit=True):
+        qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qb_c")
+        qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qb_g")
+        qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qb_s")
+        qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qb_t")
+        qb_text = st.text_area("نص السؤال أو محتواه:", key="qb_txt")
+        qb_answer = st.text_input("الإجابة الصحيحة النموذجية (أو الخيار الصحيح):", key="qb_ans")
+        qb_points = st.number_input("درجة السؤال:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key="qb_pts")
+
+        if st.form_submit_button("💾 حفظ وإضافة السؤال إلى بنك الأسئلة"):
+            if not qb_text.strip():
+                st.error("يرجى كتابة نص السؤال.")
+            else:
+                new_qbank = {
+                    "معرف_السؤال": f"QB_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "المنهج/الدولة": qb_curr,
+                    "المجموعة/الصف": qb_grade,
+                    "المادة": qb_subject,
+                    "نوع_السؤال": qb_type,
+                    "نص_السؤال": qb_text.strip(),
+                    "الخيارات_أو_الإجابة": qb_answer.strip(),
+                    "درجة_السؤال": qb_points
+                }
+                st.session_state.question_bank_df = pd.concat([st.session_state.question_bank_df, pd.DataFrame([new_qbank])], ignore_index=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                st.success("✓ تم إضافة السؤال بنجاح إلى بنك الأسئلة الخاص بهذه المرحلة!")
+
     st.write("---")
-    st.markdown("### 📋 الامتحانات المنشورة مسبقاً:")
-    if st.session_state.exams_df.empty:
-        st.info("لا توجد امتحانات منشورة بعد.")
+    st.markdown("### 📋 الأسئلة المسجلة في بنك الأسئلة:")
+    qbf_df = st.session_state.question_bank_df
+    if qbf_df.empty:
+        st.info("لا توجد أسئلة مضافة في بنك الأسئلة بعد.")
     else:
-        for ex_i, ex_r in st.session_state.exams_df.iterrows():
-            with st.expander(f"⚙️ إشراف وتعديل: {ex_r['عنوان الامتحان']} (الصف: {ex_r['المجموعة/الصف']})"):
-                with st.form(f"edit_exam_form_{ex_i}"):
-                    edit_title = st.text_input("تعديل عنوان الامتحان:", value=str(ex_r['عنوان الامتحان']))
-                    edit_desc = st.text_area("تعديل وصف الامتحان:", value=str(ex_r['وصف الامتحان']))
-                    edit_pass = st.text_input("تعديل كلمة مرور السر:", value=str(ex_r.get('كلمة المرور', '')))
-                    edit_time = st.number_input("تعديل المدة (بالدقائق):", min_value=5, max_value=180, value=int(ex_r.get('مدة الامتحان بالدقائق', 30)))
-                    
-                    if st.form_submit_button("💾 حفظ تعديلات الامتحان"):
-                        st.session_state.exams_df.loc[ex_i, "عنوان الامتحان"] = str(edit_title).strip()
-                        st.session_state.exams_df.loc[ex_i, "وصف الامتحان"] = str(edit_desc).strip()
-                        st.session_state.exams_df.loc[ex_i, "كلمة المرور"] = str(edit_pass).strip()
-                        st.session_state.exams_df.loc[ex_i, "مدة الامتحان بالدقائق"] = int(edit_time)
-                        
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
-                        st.success("✓ تم حفظ التعديلات بنجاح!")
-                        st.rerun()
-
-                try:
-                    q_list = json.loads(ex_r["الأسئلة_JSON"])
-                except Exception:
-                    q_list = []
-                
-                st.write(f"**عدد الأسئلة الحالية في هذا الامتحان:** {len(q_list)} سؤال")
-                
-                pdf_html = f"""<!DOCTYPE html>
-                <html dir="rtl" lang="ar">
-                <head><meta charset="utf-8"><title>{ex_r['عنوان الامتحان']}</title></head>
-                <body style="font-family: Arial; padding: 25px;" onload="window.print()">
-                    <h2>{ex_r['عنوان الامتحان']}</h2>
-                    <p><b>المجموعة / الصف:</b> {ex_r['المجموعة/الصف']} | <b>المادة:</b> {ex_r['المادة']}</p>
-                    <hr>
-                """
-                for q_idx, q_item in enumerate(q_list):
-                    pdf_html += f"<h3>سؤال {q_idx+1} ({q_item['type']}) - الدرجة: {q_item['points']}</h3>"
-                    if q_item.get("text"): pdf_html += f"<p>{q_item['text']}</p>"
-                    if q_item.get("q_img"):
-                        pdf_html += f'<div style="margin: 10px 0;"><img src="data:image/jpeg;base64,{q_item["q_img"]}" style="max-width: 450px; border: 1px solid #ccc;"/></div>'
-                    if q_item.get("type", "موضوعي") == "موضوعي":
-                        opts_arr = [("أ", "opt1", "opt1_img"), ("ب", "opt2", "opt2_img"), ("ج", "opt3", "opt3_img"), ("د", "opt4", "opt4_img")]
-                        for o_lbl, o_t_key, o_i_key in opts_arr:
-                            t_val = q_item.get(o_t_key, "")
-                            i_val = q_item.get(o_i_key, "")
-                            pdf_html += f"<p><b>({o_lbl})</b> {t_val}</p>"
-                            if i_val:
-                                pdf_html += f'<div style="margin: 5px 0;"><img src="data:image/jpeg;base64,{i_val}" style="max-width: 200px; border: 1px solid #ddd;"/></div>'
-                pdf_html += "</body></html>"
-
-                col_pr1, col_pr2 = st.columns(2)
-                with col_pr1:
-                    st.download_button(
-                        label="🖨️ طباعة هذا الامتحان (PDF)",
-                        data=pdf_html.encode("utf-8"),
-                        file_name=f"امتحان_{ex_r['عنوان الامتحان']}.html",
-                        mime="application/octet-stream",
-                        key=f"print_ex_{ex_i}"
-                    )
-                with col_pr2:
-                    if st.button("حذف هذا الامتحان 🗑️", key=f"del_ex_btn_{ex_i}"):
-                        st.session_state.exams_df = st.session_state.exams_df.drop(ex_i).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
-                        st.warning("تم حذف الامتحان.")
-                        st.rerun()
+        st.dataframe(qbf_df, use_container_width=True)
+        with st.expander("🗑️ حذف سؤال من بنك الأسئلة"):
+            del_qb_opts = {qbi: f"[{qbr['المجموعة/الصف']}] {qbr['نص_السؤال'][:40]}..." for qbi, qbr in qbf_df.iterrows()}
+            sel_del_qb = st.selectbox("اختر السؤال المراد حذفه:", options=list(del_qb_opts.keys()), format_func=lambda x: del_qb_opts[x], key="sel_del_qb")
+            if st.button("🚨 تأكيد حذف السؤال المختار"):
+                st.session_state.question_bank_df = qbf_df.drop(sel_del_qb).reset_index(drop=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                st.success("✓ تم حذف السؤال بنجاح!")
+                st.rerun()
 
 with tab_exam_grades_teacher:
     st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
@@ -1422,7 +1413,7 @@ with tab_exam_grades_teacher:
             if st.button("🚨 تأكيد حذف سجل الامتحان المختار"):
                 real_idx = exam_assessments.loc[sel_del_exam_idx].name
                 st.session_state.assessments_df = st.session_state.assessments_df.drop(real_idx).reset_index(drop=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.success("✓ تم حذف النتيجة بنجاح!")
                 st.rerun()
 
@@ -1448,7 +1439,7 @@ with tab_exam_grades_teacher:
                     <tr style="background:#f1f5f9;">
                         <th style="padding:10px;">التاريخ</th>
                         <th style="padding:10px;">اسم الطالب</th>
-                        <th style="padding:10px;">عنوان الامتحان</th>
+                        <th style="padding:10px;">عنوان الاختبار</th>
                         <th style="padding:10px;">الدرجة</th>
                         <th style="padding:10px;">الحالة</th>
                     </tr>
@@ -1530,13 +1521,13 @@ with tab_essay_grade:
                             st.session_state.assessments_df.at[ass_idx, "ملاحظات وتوجيهات"] = f"تم تصحيح المقالي: +{awarded_score} درجة. {teacher_feedback}"
 
                         st.session_state.essays_df = essays
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.success(f"✓ تم رصد درجة الطالب ({st_name}) بنجاح!")
                         st.rerun()
 
                     if delete_essay:
                         st.session_state.essays_df = essays.drop(es_idx).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.warning("⚠️ تم مسح إجابة المقالي بنجاح.")
                         st.rerun()
 
@@ -1579,14 +1570,14 @@ with tab_chat:
                             "المرسل": "teacher", "نص الرسالة": reply_text.strip(), "الصورة_base64": "",
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_rep])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.success("تم إرسال الرد للبشمهندس بنجاح!")
                         st.rerun()
 
 with tab_cards:
     st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
     
-    # --- قسم طلبات حجز الدروس أونلاين الواردة ---
+    # طلبات حجز الدروس أونلاين
     bookings_df_state = st.session_state.bookings_df
     if not bookings_df_state.empty:
         st.markdown("#### 📅 طلبات حجز الدروس أونلاين الواردة:")
@@ -1596,12 +1587,12 @@ with tab_cards:
             sel_del_book = st.selectbox("اختر الطلب:", options=list(del_book_opts.keys()), format_func=lambda x: del_book_opts[x], key="sel_del_book")
             if st.button("🚨 تأكيد حذف طلب الحجز المختار"):
                 st.session_state.bookings_df = bookings_df_state.drop(sel_del_book).reset_index(drop=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.success("✓ تم حذف طلب الحجز بنجاح!")
                 st.rerun()
         st.write("---")
 
-    # --- قسم طلبات اشتراكات بنك الأسئلة (فودافون كاش) ---
+    # طلبات اشتراكات بنك الأسئلة
     bank_req_state = st.session_state.bank_requests_df
     if not bank_req_state.empty:
         st.markdown("#### 💳 طلبات اشتراكات بنك الأسئلة الواردة (تأكيد الدفع):")
@@ -1621,15 +1612,14 @@ with tab_cards:
                 with c_bk1:
                     if st.button(f"✅ تأكيد وتفعيل الاشتراك للطالب {st_req_name}", key=f"confirm_bank_{br_idx}"):
                         bank_req_state.at[br_idx, "حالة_الدفع"] = "مؤكد ومفعل"
-                        # تفعيل حساب الطالب في بنك الأسئلة
                         st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(st_req_name).strip(), "حالة_الاشتراك_البنك"] = "مشترك"
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.success(f"✓ تم تفعيل اشتراك بنك الأسئلة للطالب {st_req_name} بنجاح!")
                         st.rerun()
                 with c_bk2:
                     if st.button(f"🗑️ حذف طلب الاشتراك", key=f"del_bank_req_{br_idx}"):
                         st.session_state.bank_requests_df = bank_req_state.drop(br_idx).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.warning("تم حذف طلب الاشتراك.")
                         st.rerun()
         st.write("---")
@@ -1739,21 +1729,21 @@ with tab_cards:
                             del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
                             if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
                                 st.session_state.assessments_df = st.session_state.assessments_df.drop(del_grade_choice).reset_index(drop=True)
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                                 st.success("✓ تم مسح الدرجة بنجاح!")
                                 st.rerun()
 
                 if is_banned:
                     if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
                         st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                         st.success(f"تم فك حظر {st_name}!")
                         st.rerun()
                 else:
                     if st.button("حظر 🚫", key=f"ban_{idx}"):
                         if not u_row.empty:
                             st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                             st.warning(f"تم حظر {st_name}.")
                             st.rerun()
                 
@@ -1793,7 +1783,7 @@ with tab1:
                     "نظام الدفع": payment_type, "مستوى الطالب": student_level, "ملاحظات": notes.strip(),
                 }
                 st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
 
 with tab_hw:
@@ -1827,7 +1817,7 @@ with tab_hw:
                     "حالة التسليم": ass_status, "ملاحظات وتوجيهات": ass_notes.strip(),
                 }
                 st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.success(f"✓ تم رصد {ass_type} بنجاح للطالب ({ass_student})!")
 
     st.write("---")
@@ -1884,14 +1874,14 @@ with tab2:
                 df.at[selected_idx, "مستوى الطالب"] = edit_level
                 df.at[selected_idx, "ملاحظات"] = edit_notes.strip()
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.success("✓ تم تحديث بيانات الحصة بنجاح!")
                 st.rerun()
 
             if delete_btn:
                 df = df.drop(selected_idx).reset_index(drop=True)
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.warning("⚠️ تم حذف السجل.")
                 st.rerun()
 
@@ -1936,6 +1926,7 @@ with tab3:
             st.session_state.essays_df.to_excel(writer, sheet_name="Essays", index=False)
             st.session_state.bookings_df.to_excel(writer, sheet_name="Bookings", index=False)
             st.session_state.bank_requests_df.to_excel(writer, sheet_name="BankRequests", index=False)
+            st.session_state.question_bank_df.to_excel(writer, sheet_name="QuestionBank", index=False)
 
         st.download_button(
             label="📥 تصدير ملف Excel الشامل (مستخدمين + حصص + واجبات + امتحانات + مقالي)",
