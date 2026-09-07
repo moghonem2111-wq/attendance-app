@@ -589,7 +589,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات
+        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -1311,7 +1311,6 @@ with tab_exam_grades_teacher:
     else:
         st.dataframe(exam_assessments[["التاريخ", "اسم الطالب", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
-        # إضافة زر حذف نتيجة اختبار محددة
         with st.expander("🗑️ حذف نتيجة امتحان لطالب محدد"):
             del_exam_opts = {i: f"{r['اسم الطالب']} - {r['عنوان التكليف']} ({r['التاريخ']})" for i, r in exam_assessments.iterrows()}
             sel_del_exam_idx = st.selectbox("اختر السجل المراد حذفه:", options=list(del_exam_opts.keys()), format_func=lambda x: del_exam_opts[x], key="sel_del_exam")
@@ -1376,30 +1375,32 @@ with tab_essay_grade:
         st.info("لا توجد إجابات مقالية مرسلة من الطلاب بعد.")
     else:
         for es_idx, es_row in essays.iterrows():
-            st_name = es_row["اسم الطالب"]
-            ex_name = es_row["عنوان الامتحان"]
-            q_num = es_row["رقم السؤال"]
-            q_text = es_row["نص السؤال"]
+            st_name = str(es_row.get("اسم الطالب", ""))
+            ex_name = str(es_row.get("عنوان الامتحان", ""))
+            q_num = es_row.get("رقم السؤال", 1)
+            q_text = str(es_row.get("نص السؤال", ""))
             ans_txt = es_row.get("إجابة الطالب النصية", "")
             img_b64_ans = es_row.get("صورة الحل_base64", "")
             q_max = float(es_row.get("درجة السؤال", 1.0))
-            status = es_row.get("حالة التصحيح", "قيد التصحيح من المعلم")
+            status = str(es_row.get("حالة التصحيح", "قيد التصحيح من المعلم"))
+            t_feedback = str(es_row.get("ملاحظات المعلم", ""))
+            if t_feedback == "nan": t_feedback = ""
 
             with st.expander(f"📌 حل الطالب: {st_name} — {ex_name} (س {q_num}) | [{status}]"):
                 st.markdown(f"**نص السؤال:** {q_text}")
                 st.markdown(f"**إجابة الطالب المكتوبة:**")
-                st.write(ans_txt if pd.notnull(ans_txt) and str(ans_txt).strip() else "لم يكتب نصاً (أرفق صورة بالأسفل)")
+                st.write(ans_txt if pd.notnull(ans_txt) and str(ans_txt).strip() and str(ans_txt) != "nan" else "لم يكتب نصاً (أرفق صورة بالأسفل)")
 
-                if pd.notnull(img_b64_ans) and str(img_b64_ans).strip():
+                if pd.notnull(img_b64_ans) and str(img_b64_ans).strip() and str(img_b64_ans) != "nan":
                     st.markdown("**📷 صورة خطوات الحل المرفوعة من الطالب:**")
                     st.image(f"data:image/jpeg;base64,{img_b64_ans}", use_container_width=True)
 
                 with st.form(f"grade_essay_form_{es_idx}"):
                     c_g1, c_g2 = st.columns(2)
                     with c_g1:
-                        awarded_score = st.number_input("الدرجة المستحقة:*", min_value=0.0, max_value=q_max, value=float(es_row.get("الدرجة المرصودة", 0.0)), step=0.5)
+                        awarded_score = st.number_input("الدرجة المستحقة:*", min_value=0.0, max_value=q_max, value=float(es_row.get("الدرجة المرصودة", 0.0)) if pd.notnull(es_row.get("الدرجة المرصودة")) else 0.0, step=0.5)
                     with c_g2:
-                        teacher_feedback = st.text_input("ملاحظات المعلم وتوجيهه للطالب:", value=str(es_row.get("ملاحظات المعلم", "")))
+                        teacher_feedback = st.text_input("ملاحظات المعلم وتوجيهه للطالب:", value=t_feedback)
 
                     if st.form_submit_button("💾 اعتماد ورصد الدرجة للطالب"):
                         essays.at[es_idx, "الدرجة المرصودة"] = awarded_score
@@ -1407,8 +1408,8 @@ with tab_essay_grade:
                         essays.at[es_idx, "ملاحظات المعلم"] = teacher_feedback.strip()
 
                         match_ass = st.session_state.assessments_df[
-                            (st.session_state.assessments_df["اسم الطالب"] == st_name)
-                            & (st.session_state.assessments_df["عنوان التكليف"] == ex_name)
+                            (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name.strip())
+                            & (st.session_state.assessments_df["عنوان التكليف"].astype(str).str.contains(ex_name, na=False))
                         ]
                         if not match_ass.empty:
                             ass_idx = match_ass.index[-1]
@@ -1564,7 +1565,6 @@ with tab_cards:
                     else:
                         st.dataframe(st_grades_df[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
-                        # زر مسح درجات الطالب الفردية هنا
                         with st.form(f"clear_st_grades_form_{idx}"):
                             del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
                             if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
