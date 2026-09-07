@@ -108,7 +108,7 @@ COL_EXAMS = ["معرف_الامتحان", "عنوان الامتحان", "وصف
 COL_ESSAYS = ["معرف_الحل", "معرف_الامتحان", "عنوان الامتحان", "اسم الطالب", "رقم السؤال", "نص السؤال", "إجابة الطالب النصية", "صورة الحل_base64", "درجة السؤال", "الدرجة المرصودة", "حالة التصحيح", "ملاحظات المعلم", "تاريخ الحل"]
 COL_BOOKINGS = ["تاريخ_الحجز", "اسم الطالب", "المنهج_الدولة", "المرحلة_الصف", "رقم_الهاتف", "رقم_ولي_الأمر", "الحالة"]
 COL_BANK_REQUESTS = ["تاريخ_الطلب", "اسم الطالب", "رقم_الهاتف", "كود_OTP", "حالة_الدفع", "إيصال_الدفع_base64"]
-COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "المجموعة/الصف", "المادة", "نوع_السؤال", "نص_السؤال", "الخيارات_أو_الإجابة", "درجة_السؤال"]
+COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "المجموعة/الصف", "المادة", "نوع_السؤال", "بيانات_السؤال_JSON"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -641,7 +641,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- قسم بنك الأسئلة للطالب ---
+        # --- قسم بنك الأسئلة للطالب (مغلق باشتراك 100 جنيه وفودافون كاش) ---
         if sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
@@ -691,21 +691,50 @@ if is_student_mode:
                     st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
                 else:
                     for qb_i, qb_r in st_qb.iterrows():
+                        q_data = json.loads(qb_r["بيانات_السؤال_JSON"])
                         st.markdown(f"""
                             <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:20px; margin-bottom:15px;">
-                                <p style="font-size:18px; color:{text_color};"><b>سؤال ({qb_i+1}) - الدرجة: {qb_r['درجة_السؤال']}</b></p>
-                                <p style="font-size:17px; color:{text_color};">{qb_r['نص_السؤال']}</p>
-                                <p style="font-size:15px; color:#059669;"><b>نوع السؤال:</b> {qb_r['نوع_السؤال']} | <b>المادة:</b> {qb_r['المادة']}</p>
+                                <p style="font-size:18px; color:{text_color};"><b>سؤال ({qb_i+1}) — الدرجة: {q_data['points']}</b></p>
+                                <p style="font-size:17px; color:{text_color};">{q_data['text']}</p>
                             </div>
                         """, unsafe_allow_html=True)
-                        ans_key = f"qb_ans_{qb_i}"
-                        user_ans_input = st.text_input(f"أدخل إجابتك للسؤال ({qb_i+1}):", key=ans_key)
-                        if st.button(f"تحقق من إجابة السؤال ({qb_i+1})", key=f"check_qb_{qb_i}"):
-                            correct_ans = str(qb_r.get("الخيارات_أو_الإجابة", "")).strip()
-                            if user_ans_input.strip() == correct_ans:
-                                st.success("إجابة صحيحة تماماً! أحسنت ✅")
-                            else:
-                                st.error(f"إجابة خاطئة ❌. الإجابة الصحيحة هي: {correct_ans}")
+                        
+                        if q_data.get("q_img"):
+                            st.image(f"data:image/jpeg;base64,{q_data['q_img']}", use_container_width=True)
+
+                        if q_data["type"] == "اختيار من متعدد":
+                            opts = ["أ", "ب", "ج", "د"]
+                            ans_choice = st.radio(f"اختر الإجابة الصحيحة للسؤال ({qb_i+1}):", opts, key=f"qb_radio_{qb_i}")
+                            if st.button(f"تحقق من إجابة السؤال ({qb_i+1})", key=f"check_qb_{qb_i}"):
+                                correct_idx = int(q_data["correct"])
+                                correct_letter = opts[correct_idx - 1]
+                                if ans_choice == correct_letter:
+                                    st.success("إجابة صحيحة تماماً! أحسنت ✅")
+                                else:
+                                    st.error(f"إجابة خاطئة ❌. الإجابة الصحيحة هي: الخيار ({correct_letter})")
+                        else:
+                            essay_ans_txt = st.text_area(f"اكتب خطوات حل السؤال المقالي ({qb_i+1}):", key=f"qb_essay_txt_{qb_i}")
+                            essay_ans_img = st.file_uploader(f"أو ارفع صورة حل السؤال المقالي ({qb_i+1}):", type=["jpg", "png", "jpeg"], key=f"qb_essay_img_{qb_i}")
+                            if st.button(f"إرسال حل السؤال المقالي للمعلم ({qb_i+1})", key=f"submit_qb_essay_{qb_i}"):
+                                img_b64_sub = base64.b64encode(essay_ans_img.read()).decode() if essay_ans_img is not None else ""
+                                new_qb_sub = {
+                                    "معرف_الحل": f"QB_ANS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{qb_i}",
+                                    "معرف_الامتحان": "بنك الأسئلة",
+                                    "عنوان الامتحان": "بنك الأسئلة الشامل",
+                                    "اسم الطالب": st_user["اسم الطالب"],
+                                    "رقم السؤال": qb_i + 1,
+                                    "نص السؤال": q_data["text"],
+                                    "إجابة الطالب النصية": essay_ans_txt,
+                                    "صورة الحل_base64": img_b64_sub,
+                                    "درجة السؤال": q_data["points"],
+                                    "الدرجة المرصودة": 0.0,
+                                    "حالة التصحيح": "قيد التصحيح من المعلم",
+                                    "ملاحظات المعلم": "",
+                                    "تاريخ الحل": str(date.today()),
+                                }
+                                st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_qb_sub])], ignore_index=True)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                                st.success("✓ تم إرسال إجابتك المقالية للمعلم بنجاح ليتم تصحيحها!")
 
         # 2. صفحة الاختبارات
         elif sub_page == "exams":
@@ -1034,7 +1063,7 @@ if is_student_mode:
                         content = msg.get("نص الرسالة", "")
                         img_data = msg.get("الصورة_base64", "")
                         if sender == "student":
-                            st.markdown(f"<div class='chat-bubble-student'><b>الطالب ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='chat-bubble-student'><b>أنت ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
                         else:
                             st.markdown(f"<div class='chat-bubble-teacher'><b>البشمهندس محمد غنيم ({t_stamp}):</b><br>{content}</div>", unsafe_allow_html=True)
                         if pd.notnull(img_data) and str(img_data).strip():
@@ -1110,14 +1139,14 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ترتيب الأيقونات والتبويعات لتصبح تحت بعضها البعض بشكل عمودي واحترافي
+# تجميع الأيقونات تحت بعضها البعض بشكل عمودي احترافي
 tab_exam_maker, tab_question_bank, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
     "⚙️ صانع الامتحانات",
     "📚 بنك الأسئلة",
     "📈 درجات الاختبارات",
     "📝 تصحيح المقالي",
     "💬 الدردشة والرسائل",
-    "👥 بطاقات الطلاب والاتصال",
+    "👥 بطاقات الطلاب",
     "📝 رصد حصة جديدة",
     "📚 رصد واجب يدوي",
     "✏️ تعديل السجلات",
@@ -1350,51 +1379,94 @@ with tab_exam_maker:
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
 
-# --- لوحة تحكم بنك الأسئلة (للمعلم) ---
+# --- لوحة بنك الأسئلة المتقدمة للمعلم ---
 with tab_question_bank:
-    st.subheader("📚 إدارة بنك الأسئلة وإضافة أسئلة للمراحل الدراسية:")
-    with st.form("add_question_bank_form", clear_on_submit=True):
-        qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qb_c")
-        qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qb_g")
-        qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qb_s")
-        qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qb_t")
-        qb_text = st.text_area("نص السؤال أو محتواه:", key="qb_txt")
-        qb_answer = st.text_input("الإجابة الصحيحة النموذجية (أو الخيار الصحيح):", key="qb_ans")
-        qb_points = st.number_input("درجة السؤال:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key="qb_pts")
+    st.subheader("📚 إضافة وإدارة بنك الأسئلة للمراحل الدراسية:")
+    
+    if "qb_q_img" not in st.session_state: st.session_state.qb_q_img = ""
+    if "qb_v" not in st.session_state: st.session_state.qb_v = 0
 
-        if st.form_submit_button("💾 حفظ وإضافة السؤال إلى بنك الأسئلة"):
-            if not qb_text.strip():
-                st.error("يرجى كتابة نص السؤال.")
+    with st.form("add_qbank_advanced_form"):
+        qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qba_c")
+        qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qba_g")
+        qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qba_s")
+        qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qba_t")
+        
+        st.markdown("##### 📌 صورة السؤال (اختياري):")
+        qb_file_up = st.file_uploader("رفع صورة للسؤال:", type=["jpg", "png", "jpeg"], key=f"qba_img_up_{st.session_state.qb_v}")
+        if qb_file_up is not None:
+            st.session_state.qb_q_img = base64.b64encode(qb_file_up.read()).decode()
+
+        if st.session_state.qb_q_img:
+            st.image(f"data:image/jpeg;base64,{st.session_state.qb_q_img}", width=300)
+            if st.button("🗑️ مسح صورة السؤال", key="del_qba_img"):
+                st.session_state.qb_q_img = ""
+                st.session_state.qb_v += 1
+                st.rerun()
+
+        qb_text = st.text_area("نص السؤال:", key="qba_txt", placeholder="أكتب نص السؤال هنا...")
+        
+        qb_correct_opt = 1
+        if qb_type == "اختيار من متعدد":
+            st.markdown("##### خيارات الاختيار من متعدد:")
+            qb_opt1 = st.text_input("الخيار (أ):", key="qba_o1")
+            qb_opt2 = st.text_input("الخيار (ب):", key="qba_o2")
+            qb_opt3 = st.text_input("الخيار (ج):", key="qba_o3")
+            qb_opt4 = st.text_input("الخيار (د):", key="qba_o4")
+            qb_correct_opt = st.selectbox("الإجابة الصحيحة:", [1, 2, 3, 4], format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})", key="qba_cor")
+        
+        qb_points = st.number_input("درجة السؤال:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key="qba_pts")
+
+        if st.form_submit_button("💾 حفظ السؤال في بنك الأسئلة"):
+            if not qb_text.strip() and not st.session_state.qb_q_img:
+                st.error("يرجى كتابة نص السؤال أو رفع صورة للسؤال على الأقل.")
             else:
-                new_qbank = {
+                q_payload = {
+                    "type": qb_type,
+                    "text": qb_text.strip(),
+                    "q_img": st.session_state.qb_q_img,
+                    "opt1": qb_opt1 if qb_type == "اختيار من متعدد" else "",
+                    "opt2": qb_opt2 if qb_type == "اختيار من متعدد" else "",
+                    "opt3": qb_opt3 if qb_type == "اختيار من متعدد" else "",
+                    "opt4": qb_opt4 if qb_type == "اختيار من متعدد" else "",
+                    "correct": qb_correct_opt,
+                    "points": qb_points
+                }
+                new_qbank_row = {
                     "معرف_السؤال": f"QB_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                     "المنهج/الدولة": qb_curr,
                     "المجموعة/الصف": qb_grade,
                     "المادة": qb_subject,
                     "نوع_السؤال": qb_type,
-                    "نص_السؤال": qb_text.strip(),
-                    "الخيارات_أو_الإجابة": qb_answer.strip(),
-                    "درجة_السؤال": qb_points
+                    "بيانات_السؤال_JSON": json.dumps(q_payload, ensure_ascii=False)
                 }
-                st.session_state.question_bank_df = pd.concat([st.session_state.question_bank_df, pd.DataFrame([new_qbank])], ignore_index=True)
+                st.session_state.question_bank_df = pd.concat([st.session_state.question_bank_df, pd.DataFrame([new_qbank_row])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
-                st.success("✓ تم إضافة السؤال بنجاح إلى بنك الأسئلة الخاص بهذه المرحلة!")
+                st.session_state.qb_q_img = ""
+                st.session_state.qb_v += 1
+                st.success("✓ تم حفظ السؤال بنجاح في بنك الأسئلة الخاص بهذه المرحلة!")
 
     st.write("---")
-    st.markdown("### 📋 الأسئلة المسجلة في بنك الأسئلة:")
+    st.markdown("### 📋 قائمة الأسئلة المسجلة في بنك الأسئلة:")
     qbf_df = st.session_state.question_bank_df
     if qbf_df.empty:
         st.info("لا توجد أسئلة مضافة في بنك الأسئلة بعد.")
     else:
-        st.dataframe(qbf_df, use_container_width=True)
-        with st.expander("🗑️ حذف سؤال من بنك الأسئلة"):
-            del_qb_opts = {qbi: f"[{qbr['المجموعة/الصف']}] {qbr['نص_السؤال'][:40]}..." for qbi, qbr in qbf_df.iterrows()}
-            sel_del_qb = st.selectbox("اختر السؤال المراد حذفه:", options=list(del_qb_opts.keys()), format_func=lambda x: del_qb_opts[x], key="sel_del_qb")
-            if st.button("🚨 تأكيد حذف السؤال المختار"):
-                st.session_state.question_bank_df = qbf_df.drop(sel_del_qb).reset_index(drop=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
-                st.success("✓ تم حذف السؤال بنجاح!")
-                st.rerun()
+        for qbi, qbr in qbf_df.iterrows():
+            q_data = json.loads(qbr["بيانات_السؤال_JSON"])
+            with st.expander(f"[{qbr['المجموعة/الصف']}] — {q_data['type']} (الدرجة: {q_data['points']})"):
+                st.write(f"**نص السؤال:** {q_data['text']}")
+                if q_data.get("q_img"):
+                    st.image(f"data:image/jpeg;base64,{q_data['q_img']}", width=250)
+                if q_data["type"] == "اختيار من متعدد":
+                    st.write(f"أ) {q_data.get('opt1','')} | ب) {q_data.get('opt2','')} | ج) {q_data.get('opt3','')} | د) {q_data.get('opt4','')}")
+                    st.write(f"<b>الإجابة الصحيحة:</b> الخيار ({['أ', 'ب', 'ج', 'د'][int(q_data['correct'])-1]})")
+                
+                if st.button(f"حذف هذا السؤال 🗑️", key=f"del_qb_{qbi}"):
+                    st.session_state.question_bank_df = qbf_df.drop(qbi).reset_index(drop=True)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                    st.warning("تم حذف السؤال.")
+                    st.rerun()
 
 with tab_exam_grades_teacher:
     st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
@@ -1577,7 +1649,6 @@ with tab_chat:
 with tab_cards:
     st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
     
-    # طلبات حجز الدروس أونلاين
     bookings_df_state = st.session_state.bookings_df
     if not bookings_df_state.empty:
         st.markdown("#### 📅 طلبات حجز الدروس أونلاين الواردة:")
@@ -1592,7 +1663,6 @@ with tab_cards:
                 st.rerun()
         st.write("---")
 
-    # طلبات اشتراكات بنك الأسئلة
     bank_req_state = st.session_state.bank_requests_df
     if not bank_req_state.empty:
         st.markdown("#### 💳 طلبات اشتراكات بنك الأسئلة الواردة (تأكيد الدفع):")
