@@ -2142,8 +2142,7 @@ with tab3:
     if not all_students_master:
         st.info("لا توجد بيانات طلاب مسجلة حتى الآن.")
     else:
-        # اختيار اسم طالب لعرض تفاصيله وإمكانية طباعة تقريره PDF
-        selected_master_student = st.selectbox("🔍 اختر طالباً لعرض بياناته التفصيلية وإصدار تقريره:", options=all_students_master)
+        selected_master_student = st.selectbox("🔍 اختر طالباً لعرض بياناته التفصيلية:", options=all_students_master, key="master_student_sel")
         
         if selected_master_student:
             u_r = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_master_student]
@@ -2158,12 +2157,53 @@ with tab3:
             total_due = s_r["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not s_r.empty else 0.0
 
             st.markdown(f"""
-                <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:20px;">
+                <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:15px;">
                     <h4 style="color:#10b981; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
                     <p style="font-size:16px; margin:5px 0;"><b>حالة التسجيل:</b> {reg_state} | <b>المرحلة/الصف:</b> {grade_val} ({curr_val})</p>
                     <p style="font-size:16px; margin:5px 0;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#dc2626;">{total_due:,.1f} جنيه</span></p>
                 </div>
             """, unsafe_allow_html=True)
+
+            # كود طباعة PDF خاص بهذا الطالب فقط تحت الرصيد المستحق
+            st_sessions_pdf = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
+            st_assessments_pdf = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
+
+            sess_rows_html = ""
+            for _, sr in st_sessions_pdf.iterrows():
+                sess_rows_html += f"<tr><td>{sr['التاريخ']}</td><td>{sr['الحالة']}</td><td>{sr['سعر الحصة']}</td><td>{sr['مستوى الطالب']}</td><td>{sr['ملاحظات']}</td></tr>"
+
+            ass_rows_html = ""
+            for _, ar in st_assessments_pdf.iterrows():
+                ass_rows_html += f"<tr><td>{ar['التاريخ']}</td><td>{ar['النوع']}</td><td>{ar['عنوان التكليف']}</td><td>{ar['الدرجة المحصلة']} / {ar['الدرجة العظمى']}</td><td>{ar['حالة التسليم']}</td></tr>"
+
+            single_student_pdf_html = f"""<!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+            <head><meta charset="utf-8"><title>تقرير الطالب - {selected_master_student}</title></head>
+            <body style="font-family: Arial; padding: 25px;" onload="window.print()">
+                <h2>تقرير متابعة الطالب: {selected_master_student}</h2>
+                <p><b>المرحلة / الصف:</b> {grade_val} | <b>المنهج:</b> {curr_val}</p>
+                <p><b>إجمالي الحصص:</b> {total_sess} | <b>إجمالي الرصيد المستحق:</b> {total_due:,.1f} جنيه</p>
+                <hr>
+                <h3>سجل الحصص والحضور:</h3>
+                <table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin-bottom:20px;">
+                    <tr style="background:#f1f5f9;"><th style="padding:8px;">التاريخ</th><th>الحالة</th><th>السعر</th><th>المستوى</th><th>ملاحظات</th></tr>
+                    {sess_rows_html if sess_rows_html else "<tr><td colspan='5'>لا توجد حصص مسجلة</td></tr>"}
+                </table>
+                <h3>سجل الاختبارات والواجبات:</h3>
+                <table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
+                    <tr style="background:#f1f5f9;"><th style="padding:8px;">التاريخ</th><th>النوع</th><th>العنوان</th><th>الدرجة</th><th>الحالة</th></tr>
+                    {ass_rows_html if ass_rows_html else "<tr><td colspan='5'>لا توجد اختبارات مسجلة</td></tr>"}
+                </table>
+            </body>
+            </html>"""
+
+            st.download_button(
+                label=f"🖨️ طباعة وتحميل ملف PDF خاص بالطالب ({selected_master_student})",
+                data=single_student_pdf_html.encode("utf-8"),
+                file_name=f"تقرير_الطالب_{selected_master_student}.html",
+                mime="application/octet-stream",
+                key=f"dl_single_pdf_{selected_master_student}"
+            )
 
         st.write("---")
         st.markdown("### 📋 جدول ملخص الطلاب الشامل:")
@@ -2199,20 +2239,62 @@ with tab3:
         master_df = pd.DataFrame(master_data_list)
         st.dataframe(master_df, use_container_width=True)
 
-        buf = io.BytesIO()
-        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-            master_df.to_excel(writer, sheet_name="Master_Students_Report", index=False)
-            st.session_state.users_df.to_excel(writer, sheet_name="Users", index=False)
-            st.session_state.sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
-            st.session_state.assessments_df.to_excel(writer, sheet_name="Assessments", index=False)
-            st.session_state.exams_df.to_excel(writer, sheet_name="Exams", index=False)
-            st.session_state.videos_df.to_excel(writer, sheet_name="Videos", index=False)
+        # تجهيز كود طباعة PDF لجميع الطلاب دفعة واحدة
+        all_students_pdf_html = """<!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head><meta charset="utf-8"><title>تقرير السجلات الشاملة لجميع الطلاب</title></head>
+        <body style="font-family: Arial; padding: 25px;" onload="window.print()">
+            <h2>تقرير السجلات الشاملة وإحصائيات جميع الطلاب - م/ محمد غنيم</h2>
+            <table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin-top:15px;">
+                <tr style="background:#f1f5f9;">
+                    <th style="padding:8px;">اسم الطالب</th>
+                    <th>حالة التسجيل</th>
+                    <th>المرحلة/الصف</th>
+                    <th>إجمالي الحصص</th>
+                    <th>الحصص الحاضرة</th>
+                    <th>إجمالي الحساب</th>
+                    <th>الاختبارات</th>
+                    <th>الواجبات</th>
+                </tr>
+        """
+        for item in master_data_list:
+            all_students_pdf_html += f"""
+                <tr>
+                    <td style="padding:6px;">{item['اسم الطالب']}</td>
+                    <td>{item['حالة التسجيل']}</td>
+                    <td>{item['المرحلة/الصف']}</td>
+                    <td>{item['إجمالي الحصص']}</td>
+                    <td>{item['الحصص الحاضرة']}</td>
+                    <td>{item['إجمالي الحساب المستحق']}</td>
+                    <td>{item['عدد الاختبارات']}</td>
+                    <td>{item['عدد الواجبات']}</td>
+                </tr>
+            """
+        all_students_pdf_html += "</table></body></html>"
 
-        st.download_button(
-            label="📥 تصدير تقرير السجلات الشاملة للطلاب (Excel)",
-            data=buf.getvalue(), file_name="تقرير_السجلات_الشاملة_للطلاب.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+        c_dl1, c_dl2 = st.columns(2)
+        with c_dl1:
+            buf = io.BytesIO()
+            with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+                master_df.to_excel(writer, sheet_name="Master_Students_Report", index=False)
+                st.session_state.users_df.to_excel(writer, sheet_name="Users", index=False)
+                st.session_state.sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
+                st.session_state.assessments_df.to_excel(writer, sheet_name="Assessments", index=False)
+                st.session_state.exams_df.to_excel(writer, sheet_name="Exams", index=False)
+                st.session_state.videos_df.to_excel(writer, sheet_name="Videos", index=False)
+
+            st.download_button(
+                label="📥 تصدير تقرير السجلات الشاملة للطلاب (Excel)",
+                data=buf.getvalue(), file_name="تقرير_السجلات_الشاملة_للطلاب.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        with c_dl2:
+            st.download_button(
+                label="🖨️ طباعة وتصدير تقرير السجلات الشاملة لجميع الطلاب (PDF)",
+                data=all_students_pdf_html.encode("utf-8"),
+                file_name="تقرير_السجلات_الشاملة_لجميع_الطلاب.html",
+                mime="application/octet-stream"
+            )
 
 with tab4:
     st.subheader("📑 إصدار وطباعة تقرير متابعة الطالب لولي الأمر (شامل الأسعار)")
