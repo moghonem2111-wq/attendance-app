@@ -184,13 +184,11 @@ st.markdown("""
         font-family: 'Cairo', sans-serif !important;
         font-weight: 900 !important;
         letter-spacing: 0.3px !important;
-        color: #0f172a !important;
     }
 
     input, textarea, select {
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
-        color: #0f172a !important;
     }
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
@@ -506,7 +504,7 @@ if is_student_mode:
             with col_hero_txt:
                 st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
                 st.markdown("<div style='background: #d1fae5; color: #065f46; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8; color: #0f172a;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 15px; font-weight: 800; line-height: 1.8;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
@@ -678,7 +676,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات
+        # 1. صفحة الاختبارات مع تايمر مستقر وحفظ الجلسة والتمرير السلس
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
             available_exams = st.session_state.exams_df.copy()
@@ -726,7 +724,7 @@ if is_student_mode:
                                     "answers_mcq": {},
                                     "essay_texts": {},
                                     "essay_imgs": {},
-                                    "start_time": None
+                                    "start_time_str": None
                                 }
 
                             st_ex = st.session_state[exam_state_key]
@@ -751,7 +749,7 @@ if is_student_mode:
                                         st.error("كلمة مرور الامتحان غير صحيحة.")
                                     else:
                                         st_ex["started"] = True
-                                        st_ex["start_time"] = datetime.now()
+                                        st_ex["start_time_str"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                                         st.rerun()
                                 st.markdown("</div>", unsafe_allow_html=True)
                             else:
@@ -775,11 +773,17 @@ if is_student_mode:
                                     cur_i = st_ex["cur_idx"]
                                     q_curr = questions[cur_i]
 
-                                    elapsed_secs = (datetime.now() - st_ex["start_time"]).seconds if st_ex["start_time"] else 0
+                                    # حساب الوقت المستمر حتى لو رستر الموقع
+                                    start_dt = datetime.strptime(st_ex["start_time_str"], "%Y-%m-%d %H:%M:%S") if st_ex.get("start_time_str") else datetime.now()
+                                    elapsed_secs = (datetime.now() - start_dt).seconds
                                     total_allowed_secs = ex_time * 60
                                     remaining_secs = max(0, total_allowed_secs - elapsed_secs)
                                     rem_mins = remaining_secs // 60
                                     rem_s = remaining_secs % 60
+
+                                    if remaining_secs == 0:
+                                        st.warning("⏰ تنبيه: انتهى وقت الامتحان المحدد! سيتم تسليم إجاباتك تلقائياً.")
+                                        st_ex["show_confirm_submit"] = True
 
                                     st.markdown(f"""
                                         <div style="background-color: #f97316; color: #ffffff; padding: 12px 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 900;">
