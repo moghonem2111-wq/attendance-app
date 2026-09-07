@@ -1378,21 +1378,21 @@ with tab_exam_maker:
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
 
-# --- لوحة بنك الأسئلة المتقدمة (مطابقة لنظام الاختبارات وبدون إظهار الخيارات في المقالي) ---
+# --- لوحة بنك الأسئلة المتقدمة مع رフレش فوري عند تغيير نوع السؤال ---
 with tab_question_bank:
     st.subheader("📚 بنك الأسئلة الشامل (إضافة أسئلة اختر ومقالي بصور ومواصفات كاملة):")
 
     if "qb_q_img" not in st.session_state: st.session_state.qb_q_img = ""
     if "qb_ver" not in st.session_state: st.session_state.qb_ver = 0
 
-    with st.form("add_qbank_form"):
-        qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qbc_c")
-        qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qbc_g")
-        qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qbc_s")
-        
-        qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qbc_t")
-        is_qbank_mcq = (qb_type == "اختيار من متعدد")
+    qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qbc_c")
+    qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qbc_g")
+    qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qbc_s")
+    
+    qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qbc_t", on_change=lambda: st.rerun())
+    is_qbank_mcq = (qb_type == "اختيار من متعدد")
 
+    with st.form("add_qbank_form"):
         st.markdown("##### 📌 أ) صورة السؤال (اختياري):")
         qb_file_up = st.file_uploader("رفع صورة السؤال:", type=["jpg", "png", "jpeg"], key=f"qbc_img_up_{st.session_state.qb_ver}")
         if qb_file_up is not None:
