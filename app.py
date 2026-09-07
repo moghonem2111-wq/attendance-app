@@ -170,7 +170,6 @@ if "student_sub_page" not in st.session_state:
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
 
-# قراءة البارامترات بأمان بعد تعيين الـ page_config
 query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
@@ -394,13 +393,6 @@ if is_student_mode:
     st.write("---")
 
     if not st.session_state.logged_student:
-        saved_student_name = query_params.get("st_name")
-        if saved_student_name:
-            matched_st = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(saved_student_name).strip()]
-            if not matched_st.empty:
-                st.session_state.logged_student = matched_st.iloc[0].to_dict()
-
-    if not st.session_state.logged_student:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
@@ -597,7 +589,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
+        # 1. صفحة الاختبارات مع التصحيح الشامل للمقالي وصور الحل كاملة
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -809,9 +801,9 @@ if is_student_mode:
                                                         "عنوان الامتحان": ex_title,
                                                         "اسم الطالب": st_user["اسم الطالب"],
                                                         "رقم السؤال": q_idx + 1,
-                                                        "نص السؤال": q.get("text", "سؤال مقالي مصور"),
-                                                        "إجابة الطالب النصية": st_ex["essay_texts"].get(q_idx, ""),
-                                                        "صورة الحل_base64": st_ex["essay_imgs"].get(q_idx, ""),
+                                                        "نص السؤال": str(q.get("text", "سؤال مقالي مصور")),
+                                                        "إجابة الطالب النصية": str(st_ex["essay_texts"].get(q_idx, "")),
+                                                        "صورة الحل_base64": str(st_ex["essay_imgs"].get(q_idx, "")),
                                                         "درجة السؤال": q_pts,
                                                         "الدرجة المرصودة": 0.0,
                                                         "حالة التصحيح": "قيد التصحيح من المعلم",
@@ -1389,7 +1381,7 @@ with tab_essay_grade:
 
                 if pd.notnull(img_b64_ans) and str(img_b64_ans).strip():
                     st.markdown("**📷 صورة خطوات الحل المرفوعة من الطالب:**")
-                    st.image(f"data:image/jpeg;base64,{img_b64_ans}", width=500)
+                    st.image(f"data:image/jpeg;base64,{img_b64_ans}", use_container_width=True)
 
                 with st.form(f"grade_essay_form_{es_idx}"):
                     c_g1, c_g2 = st.columns(2)
