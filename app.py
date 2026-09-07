@@ -238,7 +238,6 @@ st.markdown(f"""
     }}
     .stButton>button:hover {{ background: #059669 !important; }}
 
-    /* تخصيص أزرار الكورسات باللون الأحمر الجذاب والكتابة البيضاء المعبرة */
     .stLinkButton>a {{
         background-color: #dc2626 !important;
         color: #ffffff !important;
@@ -300,7 +299,7 @@ st.markdown(f"""
     .whatsapp-bg {{ background-color: #25D366; }}
     .telegram-bg {{ background-color: #229ED9; }}
     .tiktok-bg   {{ background-color: #000000; border: 1px solid #444; }}
-    .youtube-bg  { background-color: #FF0000; }
+    .youtube-bg  {{ background-color: #FF0000; }}
 
     .call-btn-container {{ display: flex; justify-content: center; margin-top: 25px; margin-bottom: 15px; width: 100%; }}
     .call-btn {{
