@@ -589,7 +589,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
+        # 1. صفحة الاختبارات
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -1311,6 +1311,17 @@ with tab_exam_grades_teacher:
     else:
         st.dataframe(exam_assessments[["التاريخ", "اسم الطالب", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
 
+        # إضافة زر حذف نتيجة اختبار محددة
+        with st.expander("🗑️ حذف نتيجة امتحان لطالب محدد"):
+            del_exam_opts = {i: f"{r['اسم الطالب']} - {r['عنوان التكليف']} ({r['التاريخ']})" for i, r in exam_assessments.iterrows()}
+            sel_del_exam_idx = st.selectbox("اختر السجل المراد حذفه:", options=list(del_exam_opts.keys()), format_func=lambda x: del_exam_opts[x], key="sel_del_exam")
+            if st.button("🚨 تأكيد حذف سجل الامتحان المختار"):
+                real_idx = exam_assessments.loc[sel_del_exam_idx].name
+                st.session_state.assessments_df = st.session_state.assessments_df.drop(real_idx).reset_index(drop=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                st.success("✓ تم حذف النتيجة بنجاح!")
+                st.rerun()
+
         buf_grades = io.BytesIO()
         with pd.ExcelWriter(buf_grades, engine="openpyxl") as writer:
             exam_assessments.to_excel(writer, sheet_name="Exam_Grades", index=False)
@@ -1486,7 +1497,6 @@ with tab_cards:
             status_badge = "🚫 محظور" if is_banned else "✅ نشط"
             badge_color = "#dc2626" if is_banned else "#16a34a"
 
-            # حساب حضور الطالب وإجمالي سعر الحصص
             st_sessions_card = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
             total_st_sessions = len(st_sessions_card)
             attended_st_sessions = len(st_sessions_card[st_sessions_card["الحالة"] == "حاضر"])
@@ -1506,7 +1516,6 @@ with tab_cards:
                         <p style="margin:0; font-size:14px; font-weight:900; color:#b91c1c;">إجمالي السعر: <b>{total_st_cost:,.1f}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c3:
-                    # زر طباعة حضور الطالب وسعر الحصص
                     st_sessions_html = f"""<!DOCTYPE html>
                     <html dir="rtl" lang="ar">
                     <head><meta charset="utf-8"><title>تقرير الحضور والأسعار - {st_name}</title></head>
@@ -1544,11 +1553,9 @@ with tab_cards:
                         key=f"print_att_{idx}"
                     )
                 with col_c4:
-                    # زر درجات الطالب لوحده
                     if st.button("📊 درجات الطالب", key=f"btn_grades_{idx}"):
                         st.session_state[f"show_grades_{idx}"] = not st.session_state.get(f"show_grades_{idx}", False)
 
-                # عرض تفاصيل درجات الطالب عند النقر على الزر
                 if st.session_state.get(f"show_grades_{idx}", False):
                     st.markdown(f"**سجل درجات الطالب: {st_name}**")
                     st_grades_df = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
@@ -1556,6 +1563,15 @@ with tab_cards:
                         st.info("لا توجد درجات مرصودة لهذا الطالب حتى الآن.")
                     else:
                         st.dataframe(st_grades_df[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+                        # زر مسح درجات الطالب الفردية هنا
+                        with st.form(f"clear_st_grades_form_{idx}"):
+                            del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
+                            if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
+                                st.session_state.assessments_df = st.session_state.assessments_df.drop(del_grade_choice).reset_index(drop=True)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                                st.success("✓ تم مسح الدرجة بنجاح!")
+                                st.rerun()
 
                 if is_banned:
                     if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
@@ -1903,5 +1919,5 @@ with tab4:
                 label=f"🖨️ تحميل وطباعة تقرير ولي الأمر لـ ({selected_student}) بصيغة PDF",
                 data=parent_report_html.encode("utf-8"),
                 file_name=f"تقرير_ولي_الأمر_{selected_student}.html",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                mime="application/octet-stream",
             )
