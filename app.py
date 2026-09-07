@@ -589,7 +589,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع التصحيح الشامل للمقالي وصور الحل كاملة
+        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -749,7 +749,7 @@ if is_student_mode:
                                             st_ex["essay_imgs"][cur_i] = base64.b64encode(up_essay_img.read()).decode()
 
                                         if st_ex["essay_imgs"].get(cur_i):
-                                            st.image(f"data:image/jpeg;base64,{st_ex['essay_imgs'][cur_i]}", width=300)
+                                            st.image(f"data:image/jpeg;base64,{st_ex['essay_imgs'][cur_i]}", use_container_width=True)
 
                                     st.write("---")
                                     c_prev, c_next, c_finish = st.columns([1, 1, 2])
@@ -1486,8 +1486,14 @@ with tab_cards:
             status_badge = "🚫 محظور" if is_banned else "✅ نشط"
             badge_color = "#dc2626" if is_banned else "#16a34a"
 
+            # حساب حضور الطالب وإجمالي سعر الحصص
+            st_sessions_card = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
+            total_st_sessions = len(st_sessions_card)
+            attended_st_sessions = len(st_sessions_card[st_sessions_card["الحالة"] == "حاضر"])
+            total_st_cost = st_sessions_card["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not st_sessions_card.empty else 0.0
+
             with st.container():
-                col_c1, col_c2, col_c3, col_c4 = st.columns([4, 2, 2, 2])
+                col_c1, col_c2, col_c3, col_c4 = st.columns([3, 2, 2, 2])
                 with col_c1:
                     st.markdown(f"""
                         <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
@@ -1495,26 +1501,80 @@ with tab_cards:
                         <p style="margin: 0; font-size: 13px; color: #64748b;">تاريخ التسجيل: {st_date} | كلمة المرور: <b>{st_pass}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c2:
-                    st.markdown(f"<span style='color: {badge_color}; font-weight: 900; font-size: 16px;'>{status_badge}</span>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                        <p style="margin:0; font-size:14px; font-weight:900;">حضور: <b>{attended_st_sessions}/{total_st_sessions}</b></p>
+                        <p style="margin:0; font-size:14px; font-weight:900; color:#b91c1c;">إجمالي السعر: <b>{total_st_cost:,.1f}</b></p>
+                    """, unsafe_allow_html=True)
                 with col_c3:
-                    if is_banned:
-                        if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
-                            st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                            st.success(f"تم فك حظر {st_name}!")
-                            st.rerun()
-                    else:
-                        if st.button("حظر 🚫", key=f"ban_{idx}"):
-                            if not u_row.empty:
-                                st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                                st.warning(f"تم حظر {st_name}.")
-                                st.rerun()
+                    # زر طباعة حضور الطالب وسعر الحصص
+                    st_sessions_html = f"""<!DOCTYPE html>
+                    <html dir="rtl" lang="ar">
+                    <head><meta charset="utf-8"><title>تقرير الحضور والأسعار - {st_name}</title></head>
+                    <body style="font-family: Arial; padding: 25px;" onload="window.print()">
+                        <h2>تقرير الحضور وحساب الحصص - م/ محمد غنيم</h2>
+                        <p><b>اسم الطالب:</b> {st_name} | <b>المجموعة/الصف:</b> {st_grade}</p>
+                        <p><b>إجمالي الحصص الحضورية:</b> {attended_st_sessions} من {total_st_sessions} | <b>المبلغ الإجمالي المستحق:</b> {total_st_cost:,.1f}</p>
+                        <hr>
+                        <table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin-top:15px;">
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:8px;">التاريخ</th>
+                                <th style="padding:8px;">الحالة</th>
+                                <th style="padding:8px;">سعر الحصة</th>
+                                <th style="padding:8px;">المستوى</th>
+                                <th style="padding:8px;">ملاحظات</th>
+                            </tr>
+                    """
+                    for _, s_row in st_sessions_card.iterrows():
+                        st_sessions_html += f"""
+                            <tr>
+                                <td style="padding:6px;">{s_row['التاريخ']}</td>
+                                <td style="padding:6px;">{s_row['الحالة']}</td>
+                                <td style="padding:6px;">{s_row['سعر الحصة']}</td>
+                                <td style="padding:6px;">{s_row['مستوى الطالب']}</td>
+                                <td style="padding:6px;">{s_row['ملاحظات']}</td>
+                            </tr>
+                        """
+                    st_sessions_html += "</table></body></html>"
+
+                    st.download_button(
+                        label="🖨️ طباعة الحضور والأسعار",
+                        data=st_sessions_html.encode("utf-8"),
+                        file_name=f"حضور_وأسعار_{st_name}.html",
+                        mime="application/octet-stream",
+                        key=f"print_att_{idx}"
+                    )
                 with col_c4:
-                    if st.button("حذف نهائي 🗑️", key=f"del_card_btn_{idx}"):
-                        delete_student_completely(st_name)
-                        st.success(f"✓ تم مسح الطالب ({st_name}) نهائياً!")
+                    # زر درجات الطالب لوحده
+                    if st.button("📊 درجات الطالب", key=f"btn_grades_{idx}"):
+                        st.session_state[f"show_grades_{idx}"] = not st.session_state.get(f"show_grades_{idx}", False)
+
+                # عرض تفاصيل درجات الطالب عند النقر على الزر
+                if st.session_state.get(f"show_grades_{idx}", False):
+                    st.markdown(f"**سجل درجات الطالب: {st_name}**")
+                    st_grades_df = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
+                    if st_grades_df.empty:
+                        st.info("لا توجد درجات مرصودة لهذا الطالب حتى الآن.")
+                    else:
+                        st.dataframe(st_grades_df[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+                if is_banned:
+                    if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
+                        st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                        st.success(f"تم فك حظر {st_name}!")
                         st.rerun()
+                else:
+                    if st.button("حظر 🚫", key=f"ban_{idx}"):
+                        if not u_row.empty:
+                            st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
+                            st.warning(f"تم حظر {st_name}.")
+                            st.rerun()
+                
+                if st.button("حذف نهائي للطالب 🗑️", key=f"del_card_btn_{idx}"):
+                    delete_student_completely(st_name)
+                    st.success(f"✓ تم مسح الطالب ({st_name}) نهائياً!")
+                    st.rerun()
                 st.write("---")
 
 with tab1:
