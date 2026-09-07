@@ -170,19 +170,6 @@ if "student_sub_page" not in st.session_state:
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
 
-# استخدام استمرار تسجيل الدخول عبر query_params لضمان عدم الخروج عند الـ Refresh أو الرسترة
-query_params = st.query_params
-is_student_mode = query_params.get("role") == "student"
-
-if "logged_student" not in st.session_state:
-    st.session_state.logged_student = None
-
-saved_student_name = query_params.get("st_name")
-if not st.session_state.logged_student and saved_student_name:
-    matched_st = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(saved_student_name).strip()]
-    if not matched_st.empty:
-        st.session_state.logged_student = matched_st.iloc[0].to_dict()
-
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
     st.session_state.users_df = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
@@ -335,6 +322,12 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+query_params = st.query_params
+is_student_mode = query_params.get("role") == "student"
+
+# ==============================================================================
+# 1. واجهة الطالب
+# ==============================================================================
 if is_student_mode:
     st.markdown("""
         <style>
@@ -384,6 +377,13 @@ if is_student_mode:
     st.write("---")
 
     if not st.session_state.logged_student:
+        saved_student_name = query_params.get("st_name")
+        if saved_student_name:
+            matched_st = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(saved_student_name).strip()]
+            if not matched_st.empty:
+                st.session_state.logged_student = matched_st.iloc[0].to_dict()
+
+    if not st.session_state.logged_student:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
@@ -423,6 +423,7 @@ if is_student_mode:
 
             st.write("---")
 
+            # كورسات درسلي
             st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
             st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
             st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -717,13 +718,11 @@ if is_student_mode:
                                             i_val = q_curr.get(f"opt{opt_idx}_img", "")
                                             
                                             is_selected = (saved_choice == opt_idx)
-                                            btn_color = "#10b981" if is_selected else "#0284c7"
-                                            
-                                            btn_display_text = f"الخيار ({lbl}): {t_val}" if t_val else f"الخيار ({lbl})"
+                                            btn_label = f"({lbl}) {t_val}" if t_val else f"الخيار ({lbl})"
                                             if is_selected:
-                                                btn_display_text = f"✅ تم الاختيار: {btn_display_text}"
+                                                btn_label = f"✅ تم الاختيار: {btn_label}"
 
-                                            if st.button(btn_display_text, key=f"opt_rect_btn_{ex_id}_{cur_i}_{opt_idx}", use_container_width=True):
+                                            if st.button(btn_label, key=f"opt_rect_btn_{ex_id}_{cur_i}_{opt_idx}", use_container_width=True):
                                                 st_ex["answers_mcq"][cur_i] = opt_idx
                                                 st.rerun()
 
@@ -1369,7 +1368,7 @@ with tab_essay_grade:
             with st.expander(f"📌 حل الطالب: {st_name} — {ex_name} (س {q_num}) | [{status}]"):
                 st.markdown(f"**نص السؤال:** {q_text}")
                 st.markdown(f"**إجابة الطالب المكتوبة:**")
-                st.write(ans_txt if ans_txt.strip() else "لم يكتب نصاً (أرفق صورة بالأسفل)")
+                st.write(ans_txt if pd.notnull(ans_txt) and str(ans_txt).strip() else "لم يكتب نصاً (أرفق صورة بالأسفل)")
 
                 if pd.notnull(img_b64_ans) and str(img_b64_ans).strip():
                     st.markdown("**📷 صورة خطوات الحل المرفوعة من الطالب:**")
