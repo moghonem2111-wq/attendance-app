@@ -212,6 +212,13 @@ st.markdown(f"""
         text-align: right;
     }}
     
+    img {{
+        max-width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+        border-radius: 8px;
+    }}
+
     .darssly-navbar {{
         background: {card_bg};
         padding: 12px 25px;
@@ -322,12 +329,8 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
-# ==============================================================================
-# 1. واجهة الطالب
-# ==============================================================================
 if is_student_mode:
     st.markdown("""
         <style>
@@ -580,7 +583,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو التقليدي والتفاعل باختيار المستطيل ودعم الأسئلة المقالية
+        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -1441,7 +1444,7 @@ with tab_chat:
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_rep])], ignore_index=True)
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
-                        st.success("تم إرسال الرد للطالب بنجاح!")
+                        st.success("تم إرسال الرد للبشمهندس بنجاح!")
                         st.rerun()
 
 with tab_cards:
