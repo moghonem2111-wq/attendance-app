@@ -641,7 +641,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- قسم بنك الأسئلة للطالب (مغلق باشتراك 100 جنيه وفودافون كاش) ---
+        # --- بنك الأسئلة للطالب ---
         if sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
@@ -1139,7 +1139,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# تجميع الأيقونات تحت بعضها البعض بشكل عمودي احترافي
 tab_exam_maker, tab_question_bank, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
     "⚙️ صانع الامتحانات",
     "📚 بنك الأسئلة",
@@ -1379,57 +1378,65 @@ with tab_exam_maker:
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
 
-# --- لوحة بنك الأسئلة المتقدمة للمعلم ---
+# --- لوحة بنك الأسئلة المتقدمة (مطابقة لنظام الاختبارات) ---
 with tab_question_bank:
-    st.subheader("📚 إضافة وإدارة بنك الأسئلة للمراحل الدراسية:")
-    
-    if "qb_q_img" not in st.session_state: st.session_state.qb_q_img = ""
-    if "qb_v" not in st.session_state: st.session_state.qb_v = 0
+    st.subheader("📚 بنك الأسئلة الشامل (إضافة أسئلة اختر ومقالي بصور ومواصفات كاملة):")
 
-    with st.form("add_qbank_advanced_form"):
-        qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qba_c")
-        qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qba_g")
-        qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qba_s")
-        qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qba_t")
-        
-        st.markdown("##### 📌 صورة السؤال (اختياري):")
-        qb_file_up = st.file_uploader("رفع صورة للسؤال:", type=["jpg", "png", "jpeg"], key=f"qba_img_up_{st.session_state.qb_v}")
+    if "qb_q_img" not in st.session_state: st.session_state.qb_q_img = ""
+    if "qb_o1_img" not in st.session_state: st.session_state.qb_o1_img = ""
+    if "qb_o2_img" not in st.session_state: st.session_state.qb_o2_img = ""
+    if "qb_o3_img" not in st.session_state: st.session_state.qb_o3_img = ""
+    if "qb_o4_img" not in st.session_state: st.session_state.qb_o4_img = ""
+    if "qb_ver" not in st.session_state: st.session_state.qb_ver = 0
+
+    with st.form("add_qbank_form"):
+        qb_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="qbc_c")
+        qb_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[qb_curr], key="qbc_g")
+        qb_subject = st.selectbox("المادة:", ["الرياضيات (عام)", "الجبر والإحصاء", "الهندسة وحساب المثلثات", "التفاضل والتكامل", "الاستاتيكا والديناميكا"], key="qbc_s")
+        qb_type = st.selectbox("نوع السؤال:", ["اختيار من متعدد", "مقالي"], key="qbc_t")
+
+        st.markdown("##### 📌 أ) صورة السؤال (اختياري):")
+        qb_file_up = st.file_uploader("رفع صورة السؤال:", type=["jpg", "png", "jpeg"], key=f"qbc_img_up_{st.session_state.qb_ver}")
         if qb_file_up is not None:
             st.session_state.qb_q_img = base64.b64encode(qb_file_up.read()).decode()
 
         if st.session_state.qb_q_img:
-            st.image(f"data:image/jpeg;base64,{st.session_state.qb_q_img}", width=300)
-            if st.button("🗑️ مسح صورة السؤال", key="del_qba_img"):
+            st.image(f"data:image/jpeg;base64,{st.session_state.qb_q_img}", width=350)
+            if st.button("🗑️ مسح صورة السؤال", key="del_qbc_img"):
                 st.session_state.qb_q_img = ""
-                st.session_state.qb_v += 1
+                st.session_state.qb_ver += 1
                 st.rerun()
 
-        qb_text = st.text_area("نص السؤال:", key="qba_txt", placeholder="أكتب نص السؤال هنا...")
-        
-        qb_correct_opt = 1
-        if qb_type == "اختيار من متعدد":
-            st.markdown("##### خيارات الاختيار من متعدد:")
-            qb_opt1 = st.text_input("الخيار (أ):", key="qba_o1")
-            qb_opt2 = st.text_input("الخيار (ب):", key="qba_o2")
-            qb_opt3 = st.text_input("الخيار (ج):", key="qba_o3")
-            qb_opt4 = st.text_input("الخيار (د):", key="qba_o4")
-            qb_correct_opt = st.selectbox("الإجابة الصحيحة:", [1, 2, 3, 4], format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})", key="qba_cor")
-        
-        qb_points = st.number_input("درجة السؤال:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key="qba_pts")
+        qb_text = st.text_area("نص السؤال المكتوب:", key="qbc_txt", placeholder="أكتب نص السؤال هنا...")
 
-        if st.form_submit_button("💾 حفظ السؤال في بنك الأسئلة"):
+        qb_opt1, qb_opt2, qb_opt3, qb_opt4 = "", "", "", ""
+        qb_correct = 1
+
+        if qb_type == "اختيار من متعدد":
+            st.markdown("---")
+            st.markdown("##### 🎯 ب) خيارات الاختيار من متعدد:")
+            qb_opt1 = st.text_input("الخيار (أ):", key="qbc_o1")
+            qb_opt2 = st.text_input("الخيار (ب):", key="qbc_o2")
+            qb_opt3 = st.text_input("الخيار (ج):", key="qbc_o3")
+            qb_opt4 = st.text_input("الخيار (د):", key="qbc_o4")
+            qb_correct = st.selectbox("الإجابة الصحيحة هي:*", [1, 2, 3, 4], format_func=lambda x: f"الخيار ({['أ', 'ب', 'ج', 'د'][x-1]})", key="qbc_cor")
+
+        st.write("---")
+        qb_points = st.number_input("درجة السؤال:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key="qbc_pts")
+
+        if st.form_submit_button("💾 حفظ وإدراج السؤال في بنك الأسئلة"):
             if not qb_text.strip() and not st.session_state.qb_q_img:
-                st.error("يرجى كتابة نص السؤال أو رفع صورة للسؤال على الأقل.")
+                st.error("يرجى كتابة نص السؤال أو رفع صورة السؤال على الأقل.")
             else:
                 q_payload = {
                     "type": qb_type,
                     "text": qb_text.strip(),
                     "q_img": st.session_state.qb_q_img,
-                    "opt1": qb_opt1 if qb_type == "اختيار من متعدد" else "",
-                    "opt2": qb_opt2 if qb_type == "اختيار من متعدد" else "",
-                    "opt3": qb_opt3 if qb_type == "اختيار من متعدد" else "",
-                    "opt4": qb_opt4 if qb_type == "اختيار من متعدد" else "",
-                    "correct": qb_correct_opt,
+                    "opt1": qb_opt1.strip(),
+                    "opt2": qb_opt2.strip(),
+                    "opt3": qb_opt3.strip(),
+                    "opt4": qb_opt4.strip(),
+                    "correct": qb_correct,
                     "points": qb_points
                 }
                 new_qbank_row = {
@@ -1443,11 +1450,11 @@ with tab_question_bank:
                 st.session_state.question_bank_df = pd.concat([st.session_state.question_bank_df, pd.DataFrame([new_qbank_row])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
                 st.session_state.qb_q_img = ""
-                st.session_state.qb_v += 1
-                st.success("✓ تم حفظ السؤال بنجاح في بنك الأسئلة الخاص بهذه المرحلة!")
+                st.session_state.qb_ver += 1
+                st.success("✓ تم حفظ وإدراج السؤال في بنك الأسئلة بنجاح!")
 
     st.write("---")
-    st.markdown("### 📋 قائمة الأسئلة المسجلة في بنك الأسئلة:")
+    st.markdown("### 📋 الأسئلة الحالية في بنك الأسئلة:")
     qbf_df = st.session_state.question_bank_df
     if qbf_df.empty:
         st.info("لا توجد أسئلة مضافة في بنك الأسئلة بعد.")
@@ -1457,7 +1464,7 @@ with tab_question_bank:
             with st.expander(f"[{qbr['المجموعة/الصف']}] — {q_data['type']} (الدرجة: {q_data['points']})"):
                 st.write(f"**نص السؤال:** {q_data['text']}")
                 if q_data.get("q_img"):
-                    st.image(f"data:image/jpeg;base64,{q_data['q_img']}", width=250)
+                    st.image(f"data:image/jpeg;base64,{q_data['q_img']}", width=300)
                 if q_data["type"] == "اختيار من متعدد":
                     st.write(f"أ) {q_data.get('opt1','')} | ب) {q_data.get('opt2','')} | ج) {q_data.get('opt3','')} | د) {q_data.get('opt4','')}")
                     st.write(f"<b>الإجابة الصحيحة:</b> الخيار ({['أ', 'ب', 'ج', 'د'][int(q_data['correct'])-1]})")
