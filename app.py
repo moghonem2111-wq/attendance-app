@@ -806,22 +806,30 @@ if is_student_mode:
                     st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
                 else:
                     for qb_i, qb_r in st_qb.iterrows():
-                        q_data = json.loads(qb_r["بيانات_السؤال_JSON"])
+                        raw_json_data = qb_r.get("بيانات_السؤال_JSON", "{}")
+                        try:
+                            q_data = json.loads(raw_json_data) if pd.notnull(raw_json_data) and str(raw_json_data).strip() else {}
+                        except Exception:
+                            q_data = {}
+
+                        if not q_data:
+                            continue
+
                         st.markdown(f"""
                             <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:20px; margin-bottom:15px;">
-                                <p style="font-size:18px; color:{text_color};"><b>سؤال ({qb_i+1}) — الدرجة: {q_data['points']}</b></p>
-                                <p style="font-size:17px; color:{text_color};">{q_data['text']}</p>
+                                <p style="font-size:18px; color:{text_color};"><b>سؤال ({qb_i+1}) — الدرجة: {q_data.get('points', 1.0)}</b></p>
+                                <p style="font-size:17px; color:{text_color};">{q_data.get('text', '')}</p>
                             </div>
                         """, unsafe_allow_html=True)
                         
                         if q_data.get("q_img"):
                             st.image(f"data:image/jpeg;base64,{q_data['q_img']}", use_container_width=True)
 
-                        if q_data["type"] == "اختيار من متعدد":
+                        if q_data.get("type", "اختيار من متعدد") == "اختيار من متعدد":
                             opts = ["أ", "ب", "ج", "د"]
                             ans_choice = st.radio(f"اختر الإجابة الصحيحة للسؤال ({qb_i+1}):", opts, key=f"qb_radio_{qb_i}")
                             if st.button(f"تحقق من إجابة السؤال ({qb_i+1})", key=f"check_qb_{qb_i}"):
-                                correct_idx = int(q_data["correct"])
+                                correct_idx = int(q_data.get("correct", 1))
                                 correct_letter = opts[correct_idx - 1]
                                 if ans_choice == correct_letter:
                                     st.success("إجابة صحيحة تماماً! أحسنت ✅")
@@ -838,10 +846,10 @@ if is_student_mode:
                                     "عنوان الامتحان": "بنك الأسئلة الشامل",
                                     "اسم الطالب": st_user["اسم الطالب"],
                                     "رقم السؤال": qb_i + 1,
-                                    "نص السؤال": q_data["text"],
+                                    "نص السؤال": q_data.get("text", ""),
                                     "إجابة الطالب النصية": essay_ans_txt,
                                     "صورة الحل_base64": img_b64_sub,
-                                    "درجة السؤال": q_data["points"],
+                                    "درجة السؤال": q_data.get("points", 1.0),
                                     "الدرجة المرصودة": 0.0,
                                     "حالة التصحيح": "قيد التصحيح من المعلم",
                                     "ملاحظات المعلم": "",
@@ -1575,14 +1583,24 @@ with tab_question_bank:
         st.info("لا توجد أسئلة مضافة في بنك الأسئلة بعد.")
     else:
         for qbi, qbr in qbf_df.iterrows():
-            q_data = json.loads(qbr["بيانات_السؤال_JSON"])
-            with st.expander(f"[{qbr['المجموعة/الصف']}] — {q_data['type']} (الدرجة: {q_data['points']})"):
-                st.write(f"**نص السؤال:** {q_data['text']}")
+            raw_json_data = qbr.get("بيانات_السؤال_JSON", "{}")
+            try:
+                q_data = json.loads(raw_json_data) if pd.notnull(raw_json_data) and str(raw_json_data).strip() else {}
+            except Exception:
+                q_data = {}
+
+            if not q_data:
+                continue
+
+            with st.expander(f"[{qbr['المجموعة/الصف']}] — {q_data.get('type', 'اختيار من متعدد')} (الدرجة: {q_data.get('points', 1.0)})"):
+                st.write(f"**نص السؤال:** {q_data.get('text', '')}")
                 if q_data.get("q_img"):
                     st.image(f"data:image/jpeg;base64,{q_data['q_img']}", width=300)
-                if q_data["type"] == "اختيار من متعدد":
+                if q_data.get("type") == "اختيار من متعدد":
                     st.write(f"أ) {q_data.get('opt1','')} | ب) {q_data.get('opt2','')} | ج) {q_data.get('opt3','')} | د) {q_data.get('opt4','')}")
-                    st.write(f"<b>الإجابة الصحيحة:</b> الخيار ({['أ', 'ب', 'ج', 'د'][int(q_data['correct'])-1]})")
+                    corr_idx = int(q_data.get('correct', 1)) - 1
+                    corr_letter = ['أ', 'ب', 'ج', 'د'][corr_idx] if 0 <= corr_idx < 4 else 'أ'
+                    st.write(f"<b>الإجابة الصحيحة:</b> الخيار ({corr_letter})")
                 
                 if st.button(f"حذف هذا السؤال 🗑️", key=f"del_qb_{qbi}"):
                     st.session_state.question_bank_df = qbf_df.drop(qbi).reset_index(drop=True)
