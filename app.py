@@ -623,7 +623,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات
+        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو وتفعيل النقر على الخيار بالكامل ودعم المقالي
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -1515,7 +1515,6 @@ with tab_chat:
 with tab_cards:
     st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
     
-    # قسم طلبات الحجز أونلاين الجديدة
     bookings_df_state = st.session_state.bookings_df
     if not bookings_df_state.empty:
         st.markdown("#### 📅 طلبات حجز الدروس أونلاين الواردة:")
