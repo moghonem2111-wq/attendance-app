@@ -109,6 +109,7 @@ COL_ESSAYS = ["معرف_الحل", "معرف_الامتحان", "عنوان ال
 COL_BOOKINGS = ["تاريخ_الحجز", "اسم الطالب", "المنهج_الدولة", "المرحلة_الصف", "رقم_الهاتف", "رقم_ولي_الأمر", "الحالة"]
 COL_BANK_REQUESTS = ["تاريخ_الطلب", "اسم الطالب", "رقم_الهاتف", "كود_OTP", "حالة_الدفع", "إيصال_الدفع_base64"]
 COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "المجموعة/الصف", "المادة", "نوع_السؤال", "بيانات_السؤال_JSON"]
+COL_VIDEOS = ["معرف_الفيديو", "عنوان_الفيديو", "المنهج/الدولة", "المجموعة/الصف", "رابط_الفيديو", "تاريخ_الرفع"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -120,6 +121,7 @@ def load_all_data():
     bookings_df = pd.DataFrame(columns=COL_BOOKINGS)
     bank_requests_df = pd.DataFrame(columns=COL_BANK_REQUESTS)
     question_bank_df = pd.DataFrame(columns=COL_QUESTION_BANK)
+    videos_df = pd.DataFrame(columns=COL_VIDEOS)
 
     if os.path.exists(FILE_NAME):
         try:
@@ -134,6 +136,7 @@ def load_all_data():
                 if "Bookings" in xls.sheet_names: bookings_df = pd.read_excel(xls, "Bookings")
                 if "BankRequests" in xls.sheet_names: bank_requests_df = pd.read_excel(xls, "BankRequests")
                 if "QuestionBank" in xls.sheet_names: question_bank_df = pd.read_excel(xls, "QuestionBank")
+                if "Videos" in xls.sheet_names: videos_df = pd.read_excel(xls, "Videos")
         except Exception:
             pass
 
@@ -155,10 +158,12 @@ def load_all_data():
         if col not in bank_requests_df.columns: bank_requests_df[col] = ""
     for col in COL_QUESTION_BANK:
         if col not in question_bank_df.columns: question_bank_df[col] = ""
+    for col in COL_VIDEOS:
+        if col not in videos_df.columns: videos_df[col] = ""
 
-    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df
+    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df):
     with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
@@ -169,9 +174,10 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         bookings_df.to_excel(writer, sheet_name="Bookings", index=False)
         bank_requests_df.to_excel(writer, sheet_name="BankRequests", index=False)
         question_bank_df.to_excel(writer, sheet_name="QuestionBank", index=False)
+        videos_df.to_excel(writer, sheet_name="Videos", index=False)
 
 if "users_df" not in st.session_state:
-    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df = load_all_data()
+    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df = load_all_data()
     st.session_state.users_df = u_df
     st.session_state.sessions_df = s_df
     st.session_state.assessments_df = a_df
@@ -181,6 +187,7 @@ if "users_df" not in st.session_state:
     st.session_state.bookings_df = b_df
     st.session_state.bank_requests_df = br_df
     st.session_state.question_bank_df = qb_df
+    st.session_state.videos_df = v_df
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
@@ -212,7 +219,7 @@ def delete_student_completely(student_name_to_del):
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.bookings_df = st.session_state.bookings_df[st.session_state.bookings_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.bank_requests_df = st.session_state.bank_requests_df[st.session_state.bank_requests_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
-    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
 
 is_dark = st.session_state.dark_mode
 bg_color = "#0e1117" if is_dark else "#ffffff"
@@ -508,7 +515,7 @@ if is_student_mode:
                             "الحالة": "قيد المتابعة"
                         }
                         st.session_state.bookings_df = pd.concat([st.session_state.bookings_df, pd.DataFrame([new_booking])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.success("✓ تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً لتأكيد الموعد.")
 
         elif st.session_state.page_view == "login":
@@ -571,7 +578,7 @@ if is_student_mode:
                                 "تاريخ التسجيل": str(date.today()), "الحالة_حظر": "نشط", "حالة_الاشتراك_البنك": "غير مشترك"
                             }
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                             st.session_state.logged_student = new_user
                             st.query_params["role"] = "student"
                             st.query_params["st_name"] = new_user["اسم الطالب"]
@@ -619,6 +626,9 @@ if is_student_mode:
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
         st.markdown(f"<p style='text-align: center; margin-bottom: 15px; color: {text_color}; font-size: 16px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
+        if st.button("🎥 الفيديوهات والشروحات التعليمية", use_container_width=True):
+            st.session_state.student_sub_page = "videos"
+            st.rerun()
         if st.button("📚 بنك الأسئلة الشامل (مغلق للاشتراك)", use_container_width=True):
             st.session_state.student_sub_page = "bank"
             st.rerun()
@@ -641,8 +651,31 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
+        # --- قسم الفيديوهات والشروحات للطالب (حسب مرحلته) ---
+        if sub_page == "videos":
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 الفيديوهات والشروحات التعليمية الخاصة بمرحلتك:</h3>", unsafe_allow_html=True)
+            student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
+            v_df = st.session_state.videos_df
+            st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip() == student_grade]
+
+            if st_videos.empty:
+                st.info("لا توجد فيديوهات مرفوعة لمرحلتك الدراسية حالياً. ترقبها قريباً!")
+            else:
+                for _, vid_r in st_videos.iterrows():
+                    st.markdown(f"""
+                        <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:20px; margin-bottom:15px;">
+                            <h4 style="color:#0284c7; margin-top:0;">📺 {vid_r['عنوان_الفيديو']}</h4>
+                            <p style="font-size:14px; color:#64748b;">تاريخ الرفع: {vid_r['تاريخ_الرفع']}</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    v_link = str(vid_r["رابط_الفيديو"]).strip()
+                    if "youtube.com" in v_link or "youtu.be" in v_link:
+                        st.video(v_link)
+                    else:
+                        st.markdown(f'<a href="{v_link}" target="_blank" class="stLinkButton>a">مشاهدة الفيديو اضغط هنا 🔗</a>', unsafe_allow_html=True)
+
         # --- بنك الأسئلة للطالب ---
-        if sub_page == "bank":
+        elif sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
             curr_user_row = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()]
@@ -677,7 +710,7 @@ if is_student_mode:
                                 "إيصال_الدفع_base64": rcpt_str
                             }
                             st.session_state.bank_requests_df = pd.concat([st.session_state.bank_requests_df, pd.DataFrame([new_req])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                             st.success("✓ تم إرسال طلب اشتراكك بنجاح! سيقوم المعلم بمراجعة الإيصال وتفعيل حسابك خلال دقائق.")
                 
                 st.link_button("📲 اضغط هنا للدفع من خلال انستا باي", "https://ipn.eg/S/moghonem2002/instapay/6EyvZs")
@@ -733,7 +766,7 @@ if is_student_mode:
                                     "تاريخ الحل": str(date.today()),
                                 }
                                 st.session_state.essays_df = pd.concat([st.session_state.essays_df, pd.DataFrame([new_qb_sub])], ignore_index=True)
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                                 st.success("✓ تم إرسال إجابتك المقالية للمعلم بنجاح ليتم تصحيحها!")
 
         # 2. صفحة الاختبارات
@@ -972,7 +1005,7 @@ if is_student_mode:
                                                 "ملاحظات وتوجيهات": note_msg,
                                             }
                                             st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                                             st.session_state.pop(exam_state_key, None)
                                             
                                             st.markdown(f"""
@@ -983,7 +1016,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة الموضوعية المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
@@ -1009,7 +1042,7 @@ if is_student_mode:
                         "مستوى الطالب": "قيد التقييم", "ملاحظات": f"تقييم الحصة: {selected_rating}",
                     }
                     st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                     st.success(f"تم تسجيل حضورك بنجاح للحصة بتاريخ {st_date}!")
 
         # 3. درجات الواجبات
@@ -1080,7 +1113,7 @@ if is_student_mode:
                             "المرسل": "student", "نص الرسالة": msg_text.strip(), "الصورة_base64": img_str,
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_msg])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                         st.rerun()
 
@@ -1106,7 +1139,7 @@ if is_student_mode:
 
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم (تظهر افتراضياً عندما يكون الرابط للمعلم بدون role=student)
+# 2. لوحة تحكم المعلم (تظهر عندما يكون الرابط للمعلم بدون role=student)
 # ==============================================================================
 st.sidebar.markdown("### 📷 صورة الشعار والمعلم")
 uploaded_photo = st.sidebar.file_uploader("ارفع صورتك هنا إذا لم تظهر تلقائياً:", type=["jpg", "png", "jpeg"])
@@ -1140,9 +1173,11 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-tab_exam_maker, tab_question_bank, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
+# تجميع الأيقونات والتبويعات لتصبح تحت بعضها البعض بشكل عمودي احترافي
+tab_exam_maker, tab_question_bank, tab_videos_teacher, tab_exam_grades_teacher, tab_essay_grade, tab_chat, tab_cards, tab1, tab_hw, tab2, tab3, tab4 = st.tabs([
     "⚙️ صانع الامتحانات",
     "📚 بنك الأسئلة",
+    "🎥 إدارة الفيديوهات",
     "📈 درجات الاختبارات",
     "📝 تصحيح المقالي",
     "💬 الدردشة والرسائل",
@@ -1374,12 +1409,12 @@ with tab_exam_maker:
                 "تاريخ الإنشاء": str(date.today()),
             }
             st.session_state.exams_df = pd.concat([st.session_state.exams_df, pd.DataFrame([new_ex])], ignore_index=True)
-            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
             st.session_state.temp_questions = []
             st.success(f"✓ تم نشر امتحان ({ex_title_input}) بنجاح لصف ({ex_grade_input})!")
             st.rerun()
 
-# --- لوحة بنك الأسئلة المتقدمة لمعالجة ظهور الخيارات للمقالي ---
+# --- لوحة بنك الأسئلة للمهندس ---
 with tab_question_bank:
     st.subheader("📚 بنك الأسئلة الشامل (إضافة أسئلة اختر ومقالي بصور ومواصفات كاملة):")
 
@@ -1447,7 +1482,7 @@ with tab_question_bank:
                     "بيانات_السؤال_JSON": json.dumps(q_payload, ensure_ascii=False)
                 }
                 st.session_state.question_bank_df = pd.concat([st.session_state.question_bank_df, pd.DataFrame([new_qbank_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.session_state.qb_q_img = ""
                 st.session_state.qb_ver += 1
                 st.success("✓ تم حفظ وإدراج السؤال في بنك الأسئلة بنجاح!")
@@ -1470,9 +1505,50 @@ with tab_question_bank:
                 
                 if st.button(f"حذف هذا السؤال 🗑️", key=f"del_qb_{qbi}"):
                     st.session_state.question_bank_df = qbf_df.drop(qbi).reset_index(drop=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                     st.warning("تم حذف السؤال.")
                     st.rerun()
+
+# --- لوحة إدارة الفيديوهات للمعلم ---
+with tab_videos_teacher:
+    st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب:")
+    with st.form("upload_video_form", clear_on_submit=True):
+        vid_title = st.text_input("عنوان الفيديو / الدرس:")
+        vid_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="vid_c")
+        vid_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[vid_curr], key="vid_g")
+        vid_link = st.text_input("رابط الفيديو (رابط يوتيوب أو رابط مباشر):", placeholder="https://www.youtube.com/watch?v=...")
+
+        if st.form_submit_button("💾 حفظ ونشر الفيديو للطالب"):
+            if not vid_title.strip() or not vid_link.strip():
+                st.error("يرجى كتابة عنوان الفيديو ورابطه.")
+            else:
+                new_vid = {
+                    "معرف_الفيديو": f"VID_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "عنوان_الفيديو": vid_title.strip(),
+                    "المنهج/الدولة": vid_curr,
+                    "المجموعة/الصف": vid_grade,
+                    "رابط_الفيديو": vid_link.strip(),
+                    "تاريخ_الرفع": str(date.today())
+                }
+                st.session_state.videos_df = pd.concat([st.session_state.videos_df, pd.DataFrame([new_vid])], ignore_index=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
+                st.success(f"✓ تم نشر الفيديو ({vid_title}) بنجاح للمرحلة ({vid_grade})!")
+
+    st.write("---")
+    st.markdown("### 📋 الفيديوهات المنشورة مسبقاً:")
+    v_df_state = st.session_state.videos_df
+    if v_df_state.empty:
+        st.info("لا توجد فيديوهات منشورة حالياً.")
+    else:
+        st.dataframe(v_df_state, use_container_width=True)
+        with st.expander("🗑️ حذف فيديو منشور"):
+            del_vid_opts = {vi: f"[{vr['المجموعة/الصف']}] {vr['عنوان_الفيديو']}" for vi, vr in v_df_state.iterrows()}
+            sel_del_vid = st.selectbox("اختر الفيديو المراد حذفه:", options=list(del_vid_opts.keys()), format_func=lambda x: del_vid_opts[x], key="sel_del_vid")
+            if st.button("🚨 تأكيد حذف الفيديو المختار"):
+                st.session_state.videos_df = v_df_state.drop(sel_del_vid).reset_index(drop=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
+                st.success("✓ تم حذف الفيديو بنجاح!")
+                st.rerun()
 
 with tab_exam_grades_teacher:
     st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
@@ -1491,7 +1567,7 @@ with tab_exam_grades_teacher:
             if st.button("🚨 تأكيد حذف سجل الامتحان المختار"):
                 real_idx = exam_assessments.loc[sel_del_exam_idx].name
                 st.session_state.assessments_df = st.session_state.assessments_df.drop(real_idx).reset_index(drop=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.success("✓ تم حذف النتيجة بنجاح!")
                 st.rerun()
 
@@ -1599,13 +1675,13 @@ with tab_essay_grade:
                             st.session_state.assessments_df.at[ass_idx, "ملاحظات وتوجيهات"] = f"تم تصحيح المقالي: +{awarded_score} درجة. {teacher_feedback}"
 
                         st.session_state.essays_df = essays
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.success(f"✓ تم رصد درجة الطالب ({st_name}) بنجاح!")
                         st.rerun()
 
                     if delete_essay:
                         st.session_state.essays_df = essays.drop(es_idx).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.warning("⚠️ تم مسح إجابة المقالي بنجاح.")
                         st.rerun()
 
@@ -1648,7 +1724,7 @@ with tab_chat:
                             "المرسل": "teacher", "نص الرسالة": reply_text.strip(), "الصورة_base64": "",
                         }
                         st.session_state.messages_df = pd.concat([st.session_state.messages_df, pd.DataFrame([new_rep])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.success("تم إرسال الرد للبشمهندس بنجاح!")
                         st.rerun()
 
@@ -1664,7 +1740,7 @@ with tab_cards:
             sel_del_book = st.selectbox("اختر الطلب:", options=list(del_book_opts.keys()), format_func=lambda x: del_book_opts[x], key="sel_del_book")
             if st.button("🚨 تأكيد حذف طلب الحجز المختار"):
                 st.session_state.bookings_df = bookings_df_state.drop(sel_del_book).reset_index(drop=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.success("✓ تم حذف طلب الحجز بنجاح!")
                 st.rerun()
         st.write("---")
@@ -1689,13 +1765,13 @@ with tab_cards:
                     if st.button(f"✅ تأكيد وتفعيل الاشتراك للطالب {st_req_name}", key=f"confirm_bank_{br_idx}"):
                         bank_req_state.at[br_idx, "حالة_الدفع"] = "مؤكد ومفعل"
                         st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(st_req_name).strip(), "حالة_الاشتراك_البنك"] = "مشترك"
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.success(f"✓ تم تفعيل اشتراك بنك الأسئلة للطالب {st_req_name} بنجاح!")
                         st.rerun()
                 with c_bk2:
                     if st.button(f"🗑️ حذف طلب الاشتراك", key=f"del_bank_req_{br_idx}"):
                         st.session_state.bank_requests_df = bank_req_state.drop(br_idx).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.warning("تم حذف طلب الاشتراك.")
                         st.rerun()
         st.write("---")
@@ -1805,21 +1881,21 @@ with tab_cards:
                             del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
                             if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
                                 st.session_state.assessments_df = st.session_state.assessments_df.drop(del_grade_choice).reset_index(drop=True)
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                                 st.success("✓ تم مسح الدرجة بنجاح!")
                                 st.rerun()
 
                 if is_banned:
                     if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
                         st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "نشط"
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                         st.success(f"تم فك حظر {st_name}!")
                         st.rerun()
                 else:
                     if st.button("حظر 🚫", key=f"ban_{idx}"):
                         if not u_row.empty:
                             st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"] == st_name, "الحالة_حظر"] = "محظور"
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                             st.warning(f"تم حظر {st_name}.")
                             st.rerun()
                 
@@ -1859,7 +1935,7 @@ with tab1:
                     "نظام الدفع": payment_type, "مستوى الطالب": student_level, "ملاحظات": notes.strip(),
                 }
                 st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
 
 with tab_hw:
@@ -1893,7 +1969,7 @@ with tab_hw:
                     "حالة التسليم": ass_status, "ملاحظات وتوجيهات": ass_notes.strip(),
                 }
                 st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.success(f"✓ تم رصد {ass_type} بنجاح للطالب ({ass_student})!")
 
     st.write("---")
@@ -1950,14 +2026,14 @@ with tab2:
                 df.at[selected_idx, "مستوى الطالب"] = edit_level
                 df.at[selected_idx, "ملاحظات"] = edit_notes.strip()
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.success("✓ تم تحديث بيانات الحصة بنجاح!")
                 st.rerun()
 
             if delete_btn:
                 df = df.drop(selected_idx).reset_index(drop=True)
                 st.session_state.sessions_df = df
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df)
                 st.warning("⚠️ تم حذف السجل.")
                 st.rerun()
 
@@ -2003,6 +2079,7 @@ with tab3:
             st.session_state.bookings_df.to_excel(writer, sheet_name="Bookings", index=False)
             st.session_state.bank_requests_df.to_excel(writer, sheet_name="BankRequests", index=False)
             st.session_state.question_bank_df.to_excel(writer, sheet_name="QuestionBank", index=False)
+            st.session_state.videos_df.to_excel(writer, sheet_name="Videos", index=False)
 
         st.download_button(
             label="📥 تصدير ملف Excel الشامل (مستخدمين + حصص + واجبات + امتحانات + مقالي)",
