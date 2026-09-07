@@ -7,6 +7,12 @@ import pandas as pd
 from PIL import Image
 import streamlit as st
 
+st.set_page_config(
+    page_title="م/ محمد غنيم | منصة شرح الرياضيات والإحصاء",
+    page_icon="📐",
+    layout="wide",
+)
+
 try:
     from streamlit_paste_button import paste_image_button
 except ImportError:
@@ -19,12 +25,6 @@ except ImportError:
 
 FILE_NAME = "سجل_الغياب_والحصص.xlsx"
 IMG_NAME = "teacher.jpg"
-
-st.set_page_config(
-    page_title="م/ محمد غنيم | منصة شرح الرياضيات والإحصاء",
-    page_icon="📐",
-    layout="wide",
-)
 
 CURRICULUM_DATA = {
     "المنهج المصري 🇪🇬": [
@@ -169,6 +169,19 @@ if "student_sub_page" not in st.session_state:
 
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
+
+# قراءة البارامترات بأمان بعد تعيين الـ page_config
+query_params = st.query_params
+is_student_mode = query_params.get("role") == "student"
+
+if "logged_student" not in st.session_state:
+    st.session_state.logged_student = None
+
+saved_student_name = query_params.get("st_name")
+if not st.session_state.logged_student and saved_student_name:
+    matched_st = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(saved_student_name).strip()]
+    if not matched_st.empty:
+        st.session_state.logged_student = matched_st.iloc[0].to_dict()
 
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
@@ -329,8 +342,9 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-is_student_mode = query_params.get("role") == "student"
-
+# ==============================================================================
+# 1. واجهة الطالب
+# ==============================================================================
 if is_student_mode:
     st.markdown("""
         <style>
