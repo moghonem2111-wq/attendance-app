@@ -678,7 +678,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات (النص باللون الأسود وعداد التوقيت المباشر وشكل الشهادة)
+        # 1. صفحة الاختبارات
         if sub_page == "exams":
             st.markdown("### ✍️ الاختبارات الإلكترونية التفاعلية المتاحة:")
             available_exams = st.session_state.exams_df.copy()
@@ -1320,7 +1320,7 @@ with tab_exam_maker:
             st.rerun()
 
     st.write("---")
-    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيارات التعديل والإشراف والأسئلة):")
+    st.markdown("### 📋 الامتحانات المنشورة مسبقاً (مع خيارات التعديل الكاملة وإدارة الأسئلة):")
     if st.session_state.exams_df.empty:
         st.info("لا توجد امتحانات منشورة بعد.")
     else:
