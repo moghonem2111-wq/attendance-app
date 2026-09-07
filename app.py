@@ -651,15 +651,17 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي ---
+        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي (مصححة لتعرض الفيديو بدقة تامة) ---
         if sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
             v_df = st.session_state.videos_df
-            st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip() == student_grade]
+            
+            # فلترة مرنة تتأكد من مطابقة الصف بغض النظر عن المسافات الزائدة
+            st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
 
             if st_videos.empty:
-                st.info("لا توجد فيديوهات مرفوعة لمرحلتك الدراسية حالياً. ترقبها قريباً!")
+                st.info(f"لا توجد فيديوهات مرفوعة لمرحلتك الدراسية ({student_grade}) حالياً. ترقبها قريباً!")
             else:
                 col_sidebar, col_main_vid = st.columns([1, 2.2])
                 
@@ -669,9 +671,6 @@ if is_student_mode:
                             <h4 style="margin:0 0 10px 0; color:#10b981; font-size:18px;">📚 محتوى الدروس</h4>
                         </div>
                     """, unsafe_allow_html=True)
-                    
-                    if "selected_video_idx" not in st.session_state:
-                        st.session_state.selected_video_idx = 0
 
                     video_titles = st_videos["عنوان_الفيديو"].tolist()
                     selected_title = st.radio("اختر الدرس للمشاهدة:", video_titles, key="darssly_vid_radio")
@@ -684,7 +683,7 @@ if is_student_mode:
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    v_link = str(selected_row["رابط_الفيديو"]).strip()
+                    v_link = str(selected_row.get("رابط_الفيديو", "")).strip()
                     v_bytes = selected_row.get("فيديو_base64", "")
 
                     if pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
@@ -692,14 +691,14 @@ if is_student_mode:
                             vid_bytes_dec = base64.b64decode(v_bytes)
                             st.video(vid_bytes_dec)
                         except Exception:
-                            st.error("حدث خطأ في عرض ملف الفيديو المرفوع.")
-                    elif v_link and v_link != "nan":
+                            st.error("حدث خطأ في فك تشفير وعرض ملف الفيديو المرفوع.")
+                    elif v_link and v_link != "nan" and v_link != "":
                         if "youtube.com" in v_link or "youtu.be" in v_link:
                             st.video(v_link)
                         else:
                             st.link_button("🔗 مشاهدة الفيديو عبر الرابط الخارجي", v_link)
                     else:
-                        st.info("لا يوجد فيديو متاح لهذا الدرس.")
+                        st.info("لا يوجد فيديو متاح أو مرفوع لهذا الدرس حالياً.")
 
                     st.write("---")
                     st.markdown("<h4 style='font-size:18px;'>❓ الأسئلة والتعليقات (0)</h4>", unsafe_allow_html=True)
@@ -751,7 +750,7 @@ if is_student_mode:
                 st.success("🎉 أهلاً بك! حسابك مفعل ومسجل في بنك الأسئلة الخاص بمرحلتك الدراسية.")
                 student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
                 qb_df = st.session_state.question_bank_df
-                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip() == student_grade]
+                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
 
                 if st_qb.empty:
                     st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
@@ -1049,7 +1048,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
