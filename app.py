@@ -170,6 +170,19 @@ if "student_sub_page" not in st.session_state:
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
 
+# استخدام استمرار تسجيل الدخول عبر query_params لضمان عدم الخروج عند الـ Refresh أو الرسترة
+query_params = st.query_params
+is_student_mode = query_params.get("role") == "student"
+
+if "logged_student" not in st.session_state:
+    st.session_state.logged_student = None
+
+saved_student_name = query_params.get("st_name")
+if not st.session_state.logged_student and saved_student_name:
+    matched_st = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(saved_student_name).strip()]
+    if not matched_st.empty:
+        st.session_state.logged_student = matched_st.iloc[0].to_dict()
+
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
     st.session_state.users_df = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
@@ -322,12 +335,6 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-query_params = st.query_params
-is_student_mode = query_params.get("role") == "student"
-
-# ==============================================================================
-# 1. واجهة الطالب
-# ==============================================================================
 if is_student_mode:
     st.markdown("""
         <style>
@@ -357,6 +364,8 @@ if is_student_mode:
             if st.button("🏠 الرئيسية"):
                 st.session_state.page_view = "home"
                 st.session_state.logged_student = None
+                st.query_params.clear()
+                st.query_params["role"] = "student"
                 st.rerun()
         with c_btn1:
             if st.button("👤 دخول"):
@@ -373,9 +382,6 @@ if is_student_mode:
                 st.rerun()
 
     st.write("---")
-
-    if "logged_student" not in st.session_state:
-        st.session_state.logged_student = None
 
     if not st.session_state.logged_student:
         if st.session_state.page_view == "home":
@@ -417,7 +423,6 @@ if is_student_mode:
 
             st.write("---")
 
-            # كورسات درسلي
             st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
             st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
             st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -471,6 +476,8 @@ if is_student_mode:
                             st.error("🚫 تم حظر هذا الحساب من قبل المعلم.")
                         else:
                             st.session_state.logged_student = user_info
+                            st.query_params["role"] = "student"
+                            st.query_params["st_name"] = user_info["اسم الطالب"]
                             st.success(f"مرحباً بك مجدداً يا {login_name}!")
                             st.rerun()
                     else:
@@ -507,6 +514,8 @@ if is_student_mode:
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
                             st.session_state.logged_student = new_user
+                            st.query_params["role"] = "student"
+                            st.query_params["st_name"] = new_user["اسم الطالب"]
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
@@ -521,6 +530,8 @@ if is_student_mode:
         if not fresh_user.empty and fresh_user.iloc[0].get("الحالة_حظر") == "محظور":
             st.error("🚫 عذراً، تم حظر حسابك.")
             st.session_state.logged_student = None
+            st.query_params.clear()
+            st.query_params["role"] = "student"
             st.rerun()
 
         col_u1, col_u2 = st.columns([4, 1])
@@ -536,6 +547,8 @@ if is_student_mode:
             if st.button("🚪 خروج"):
                 st.session_state.logged_student = None
                 st.session_state.page_view = "home"
+                st.query_params.clear()
+                st.query_params["role"] = "student"
                 st.rerun()
 
         st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
@@ -566,7 +579,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع إزالة أرقام الاختيارات السفلى والتفاعل بالكامل عبر النقر على المستطيل ودعم الأسئلة المقالية
+        # 1. صفحة الاختبارات مع التايمر المستمر وإلغاء الراديو التقليدي والتفاعل باختيار المستطيل ودعم الأسئلة المقالية
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -697,19 +710,20 @@ if is_student_mode:
                                         opts_labels = ["أ", "ب", "ج", "د"]
                                         saved_choice = st_ex["answers_mcq"].get(cur_i, None)
 
-                                        st.markdown(f"<p style='color:{text_color}; font-size:16px; margin-top:10px;'><b>اختر إجابتك (اضغط على الخيار المناسب):</b></p>", unsafe_allow_html=True)
+                                        st.markdown(f"<p style='color:{text_color}; font-size:16px; margin-top:10px;'><b>اختر إجابتك (انقر على الخيار المطلوب):</b></p>", unsafe_allow_html=True)
                                         
                                         for opt_idx, lbl in enumerate(opts_labels, 1):
                                             t_val = q_curr.get(f"opt{opt_idx}", "")
                                             i_val = q_curr.get(f"opt{opt_idx}_img", "")
                                             
                                             is_selected = (saved_choice == opt_idx)
-                                            bg_opt = "#10b981" if is_selected else card_bg
-                                            fg_opt = "#ffffff" if is_selected else text_color
-                                            border_opt = "#059669" if is_selected else card_border
+                                            btn_color = "#10b981" if is_selected else "#0284c7"
                                             
-                                            btn_label = f"({lbl}) {t_val}" if t_val else f"الخيار ({lbl})"
-                                            if st.button(btn_label, key=f"opt_box_btn_{ex_id}_{cur_i}_{opt_idx}", use_container_width=True):
+                                            btn_display_text = f"الخيار ({lbl}): {t_val}" if t_val else f"الخيار ({lbl})"
+                                            if is_selected:
+                                                btn_display_text = f"✅ تم الاختيار: {btn_display_text}"
+
+                                            if st.button(btn_display_text, key=f"opt_rect_btn_{ex_id}_{cur_i}_{opt_idx}", use_container_width=True):
                                                 st_ex["answers_mcq"][cur_i] = opt_idx
                                                 st.rerun()
 
@@ -773,7 +787,6 @@ if is_student_mode:
                                                     else:
                                                         detailed_report += f"<br>سؤال {q_idx+1}: إجابة خاطئة ❌ (الصحيحة: الخيار {['أ', 'ب', 'ج', 'د'][correct_ans-1]})"
                                                 else:
-                                                    # تسجيل إجابة السؤال المقالي لكنترول المعلم
                                                     new_essay_sub = {
                                                         "معرف_الحل": f"ANS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{q_idx}",
                                                         "معرف_الامتحان": ex_id,
