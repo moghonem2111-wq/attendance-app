@@ -167,6 +167,9 @@ if "page_view" not in st.session_state:
 if "student_sub_page" not in st.session_state:
     st.session_state.student_sub_page = "dashboard"
 
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
 def delete_student_completely(student_name_to_del):
     target = student_name_to_del.strip()
     st.session_state.users_df = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
@@ -176,224 +179,117 @@ def delete_student_completely(student_name_to_del):
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
 
-st.markdown("""
+# تطبيق ثيم الوضع الداكن أو الفاتح ديناميكياً
+is_dark = st.session_state.dark_mode
+bg_color = "#0e1117" if is_dark else "#ffffff"
+text_color = "#f8fafc" if is_dark else "#0f172a"
+card_bg = "#1e232d" if is_dark else "#ffffff"
+card_border = "#334155" if is_dark else "#e2e8f0"
+
+st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
     
-    html, body, [class*="css"], p, span, label, div, button, h1, h2, h3, h4, h5, h6 {
+    html, body, [class*="css"], p, span, label, div, button, h1, h2, h3, h4, h5, h6 {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 900 !important;
         letter-spacing: 0.3px !important;
-    }
+        color: {text_color} !important;
+    }}
 
-    input, textarea, select {
+    .stApp {{
+        background-color: {bg_color} !important;
+    }}
+
+    input, textarea, select {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
-    }
+        color: #0f172a !important;
+    }}
 
-    body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {
+    body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {{
         direction: rtl;
         text-align: right;
-    }
+    }}
     
-    .darssly-navbar {
-        background: #1e232d;
+    .darssly-navbar {{
+        background: {card_bg};
         padding: 12px 25px;
         border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        border: 1px solid #334155;
-    }
-    .navbar-brand { display: flex; align-items: center; gap: 15px; }
-    .navbar-title-group h3 { margin: 0 !important; color: #34d399 !important; font-size: 18px !important; font-weight: 900 !important; }
-    .navbar-title-group p { margin: 2px 0 0 0 !important; color: #cbd5e1 !important; font-size: 12px !important; font-weight: 800 !important; }
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid {card_border};
+    }}
+    .navbar-brand {{ display: flex; align-items: center; gap: 15px; }}
+    .navbar-title-group h3 {{ margin: 0 !important; color: #10b981 !important; font-size: 18px !important; }}
+    .navbar-title-group p {{ margin: 2px 0 0 0 !important; color: {text_color} !important; font-size: 12px !important; opacity: 0.8; }}
 
-    .exam-builder-header {
-        background-color: #f59e0b;
-        color: #ffffff !important;
-        padding: 16px 22px;
-        border-radius: 10px 10px 0 0;
-        font-size: 22px;
-        font-weight: 900;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .vertical-section-header {
-        background: linear-gradient(135deg, #0284c7, #0369a1);
-        color: #ffffff !important;
-        padding: 14px 20px;
-        border-radius: 10px;
-        margin-top: 25px;
-        margin-bottom: 15px;
-        font-size: 20px;
-        font-weight: 900;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+    .exam-builder-header {{
+        background-color: #f59e0b; color: #ffffff !important; padding: 16px 22px; border-radius: 10px 10px 0 0; font-size: 22px; font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; gap: 12px;
+    }}
+    .vertical-section-header {{
+        background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff !important; padding: 14px 20px; border-radius: 10px; margin-top: 25px; margin-bottom: 15px; font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 10px;
+    }}
     
-    .stButton>button {
-        background: #10b981 !important;
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-        border: none !important;
-        border-radius: 10px;
-        font-weight: 900 !important;
-        font-size: 16px !important;
-        padding: 12px 22px;
-        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-        width: 100% !important;
-    }
-    .stButton>button:hover { background: #059669 !important; }
+    .stButton>button {{
+        background: #10b981 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; border: none !important; border-radius: 10px; font-weight: 900 !important; font-size: 16px !important; padding: 12px 22px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); width: 100% !important;
+    }}
+    .stButton>button:hover {{ background: #059669 !important; }}
 
-    .exam-top-bar {
-        background-color: #f97316;
-        color: #ffffff;
-        padding: 15px 25px;
-        border-radius: 10px 10px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 20px;
-        font-weight: 900;
-    }
-    .exam-card-box {
-        background: #1e232d;
-        border: 1px solid #334155;
-        border-radius: 0 0 12px 12px;
-        padding: 25px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin-bottom: 25px;
-        color: #f8fafc !important;
-    }
+    .exam-top-bar {{
+        background-color: #f97316; color: #ffffff; padding: 15px 25px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 900;
+    }}
+    .exam-card-box {{
+        background: {card_bg}; border: 1px solid {card_border}; border-radius: 0 0 12px 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; color: {text_color} !important;
+    }}
 
-    .chat-bubble-student {
-        background-color: #075985;
-        color: #f0f9ff;
-        padding: 14px 18px;
-        border-radius: 14px 14px 0 14px;
-        margin-bottom: 12px;
-        max-width: 78%;
-        margin-right: auto;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        border: 1px solid #0284c7;
-    }
-    .chat-bubble-teacher {
-        background-color: #065f46;
-        color: #ecfdf5;
-        padding: 14px 18px;
-        border-radius: 14px 14px 14px 0;
-        margin-bottom: 12px;
-        max-width: 78%;
-        margin-left: auto;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        border: 1px solid #059669;
-    }
+    .chat-bubble-student {{
+        background-color: #075985; color: #f0f9ff; padding: 14px 18px; border-radius: 14px 14px 0 14px; margin-bottom: 12px; max-width: 78%; margin-right: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #0284c7;
+    }}
+    .chat-bubble-teacher {{
+        background-color: #065f46; color: #ecfdf5; padding: 14px 18px; border-radius: 14px 14px 14px 0; margin-bottom: 12px; max-width: 78%; margin-left: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #059669;
+    }}
 
-    .darssly-box {
-        background: linear-gradient(135deg, #059669, #10b981);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-    }
+    .darssly-box {{
+        background: linear-gradient(135deg, #059669, #10b981); border-radius: 16px; padding: 24px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3); border: 2px solid rgba(255, 255, 255, 0.25); color: #ffffff !important;
+    }}
+    .darssly-box * {{ color: #ffffff !important; }}
 
-    .course-card {
-        background: #1e232d;
-        border: 2px solid #334155;
-        border-radius: 16px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-    }
-    .course-icon-box {
-        font-size: 45px;
-        background: #065f46;
-        width: 80px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        margin: 0 auto 15px auto;
-        border: 2px solid #10b981;
-    }
-    .course-title { color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }
-    .course-desc { color: #cbd5e1 !important; font-size: 15px !important; font-weight: 800 !important; margin-bottom: 15px !important; }
+    .course-card {{
+        background: {card_bg}; border: 2px solid {card_border}; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); margin-bottom: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+    }}
+    .course-icon-box {{
+        font-size: 45px; background: #065f46; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px auto; border: 2px solid #10b981;
+    }}
+    .course-title {{ color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }}
+    .course-desc {{ color: {text_color} !important; font-size: 14px !important; font-weight: 800 !important; opacity: 0.9; margin-bottom: 15px !important; }}
 
-    /* أيقونات التواصل الاجتماعي الاحترافية */
-    .social-top-container {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-top: 10px;
-        justify-content: center;
-    }
-    .social-btn-top {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        text-decoration: none !important;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-        transition: transform 0.2s ease;
-    }
-    .social-btn-top:hover { transform: scale(1.12); }
-    .social-btn-top svg { width: 20px; height: 20px; fill: #ffffff; }
+    .social-top-container {{
+        display: flex; gap: 12px; align-items: center; margin-top: 10px; justify-content: center;
+    }}
+    .social-btn-top {{
+        display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; text-decoration: none !important; box-shadow: 0 3px 8px rgba(0,0,0,0.25); transition: transform 0.2s ease;
+    }}
+    .social-btn-top:hover {{ transform: scale(1.12); }}
+    .social-btn-top svg {{ width: 20px; height: 20px; fill: #ffffff; }}
 
-    .facebook-bg { background-color: #1877F2; }
-    .whatsapp-bg { background-color: #25D366; }
-    .telegram-bg { background-color: #229ED9; }
-    .tiktok-bg   { background-color: #000000; border: 1px solid #444; }
+    .facebook-bg {{ background-color: #1877F2; }}
+    .whatsapp-bg {{ background-color: #25D366; }}
+    .telegram-bg {{ background-color: #229ED9; }}
+    .tiktok-bg   {{ background-color: #000000; border: 1px solid #444; }}
     .youtube-bg  { background-color: #FF0000; }
 
-    .call-btn-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 25px;
-        margin-bottom: 15px;
-        width: 100%;
-    }
-    .call-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: #ffffff !important;
-        padding: 14px 28px;
-        border-radius: 50px;
-        font-size: 18px;
-        font-weight: 900;
-        text-decoration: none !important;
-        border: 2px solid #ffffff;
-    }
-    .social-footer-box {
-        margin-top: 25px;
-        padding: 20px 0;
-        border-top: 1px solid rgba(150, 150, 150, 0.3);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-    }
-    .rights-text { font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; color: #f8fafc; }
+    .call-btn-container {{ display: flex; justify-content: center; margin-top: 25px; margin-bottom: 15px; width: 100%; }}
+    .call-btn {{
+        display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff !important; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 900; text-decoration: none !important; border: 2px solid #ffffff;
+    }}
+    .social-footer-box {{
+        margin-top: 25px; padding: 20px 0; border-top: 1px solid rgba(150, 150, 150, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;
+    }}
+    .rights-text {{ font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; color: {text_color}; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -427,7 +323,7 @@ if is_student_mode:
         """, unsafe_allow_html=True)
     with col_nav2:
         st.write("")
-        c_btn0, c_btn1, c_btn2 = st.columns(3)
+        c_btn0, c_btn1, c_btn2, c_btn3 = st.columns(4)
         with c_btn0:
             if st.button("🏠 الرئيسية"):
                 st.session_state.page_view = "home"
@@ -441,6 +337,12 @@ if is_student_mode:
             if st.button("✨ حساب"):
                 st.session_state.page_view = "register"
                 st.rerun()
+        with c_btn3:
+            # زر تبديل الوضع (فاتح / داكن)
+            mode_label = "☀️ فاتح" if st.session_state.dark_mode else "🌙 داكن"
+            if st.button(mode_label):
+                st.session_state.dark_mode = not st.session_state.dark_mode
+                st.rerun()
 
     st.write("---")
 
@@ -451,11 +353,11 @@ if is_student_mode:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown("<h1 style='color: #34d399; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-                st.markdown("<div style='background: #065f46; color: #ecfdf5; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: #f8fafc;'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown("<h1 style='color: #10b981; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+                st.markdown("<div style='background: #10b981; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
-                # أيقونات التواصل الاجتماعي في الواجهة الرئيسية
+                # أيقونات وسائل التواصل الاجتماعي
                 st.markdown("""
                     <div class="social-top-container">
                         <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
@@ -519,7 +421,7 @@ if is_student_mode:
             st.markdown('</div>', unsafe_allow_html=True)
 
         elif st.session_state.page_view == "login":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>🔐 تسجيل دخول الطالب:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب:</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
                 login_name = st.text_input("اسم الطالب المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
@@ -548,7 +450,7 @@ if is_student_mode:
                         st.error("اسم الطالب أو الرقم السري غير صحيح.")
 
         elif st.session_state.page_view == "register":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
             with st.form("student_register_form"):
                 reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
@@ -597,9 +499,9 @@ if is_student_mode:
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(f"""
-                <div style="background: #1e232d; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid #334155;">
+                <div style="background: {card_bg}; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid {card_border};">
                     <h3 style="margin: 0; color: #34d399; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: #f8fafc; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
+                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
         with col_u2:
@@ -616,7 +518,7 @@ if is_student_mode:
 
         # ==================== لوحة خدمات الطالب ====================
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; margin-bottom: 15px; color: #f8fafc; font-size: 16px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; margin-bottom: 15px; color: {text_color}; font-size: 16px;'>اختر القسم الذي تريد فتحه:</p>", unsafe_allow_html=True)
 
         if st.button("✍️ الاختبارات الإلكترونية التفاعلية", use_container_width=True):
             st.session_state.student_sub_page = "exams"
@@ -637,9 +539,9 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات مع شهادة واضحة ومقروءة تماماً
+        # 1. صفحة الاختبارات
         if sub_page == "exams":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
 
             if available_exams.empty:
@@ -894,7 +796,7 @@ if is_student_mode:
 
         # 2. صفحة الحضور
         elif sub_page == "attendance":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>📝 تسجيل حضور حصة اليوم وتقييمها:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📝 تسجيل حضور حصة اليوم وتقييمها:</h3>", unsafe_allow_html=True)
             with st.form("logged_student_att_form", clear_on_submit=True):
                 st_date = st.date_input("تاريخ الحصة:", value=date.today())
                 selected_rating = st.selectbox("⭐ قيّم الحصة مع البشمهندس (من 5 نجوم):", [
@@ -914,7 +816,7 @@ if is_student_mode:
 
         # 3. درجات الواجبات
         elif sub_page == "hw_grades":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>📊 متابعة درجات الواجبات المنزلية:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📊 متابعة درجات الواجبات المنزلية:</h3>", unsafe_allow_html=True)
             my_assessments = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("واجب", na=False))
@@ -926,7 +828,7 @@ if is_student_mode:
 
         # 4. درجات الاختبارات مع شهادة وتفاصيل صح/خطأ
         elif sub_page == "exam_grades":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>📈 متابعة درجات الاختبارات والكويزات وتفاصيل الإجابات:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📈 متابعة درجات الاختبارات والكويزات وتفاصيل الإجابات:</h3>", unsafe_allow_html=True)
             my_exams = st.session_state.assessments_df[
                 (st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip())
                 & (st.session_state.assessments_df["النوع"].astype(str).str.contains("اختبار|كويز", na=False))
@@ -951,7 +853,7 @@ if is_student_mode:
 
         # 5. الدردشة
         elif sub_page == "chat":
-            st.markdown("<h3 style='color: #f8fafc; font-size: 22px;'>💬 مركز الدردشة والدعم المباشر:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>💬 مركز الدردشة والدعم المباشر:</h3>", unsafe_allow_html=True)
             student_name_key = st_user["اسم الطالب"].strip()
             chat_history = st.session_state.messages_df[st.session_state.messages_df["اسم الطالب"].astype(str).str.strip() == student_name_key].copy()
 
@@ -984,7 +886,6 @@ if is_student_mode:
                         st.success("تم إرسال رسالتك للبشمهندس بنجاح!")
                         st.rerun()
 
-    # أزرار وأيقونات التواصل في أسفل الصفحة
     st.markdown("""
         <div class="call-btn-container">
             <a href="tel:01016361440" class="call-btn">
@@ -1845,7 +1746,7 @@ with tab4:
                 </style>
             </head>
             <body onload="window.print()">
-                <div class="header-box">
+                .div class="header-box">
                     <div style="display: flex; align-items: center; gap: 20px;">
                         {teacher_img_tag}
                         <div>
