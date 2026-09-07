@@ -659,7 +659,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي ---
+        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي مع الأيقونات الاحترافية لاختيار الدروس ---
         if sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
@@ -678,9 +678,21 @@ if is_student_mode:
                         </div>
                     """, unsafe_allow_html=True)
 
-                    video_titles = st_videos["عنوان_الفيديو"].tolist()
-                    selected_title = st.radio("اختر الدرس للمشاهدة:", video_titles, key="darssly_vid_radio")
-                    selected_row = st_videos[st_videos["عنوان_الفيديو"] == selected_title].iloc[0]
+                    if "selected_video_idx" not in st.session_state:
+                        st.session_state.selected_video_idx = 0
+
+                    # عرض الدروس كأزرار وإيقونات احترافية لتسهيل التنقل
+                    for v_i, v_row in st_videos.reset_index(drop=True).iterrows():
+                        v_title_btn = f"📖 {v_row['عنوان_الفيديو']}"
+                        is_active_btn = (st.session_state.selected_video_idx == v_i)
+                        btn_bg = "#059669" if is_active_btn else card_bg
+                        btn_fg = "#ffffff" if is_active_btn else text_color
+                        
+                        if st.button(v_title_btn, key=f"darssly_btn_v_{v_i}", use_container_width=True):
+                            st.session_state.selected_video_idx = v_i
+                            st.rerun()
+
+                    selected_row = st_videos.iloc[st.session_state.selected_video_idx] if st.session_state.selected_video_idx < len(st_videos) else st_videos.iloc[0]
 
                 with col_main_vid:
                     st.markdown(f"""
@@ -2151,7 +2163,6 @@ with tab3:
 
             reg_state = "نعم (مسجل على المنصة)" if not u_r.empty else "لا (مسجل يدويًا)"
             
-            # جلب المرحلة والمنهج بدقة من جدول المستخدمين أو السجلات
             grade_val = "-"
             curr_val = "-"
             if not u_r.empty:
@@ -2166,14 +2177,14 @@ with tab3:
             total_due = s_r["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not s_r.empty else 0.0
 
             st.markdown(f"""
-                <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:15px;">
+                <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:10px;">
                     <h4 style="color:#10b981; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
                     <p style="font-size:16px; margin:5px 0;"><b>حالة التسجيل:</b> {reg_state} | <b>المرحلة/الصف:</b> {grade_val} ({curr_val})</p>
                     <p style="font-size:16px; margin:5px 0;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#dc2626;">{total_due:,.1f} جنيه</span></p>
                 </div>
             """, unsafe_allow_html=True)
 
-            # زر طباعة ملف PDF خاص بهذا الطالب فقط تحت الرصيد المستحق
+            # زر طباعة PDF خاص بالطالب مباشرة تحت الرصيد المستحق
             st_sessions_pdf = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
             st_assessments_pdf = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
 
@@ -2207,7 +2218,7 @@ with tab3:
             </html>"""
 
             st.download_button(
-                label=f"🖨️ طباعة وتصدير ملف PDF خاص بالطالب ({selected_master_student})",
+                label=f"🖨️ طباعة وتحميل ملف PDF خاص بالطالب ({selected_master_student})",
                 data=single_student_pdf_html.encode("utf-8"),
                 file_name=f"تقرير_الطالب_{selected_master_student}.html",
                 mime="application/octet-stream",
@@ -2254,7 +2265,6 @@ with tab3:
         master_df = pd.DataFrame(master_data_list)
         st.dataframe(master_df, use_container_width=True)
 
-        # كود طباعة PDF لجميع الطلاب دفعة واحدة بجانب زر إكسل
         all_students_pdf_html = """<!DOCTYPE html>
         <html dir="rtl" lang="ar">
         <head><meta charset="utf-8"><title>تقرير السجلات الشاملة لجميع الطلاب</title></head>
