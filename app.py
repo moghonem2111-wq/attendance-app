@@ -1081,7 +1081,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
@@ -2150,8 +2150,17 @@ with tab3:
             a_r = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == selected_master_student]
 
             reg_state = "نعم (مسجل على المنصة)" if not u_r.empty else "لا (مسجل يدويًا)"
-            grade_val = u_r.iloc[0].get("المجموعة/الصف", "-") if not u_r.empty else (s_r.iloc[-1].get("المجموعة/الصف", "-") if not s_r.empty else "-")
-            curr_val = u_r.iloc[0].get("المنهج/الدولة", "-") if not u_r.empty else (s_r.iloc[-1].get("المنهج/الدولة", "-") if not s_r.empty else "-")
+            
+            # جلب المرحلة والمنهج بدقة من جدول المستخدمين أو السجلات
+            grade_val = "-"
+            curr_val = "-"
+            if not u_r.empty:
+                grade_val = str(u_r.iloc[0].get("المجموعة/الصف", "-"))
+                curr_val = str(u_r.iloc[0].get("المنهج/الدولة", "-"))
+            elif not s_r.empty:
+                grade_val = str(s_r.iloc[-1].get("المجموعة/الصف", "-"))
+                curr_val = str(s_r.iloc[-1].get("المنهج/الدولة", "-"))
+
             total_sess = len(s_r)
             attended_sess = len(s_r[s_r["الحالة"] == "حاضر"])
             total_due = s_r["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not s_r.empty else 0.0
@@ -2164,7 +2173,7 @@ with tab3:
                 </div>
             """, unsafe_allow_html=True)
 
-            # كود طباعة PDF خاص بهذا الطالب فقط تحت الرصيد المستحق
+            # زر طباعة ملف PDF خاص بهذا الطالب فقط تحت الرصيد المستحق
             st_sessions_pdf = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
             st_assessments_pdf = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
 
@@ -2198,7 +2207,7 @@ with tab3:
             </html>"""
 
             st.download_button(
-                label=f"🖨️ طباعة وتحميل ملف PDF خاص بالطالب ({selected_master_student})",
+                label=f"🖨️ طباعة وتصدير ملف PDF خاص بالطالب ({selected_master_student})",
                 data=single_student_pdf_html.encode("utf-8"),
                 file_name=f"تقرير_الطالب_{selected_master_student}.html",
                 mime="application/octet-stream",
@@ -2215,7 +2224,13 @@ with tab3:
             a_r = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name]
             
             is_registered = "نعم (مسجل على المنصة)" if not u_r.empty else "لا (مسجل يدويًا)"
-            grade_val = u_r.iloc[0].get("المجموعة/الصف", "-") if not u_r.empty else (s_r.iloc[-1].get("المجموعة/الصف", "-") if not s_r.empty else "-")
+            
+            grade_val = "-"
+            if not u_r.empty:
+                grade_val = str(u_r.iloc[0].get("المجموعة/الصف", "-"))
+            elif not s_r.empty:
+                grade_val = str(s_r.iloc[-1].get("المجموعة/الصف", "-"))
+
             total_sess = len(s_r)
             attended_sess = len(s_r[s_r["الحالة"] == "حاضر"])
             avg_price = s_r["سعر الحصة"].astype(float, errors="ignore").mean() if not s_r.empty else 0.0
@@ -2239,7 +2254,7 @@ with tab3:
         master_df = pd.DataFrame(master_data_list)
         st.dataframe(master_df, use_container_width=True)
 
-        # تجهيز كود طباعة PDF لجميع الطلاب دفعة واحدة
+        # كود طباعة PDF لجميع الطلاب دفعة واحدة بجانب زر إكسل
         all_students_pdf_html = """<!DOCTYPE html>
         <html dir="rtl" lang="ar">
         <head><meta charset="utf-8"><title>تقرير السجلات الشاملة لجميع الطلاب</title></head>
@@ -2312,9 +2327,18 @@ with tab4:
         if selected_student:
             st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
             st_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
+            
+            u_r_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student]
 
-            curr_val = st_sessions.iloc[-1].get("المنهج/الدولة", "-") if not st_sessions.empty else "-"
-            group_val = st_sessions.iloc[-1].get("المجموعة/الصف", "-") if not st_sessions.empty else "-"
+            curr_val = "-"
+            group_val = "-"
+            if not u_r_rep.empty:
+                group_val = str(u_r_rep.iloc[0].get("المجموعة/الصف", "-"))
+                curr_val = str(u_r_rep.iloc[0].get("المنهج/الدولة", "-"))
+            elif not st_sessions.empty:
+                group_val = str(st_sessions.iloc[-1].get("المجموعة/الصف", "-"))
+                curr_val = str(st_sessions.iloc[-1].get("المنهج/الدولة", "-"))
+
             level_val = st_sessions.iloc[-1].get("مستوى الطالب", "جيد") if not st_sessions.empty else "جيد"
             pay_val = st_sessions.iloc[-1].get("نظام الدفع", "مؤجل") if not st_sessions.empty else "مؤجل"
 
