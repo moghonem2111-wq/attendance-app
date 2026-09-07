@@ -229,11 +229,10 @@ def delete_student_completely(student_name_to_del):
     st.session_state.video_comments_df = st.session_state.video_comments_df[st.session_state.video_comments_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df)
 
-is_dark = st.session_state.dark_mode
-bg_color = "#0e1117" if is_dark else "#ffffff"
-text_color = "#f8fafc" if is_dark else "#0f172a"
-card_bg = "#1e232d" if is_dark else "#ffffff"
-card_border = "#334155" if is_dark else "#e2e8f0"
+bg_color = "#ffffff"
+text_color = "#0f172a"
+card_bg = "#f8fafc"
+card_border = "#cbd5e1"
 
 st.markdown(f"""
     <style>
@@ -254,7 +253,7 @@ st.markdown(f"""
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
         color: #0f172a !important;
-        background-color: {card_bg} !important;
+        background-color: #ffffff !important;
     }}
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {{
@@ -281,7 +280,7 @@ st.markdown(f"""
         border: 1px solid {card_border};
     }}
     .navbar-brand {{ display: flex; align-items: center; gap: 15px; }}
-    .navbar-title-group h3 {{ margin: 0 !important; color: #10b981 !important; font-size: 18px !important; }}
+    .navbar-title-group h3 {{ margin: 0 !important; color: #059669 !important; font-size: 18px !important; }}
     .navbar-title-group p {{ margin: 2px 0 0 0 !important; color: {text_color} !important; font-size: 12px !important; opacity: 0.8; }}
 
     .exam-builder-header {{
@@ -333,10 +332,10 @@ st.markdown(f"""
     }}
 
     .chat-bubble-student {{
-        background-color: #075985; color: #f0f9ff; padding: 14px 18px; border-radius: 14px 14px 0 14px; margin-bottom: 12px; max-width: 78%; margin-right: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #0284c7;
+        background-color: #0284c7; color: #ffffff; padding: 14px 18px; border-radius: 14px 14px 0 14px; margin-bottom: 12px; max-width: 78%; margin-right: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #0369a1;
     }}
     .chat-bubble-teacher {{
-        background-color: #065f46; color: #ecfdf5; padding: 14px 18px; border-radius: 14px 14px 14px 0; margin-bottom: 12px; max-width: 78%; margin-left: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #059669;
+        background-color: #059669; color: #ffffff; padding: 14px 18px; border-radius: 14px 14px 14px 0; margin-bottom: 12px; max-width: 78%; margin-left: auto; font-size: 16px !important; font-weight: 800 !important; border: 1px solid #047857;
     }}
 
     .darssly-box {{
@@ -350,7 +349,7 @@ st.markdown(f"""
     .course-icon-box {{
         font-size: 45px; background: #065f46; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px auto; border: 2px solid #10b981;
     }}
-    .course-title {{ color: #34d399 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }}
+    .course-title {{ color: #059669 !important; font-size: 20px !important; font-weight: 900 !important; margin-bottom: 8px !important; }}
     .course-desc {{ color: {text_color} !important; font-size: 14px !important; font-weight: 800 !important; opacity: 0.9; margin-bottom: 15px !important; }}
 
     .social-top-container {{
@@ -434,8 +433,8 @@ if is_student_mode:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown("<h1 style='color: #34d399; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-                st.markdown("<div style='background: #065f46; color: #ecfdf5; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+                st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+                st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
                 st.markdown("""
@@ -463,8 +462,8 @@ if is_student_mode:
                 if img_b64:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <div style="position: absolute; width: 240px; height: 240px; background: #065f46; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
-                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #10b981; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <div style="position: absolute; width: 240px; height: 240px; background: #059669; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
+                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -473,7 +472,7 @@ if is_student_mode:
             # كورسات درسلي
             st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
             st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #ecfdf5; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
 
             courses_grid = [
                 ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
@@ -612,7 +611,7 @@ if is_student_mode:
         with col_u1:
             st.markdown(f"""
                 <div style="background: {card_bg}; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid {card_border};">
-                    <h3 style="margin: 0; color: #34d399; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
+                    <h3 style="margin: 0; color: #059669; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
                     <p style="margin: 4px 0 10px 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
@@ -674,7 +673,7 @@ if is_student_mode:
                 with col_sidebar:
                     st.markdown(f"""
                         <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin:0 0 10px 0; color:#10b981; font-size:18px;">📚 محتوى الدروس</h4>
+                            <h4 style="margin:0 0 10px 0; color:#059669; font-size:18px;">📚 محتوى الدروس</h4>
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -685,8 +684,6 @@ if is_student_mode:
                     for v_i, v_row in st_videos.reset_index(drop=True).iterrows():
                         v_title_btn = f"📖 {v_row['عنوان_الفيديو']}"
                         is_active_btn = (st.session_state.selected_video_idx == v_i)
-                        btn_bg = "#059669" if is_active_btn else card_bg
-                        btn_fg = "#ffffff" if is_active_btn else text_color
                         
                         if st.button(v_title_btn, key=f"darssly_btn_v_{v_i}", use_container_width=True):
                             st.session_state.selected_video_idx = v_i
@@ -1093,7 +1090,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{mcq_score} / {total_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
@@ -1210,7 +1207,7 @@ if is_student_mode:
                 <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
             </div>
             <div class="rights-text">جميع الحقوق محفوظة لدي م / محمد غنيم 2026</div>
-        </div>
+         </div>
     """, unsafe_allow_html=True)
     st.stop()
 
@@ -2178,13 +2175,12 @@ with tab3:
 
             st.markdown(f"""
                 <div style="background:{card_bg}; border:2px solid #10b981; border-radius:12px; padding:20px; margin-bottom:10px;">
-                    <h4 style="color:#10b981; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
-                    <p style="font-size:16px; margin:5px 0;"><b>حالة التسجيل:</b> {reg_state} | <b>المرحلة/الصف:</b> {grade_val} ({curr_val})</p>
-                    <p style="font-size:16px; margin:5px 0;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#dc2626;">{total_due:,.1f} جنيه</span></p>
+                    <h4 style="color:#059669; margin-top:0;">👤 ملف الطالب: {selected_master_student}</h4>
+                    <p style="font-size:16px; margin:5px 0; color:#0f172a;"><b>حالة التسجيل:</b> {reg_state} | <b>المرحلة/الصف:</b> {grade_val} ({curr_val})</p>
+                    <p style="font-size:16px; margin:5px 0; color:#0f172a;"><b>إجمالي الحصص:</b> {total_sess} (حاضر: {attended_sess}) | <b>إجمالي المبلغ المستحق:</b> <span style="color:#dc2626;">{total_due:,.1f} جنيه</span></p>
                 </div>
             """, unsafe_allow_html=True)
 
-            # زر طباعة PDF خاص بالطالب مباشرة تحت الرصيد المستحق
             st_sessions_pdf = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
             st_assessments_pdf = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == selected_master_student].copy()
 
@@ -2218,7 +2214,7 @@ with tab3:
             </html>"""
 
             st.download_button(
-                label=f"🖨️ طباعة وتحميل ملف PDF خاص بالطالب ({selected_master_student})",
+                label=f"🖨️ طباعة وتصدير ملف PDF خاص بالطالب ({selected_master_student})",
                 data=single_student_pdf_html.encode("utf-8"),
                 file_name=f"تقرير_الطالب_{selected_master_student}.html",
                 mime="application/octet-stream",
