@@ -179,7 +179,6 @@ def delete_student_completely(student_name_to_del):
     st.session_state.essays_df = st.session_state.essays_df[st.session_state.essays_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df)
 
-# تطبيق ثيم الوضع الداكن أو الفاتح ديناميكياً
 is_dark = st.session_state.dark_mode
 bg_color = "#0e1117" if is_dark else "#ffffff"
 text_color = "#f8fafc" if is_dark else "#0f172a"
@@ -280,7 +279,7 @@ st.markdown(f"""
     .whatsapp-bg {{ background-color: #25D366; }}
     .telegram-bg {{ background-color: #229ED9; }}
     .tiktok-bg   {{ background-color: #000000; border: 1px solid #444; }}
-    .youtube-bg  { background-color: #FF0000; }
+    .youtube-bg  {{ background-color: #FF0000; }}
 
     .call-btn-container {{ display: flex; justify-content: center; margin-top: 25px; margin-bottom: 15px; width: 100%; }}
     .call-btn {{
@@ -338,7 +337,6 @@ if is_student_mode:
                 st.session_state.page_view = "register"
                 st.rerun()
         with c_btn3:
-            # زر تبديل الوضع (فاتح / داكن)
             mode_label = "☀️ فاتح" if st.session_state.dark_mode else "🌙 داكن"
             if st.button(mode_label):
                 st.session_state.dark_mode = not st.session_state.dark_mode
@@ -353,11 +351,10 @@ if is_student_mode:
         if st.session_state.page_view == "home":
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown("<h1 style='color: #10b981; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-                st.markdown("<div style='background: #10b981; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
+                st.markdown("<h1 style='color: #34d399; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
+                st.markdown("<div style='background: #065f46; color: #ecfdf5; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
-                # أيقونات وسائل التواصل الاجتماعي
                 st.markdown("""
                     <div class="social-top-container">
                         <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
@@ -539,7 +536,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # 1. صفحة الاختبارات
+        # 1. صفحة الاختبارات مع شهادة واضحة ومقروءة تماماً
         if sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية المتاحة:</h3>", unsafe_allow_html=True)
             available_exams = st.session_state.exams_df.copy()
@@ -1746,7 +1743,7 @@ with tab4:
                 </style>
             </head>
             <body onload="window.print()">
-                .div class="header-box">
+                <div class="header-box">
                     <div style="display: flex; align-items: center; gap: 20px;">
                         {teacher_img_tag}
                         <div>
