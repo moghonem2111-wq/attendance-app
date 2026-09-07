@@ -365,7 +365,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب
+# 1. واجهة الطالب (تظهر فقط إذا كان الرابط يحتوي على ?role=student)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -641,7 +641,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- بنك الأسئلة للطالب (مع الدفع عبر InstaPay وتأكيد المعلم) ---
+        # --- بنك الأسئلة للطالب ---
         if sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
@@ -983,7 +983,7 @@ if is_student_mode:
                                                     <div style="width:130px; height:130px; border-radius:50%; border:10px solid #ffffff; display:flex; align-items:center; justify-content:center; margin:25px auto; font-size:30px; font-weight:900; color:#ffffff;">
                                                         {pct:.0f}%
                                                     </div>
-                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة الموضوعية المحصلة: <b>{mcq_score} / {total_max}</b></p>
+                                                    <p style="font-size:19px; font-weight:900; color:#ffffff;">الدرجة المحصلة: <b>{solved_score} / {solved_max}</b></p>
                                                     <p style="margin-top:10px; font-size:15px; color:#fef2f2;">(تم إرسال إجاباتك المقالية لمعلم المادة لتصحيحها وإضافة درجتها)</p>
                                                     <p style="margin-top:15px; font-size:16px; color:#f1f5f9;">مع تحيات معلم المادة: <b>م / محمد غنيم</b></p>
                                                 </div>
