@@ -651,13 +651,11 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي (مصححة لتعرض الفيديو بدقة تامة) ---
+        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي ---
         if sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
             v_df = st.session_state.videos_df
-            
-            # فلترة مرنة تتأكد من مطابقة الصف بغض النظر عن المسافات الزائدة
             st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
 
             if st_videos.empty:
@@ -686,19 +684,19 @@ if is_student_mode:
                     v_link = str(selected_row.get("رابط_الفيديو", "")).strip()
                     v_bytes = selected_row.get("فيديو_base64", "")
 
-                    if pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
+                    if v_link and v_link != "nan" and v_link != "":
+                        if "youtube.com" in v_link or "youtu.be" in v_link:
+                            st.video(v_link)
+                        else:
+                            st.video(v_link)
+                    elif pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
                         try:
                             vid_bytes_dec = base64.b64decode(v_bytes)
                             st.video(vid_bytes_dec)
                         except Exception:
-                            st.error("حدث خطأ في فك تشفير وعرض ملف الفيديو المرفوع.")
-                    elif v_link and v_link != "nan" and v_link != "":
-                        if "youtube.com" in v_link or "youtu.be" in v_link:
-                            st.video(v_link)
-                        else:
-                            st.link_button("🔗 مشاهدة الفيديو عبر الرابط الخارجي", v_link)
+                            st.error("⚠️ الأفضل استخدام روابط مباشرة أو يوتيوب للفيديوهات لتشغيلها بسلاسة تامة.")
                     else:
-                        st.info("لا يوجد فيديو متاح أو مرفوع لهذا الدرس حالياً.")
+                        st.info("لا يوجد فيديو متاح لهذا الدرس.")
 
                     st.write("---")
                     st.markdown("<h4 style='font-size:18px;'>❓ الأسئلة والتعليقات (0)</h4>", unsafe_allow_html=True)
@@ -1540,15 +1538,15 @@ with tab_question_bank:
                     st.warning("تم حذف السؤال.")
                     st.rerun()
 
-# --- لوحة إدارة الرفع المباشر للفيديوهات للمعلم مع شريط التقدم والنسبة المئوية ---
+# --- لوحة إدارة الفيديوهات للمعلم ---
 with tab_videos_teacher:
-    st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب (حتى 1 جيجابايت مع شريط تقدم):")
+    st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب:")
     with st.form("upload_video_form", clear_on_submit=True):
         vid_title = st.text_input("عنوان الفيديو / الدرس:")
         vid_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="vid_c")
         vid_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[vid_curr], key="vid_g")
         
-        vid_upload_file = st.file_uploader("رفع ملف الفيديو من الجهاز (بحد أقصى 1 جيجابايت):", type=["mp4", "mov", "avi", "mkv", "webm"])
+        vid_upload_file = st.file_uploader("رفع ملف الفيديو (MP4 أو ما شابه):", type=["mp4", "mov", "avi", "mkv", "webm"])
         vid_link_input = st.text_input("أو ضع رابط فيديو (يوتيوب أو رابط مباشر):", placeholder="https://www.youtube.com/watch?v=...")
 
         if st.form_submit_button("💾 حفظ ونشر الفيديو للطالب"):
@@ -1558,23 +1556,7 @@ with tab_videos_teacher:
                 v_bytes_str = ""
                 if vid_upload_file is not None:
                     file_bytes = vid_upload_file.read()
-                    total_size = len(file_bytes)
-                    
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    chunk_size = max(1, total_size // 100)
-                    processed = 0
-                    
-                    for i in range(0, total_size, chunk_size):
-                        processed = min(total_size, processed + chunk_size)
-                        pct = int((processed / total_size) * 100)
-                        progress_bar.progress(pct)
-                        status_text.text(f"⏳ جاري معالجة ورفع الفيديو... {pct}% مكتمل")
-                    
                     v_bytes_str = base64.b64encode(file_bytes).decode()
-                    progress_bar.progress(100)
-                    status_text.text("✓ تم رفع ومعالجة الفيديو بنجاح 100%!")
 
                 new_vid = {
                     "معرف_الفيديو": f"VID_{datetime.now().strftime('%Y%m%d%H%M%S')}",
