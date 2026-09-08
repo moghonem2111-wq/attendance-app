@@ -101,7 +101,7 @@ def base64_to_pil(b64_str):
 img_b64 = get_image_base64(found_img_path)
 
 COL_SESSIONS = ["التاريخ", "اسم الطالب", "المنهج/الدولة", "المجموعة/الصف", "الحالة", "سعر الحصة", "عدد الحصص الكلي", "نظام الدفع", "مستوى الطالب", "ملاحظات"]
-COL_USERS = ["اسم الطالب", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "تاريخ التسجيل", "الحالة_حظر", "حالة_الاشتراك_البنك"]
+COL_USERS = ["اسم الطالب", "رقم الهاتف", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "تاريخ التسجيل", "الحالة_حظر", "حالة_الاشتراك_البنك"]
 COL_ASSESSMENTS = ["التاريخ", "اسم الطالب", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]
 COL_MESSAGES = ["التاريخ_والوقت", "اسم الطالب", "المرسل", "نص الرسالة", "الصورة_base64"]
 COL_EXAMS = ["معرف_الامتحان", "عنوان الامتحان", "وصف الامتحان", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "المادة", "الفصل الدراسي", "مدة الامتحان بالدقائق", "الأسئلة_JSON", "تاريخ الإنشاء"]
@@ -147,7 +147,11 @@ def load_all_data():
             pass
 
     for col in COL_USERS:
-        if col not in users_df.columns: users_df[col] = "نشط" if col == "الحالة_حظر" else ("غير مشترك" if col == "حالة_الاشتراك_البنك" else "")
+        if col not in users_df.columns:
+            if col == "رقم الهاتف": users_df[col] = ""
+            elif col == "الحالة_حظر": users_df[col] = "نشط"
+            elif col == "حالة_الاشتراك_البنك": users_df[col] = "غير مشترك"
+            else: users_df[col] = ""
     for col in COL_SESSIONS:
         if col not in sessions_df.columns: sessions_df[col] = ""
     for col in COL_ASSESSMENTS:
@@ -221,9 +225,9 @@ is_student_mode = query_params.get("role") == "student"
 if "logged_student" not in st.session_state:
     st.session_state.logged_student = None
 
-saved_student_name = query_params.get("st_name")
-if not st.session_state.logged_student and saved_student_name:
-    matched_st = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(saved_student_name).strip()]
+saved_student_phone = query_params.get("st_phone")
+if not st.session_state.logged_student and saved_student_phone:
+    matched_st = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(saved_student_phone).strip()]
     if not matched_st.empty:
         st.session_state.logged_student = matched_st.iloc[0].to_dict()
 
@@ -410,7 +414,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب الشاملة
+# 1. واجهة الطالب (تسجيل الدخول برقم الهاتف والرقم السري، أو التسجيل كضيف)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -464,14 +468,17 @@ if is_student_mode:
 
     st.write("---")
 
+    # صفحة التسجيل كضيف
     if st.session_state.page_view == "guest_reg":
-        st.markdown(f"<h3 style='color: {text_color}; font-size: 24px;'>👥 تسجيل الدخول كـ (ضيف جديد):</h3>", unsafe_allow_html=True)
-        st.markdown(f"<p style='color: {text_color}; font-size: 16px;'>أدخل بياناتك أدناه لتظهر في سجلات المعلم وتستعرض المنصة:</p>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color: {text_color}; font-size: 24px;'>👥 تسجيل بياناتك كـ (ضيف جديد):</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color: {text_color}; font-size: 16px;'>أدخل اسمك، رقم هاتفك، ومنهجك لتظهر في سجلات المعلم فوراً:</p>", unsafe_allow_html=True)
         
         with st.form("guest_registration_form"):
             g_name = st.text_input("اسم الطالب بالكامل:*", placeholder="مثال: كريم أحمد محمود")
+            g_phone = st.text_input("رقم الهاتف المحمول:*", placeholder="010XXXXXXXX")
             g_curr = st.selectbox("المنهج الدراسي / الدولة:*", list(CURRICULUM_DATA.keys()))
             g_grade = st.selectbox("المرحلة / الصف الدراسي:*", CURRICULUM_DATA[g_curr])
+            g_pass = st.text_input("اختر رقماً سرياً خاصاً بك:*", type="password", value="1234")
             
             c_g1, c_g2 = st.columns(2)
             with c_g1:
@@ -482,27 +489,30 @@ if is_student_mode:
                     st.rerun()
 
             if submit_guest:
-                if not g_name.strip():
-                    st.error("يرجى كتابة اسم الطالب بالكامل.")
+                if not g_name.strip() or not g_phone.strip():
+                    st.error("يرجى كتابة الاسم ورقم الهاتف على الأقل.")
                 else:
                     new_guest_user = {
                         "اسم الطالب": g_name.strip(),
-                        "كلمة المرور": "1234",
+                        "رقم الهاتف": g_phone.strip(),
+                        "كلمة المرور": g_pass.strip(),
                         "المنهج/الدولة": g_curr,
                         "المجموعة/الصف": g_grade,
                         "تاريخ التسجيل": str(date.today()),
                         "الحالة_حظر": "نشط",
                         "حالة_الاشتراك_البنك": "غير مشترك"
                     }
-                    existing = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == g_name.strip()]
+                    existing = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == g_phone.strip()]
                     if existing.empty:
                         st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_guest_user])], ignore_index=True)
+                    else:
+                        st.session_state.users_df.loc[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == g_phone.strip(), ["اسم الطالب", "المنهج/الدولة", "المجموعة/الصف"]] = [g_name.strip(), g_curr, g_grade]
                     
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df)
                     
                     st.session_state.logged_student = new_guest_user
                     st.query_params["role"] = "student"
-                    st.query_params["st_name"] = g_name.strip()
+                    st.query_params["st_phone"] = g_phone.strip()
                     st.success(f"أهلاً بك يا {g_name.strip()}! تم تسجيل بياناتك بنجاح في سجلات المعلم.")
                     st.rerun()
 
@@ -602,10 +612,11 @@ if is_student_mode:
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df)
                         st.success("✓ تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً لتأكيد الموعد.")
 
+        # --- تسجيل الدخول برقم الهاتف ---
         elif st.session_state.page_view == "login":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب (برقم الهاتف):</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
-                login_name = st.text_input("اسم الطالب المسجل:")
+                login_phone = st.text_input("رقم الهاتف المحمول المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
                 c_l1, c_l2 = st.columns(2)
                 with c_l1:
@@ -617,7 +628,7 @@ if is_student_mode:
 
                 if submit_login:
                     users_match = st.session_state.users_df[
-                        (st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == login_name.strip())
+                        (st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == login_phone.strip())
                         & (st.session_state.users_df["كلمة المرور"].astype(str).str.strip() == login_pass.strip())
                     ]
                     if not users_match.empty:
@@ -627,16 +638,17 @@ if is_student_mode:
                         else:
                             st.session_state.logged_student = user_info
                             st.query_params["role"] = "student"
-                            st.query_params["st_name"] = user_info["اسم الطالب"]
-                            st.success(f"مرحباً بك مجدداً يا {login_name}!")
+                            st.query_params["st_phone"] = user_info["رقم الهاتف"]
+                            st.success(f"مرحباً بك مجدداً يا {user_info['اسم الطالب']}!")
                             st.rerun()
                     else:
-                        st.error("اسم الطالب أو الرقم السري غير صحيح.")
+                        st.error("رقم الهاتف أو الرقم السري غير صحيح. تأكد من إدخال البيانات الصحيحة أو أنشئ حساباً جديداً.")
 
         elif st.session_state.page_view == "register":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
             with st.form("student_register_form"):
                 reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
+                reg_phone = st.text_input("رقم الهاتف المحمول (لتسجيل الدخول به لاحقاً):*", placeholder="010XXXXXXXX")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
                 reg_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[reg_curr])
                 reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك:", type="password")
@@ -649,23 +661,28 @@ if is_student_mode:
                         st.rerun()
 
                 if submit_reg:
-                    if not reg_name.strip() or not reg_pass.strip():
-                        st.error("يرجى كتابة اسمك والرقم السري.")
+                    if not reg_name.strip() or not reg_phone.strip() or not reg_pass.strip():
+                        st.error("يرجى ملء جميع الحقول المطلوبة (الاسم، رقم الهاتف، والرقم السري).")
                     else:
-                        existing = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == reg_name.strip()]
+                        existing = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == reg_phone.strip()]
                         if not existing.empty:
-                            st.warning("هذا الاسم مسجل بالفعل! يرجى تسجيل الدخول مباشرة.")
+                            st.warning("رقم الهاتف هذا مسجل بالفعل! يرجى تسجيل الدخول مباشرة برقم هاتفك.")
                         else:
                             new_user = {
-                                "اسم الطالب": reg_name.strip(), "كلمة المرور": reg_pass.strip(),
-                                "المنهج/الدولة": reg_curr, "المجموعة/الصف": reg_grade,
-                                "تاريخ التسجيل": str(date.today()), "الحالة_حظر": "نشط", "حالة_الاشتراك_البنك": "غير مشترك"
+                                "اسم الطالب": reg_name.strip(),
+                                "رقم الهاتف": reg_phone.strip(),
+                                "كلمة المرور": reg_pass.strip(),
+                                "المنهج/الدولة": reg_curr,
+                                "المجموعة/الصف": reg_grade,
+                                "تاريخ التسجيل": str(date.today()),
+                                "الحالة_حظر": "نشط",
+                                "حالة_الاشتراك_البنك": "غير مشترك"
                             }
                             st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([new_user])], ignore_index=True)
                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df)
                             st.session_state.logged_student = new_user
                             st.query_params["role"] = "student"
-                            st.query_params["st_name"] = new_user["اسم الطالب"]
+                            st.query_params["st_phone"] = new_user["رقم الهاتف"]
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
 
@@ -676,7 +693,7 @@ if is_student_mode:
 
     else:
         st_user = st.session_state.logged_student
-        fresh_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()]
+        fresh_user = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(st_user.get("رقم الهاتف", "")).strip()]
         if not fresh_user.empty and fresh_user.iloc[0].get("الحالة_حظر") == "محظور":
             st.error("🚫 عذراً، تم حظر حسابك.")
             st.session_state.logged_student = None
@@ -689,7 +706,7 @@ if is_student_mode:
             st.markdown(f"""
                 <div style="background: {card_bg}; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid {card_border};">
                     <h3 style="margin: 0; color: #059669; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')}</p>
+                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')} | الهاتف: {st_user.get('رقم الهاتف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
         with col_u2:
@@ -874,7 +891,7 @@ if is_student_mode:
         elif sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
-            curr_user_row = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == st_user["اسم الطالب"].strip()]
+            curr_user_row = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(st_user.get("رقم الهاتف", "")).strip()]
             sub_status = curr_user_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not curr_user_row.empty else "غير مشترك"
 
             if sub_status != "مشترك":
@@ -1525,9 +1542,11 @@ if t_page == "dashboard":
 
 elif t_page == "exam_maker":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.markdown("<div class='exam-builder-header'>➕ صانع الامتحانات التفاعلية (مع محرر وقص الصور وميزة الطباعة PDF)</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / محرر وقص الصور وميزة الطباعة PDF</div>", unsafe_allow_html=True)
 
-    if "temp_questions" not in st.session_state: st.session_state.temp_questions = []
+    if "temp_questions" not in st.session_state:
+        st.session_state.temp_questions = []
+
     if "q_img_ver" not in st.session_state: st.session_state.q_img_ver = 0
     if "opt1_ver" not in st.session_state: st.session_state.opt1_ver = 0
     if "opt2_ver" not in st.session_state: st.session_state.opt2_ver = 0
@@ -1901,6 +1920,27 @@ elif t_page == "videos":
                 st.success("✓ تم حذف الفيديو بنجاح!")
                 st.rerun()
 
+    # --- قسم متابعة تعليقات وأسئلة الطلاب على الفيديوهات ---
+    st.write("---")
+    st.markdown("### 💬 متابعة تعليقات وأسئلة الطلاب على الفيديوهات:")
+    vc_state = st.session_state.video_comments_df
+    if vc_state.empty:
+        st.info("لا توجد تعليقات أو أسئلة من الطلاب على الفيديوهات حتى الآن.")
+    else:
+        for c_idx, c_row in vc_state.iterrows():
+            st.markdown(f"""
+                <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:10px; padding:15px; margin-bottom:12px;">
+                    <p style="margin:0; color:#10b981; font-size:16px;"><b>درس: {c_row['عنوان_الفيديو']}</b></p>
+                    <p style="margin:4px 0; color:#0284c7; font-size:14px;">الطالب: <b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
+                    <p style="margin:8px 0 0 0; font-size:16px;">{c_row['نص_التعليق']}</p>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"🗑️ حذف هذا التعليق", key=f"del_vcomm_{c_idx}"):
+                st.session_state.video_comments_df = vc_state.drop(c_idx).reset_index(drop=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df)
+                st.success("تم حذف التعليق.")
+                st.rerun()
+
 elif t_page == "abqary":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
     st.subheader("💡 إدارة امتحانات ونتائج موقع عبقري:")
@@ -2202,6 +2242,7 @@ elif t_page == "students":
             st_grade = u_row.iloc[0].get("المجموعة/الصف", "-") if not u_row.empty else (s_row.iloc[-1].get("المجموعة/الصف", "-") if not s_row.empty else "-")
             st_date = u_row.iloc[0].get("تاريخ التسجيل", "-") if not u_row.empty else "-"
             st_pass = u_row.iloc[0].get("كلمة المرور", "-") if not u_row.empty else "-"
+            st_phone = u_row.iloc[0].get("رقم الهاتف", "-") if not u_row.empty else "-"
             is_banned = u_row.iloc[0].get("الحالة_حظر") == "محظور" if not u_row.empty else False
             bank_sub_state = u_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not u_row.empty else "غير مشترك"
 
@@ -2220,7 +2261,7 @@ elif t_page == "students":
                     st.markdown(f"""
                         <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
                         <p style="margin: 3px 0; font-size: 14px; font-weight: 900;">{st_curr} — {st_grade}</p>
-                        <p style="margin: 0; font-size: 13px; color: #64748b;">تاريخ التسجيل: {st_date} | كلمة المرور: <b>{st_pass}</b></p>
+                        <p style="margin: 0; font-size: 13px; color: #64748b;">الهاتف: {st_phone} | كلمة المرور: <b>{st_pass}</b></p>
                         <p style="margin: 2px 0 0 0; font-size: 13px; color: #0284c7;"><b>{bank_badge}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c2:
