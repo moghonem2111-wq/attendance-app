@@ -236,10 +236,17 @@ def delete_student_completely(student_name_to_del):
     st.session_state.video_comments_df = st.session_state.video_comments_df[st.session_state.video_comments_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df)
 
-bg_color = "#ffffff"
-text_color = "#0f172a"
-card_bg = "#f8fafc"
-card_border = "#cbd5e1"
+# تحديد الألوان بناءً على حالة الوضع الداكن أو الفاتح
+if st.session_state.dark_mode:
+    bg_color = "#0f172a"
+    text_color = "#f8fafc"
+    card_bg = "#1e293b"
+    card_border = "#334155"
+else:
+    bg_color = "#ffffff"
+    text_color = "#0f172a"
+    card_bg = "#f8fafc"
+    card_border = "#cbd5e1"
 
 st.markdown(f"""
     <style>
@@ -259,23 +266,23 @@ st.markdown(f"""
     input, textarea, select, div[data-baseweb="select"] > div {{
         font-family: 'Cairo', sans-serif !important;
         font-weight: 800 !important;
-        color: #0f172a !important;
-        background-color: #ffffff !important;
+        color: {text_color} !important;
+        background-color: {card_bg} !important;
     }}
 
     div[data-baseweb="popover"], div[role="dialog"], div[aria-label*="Choose a date"], div[aria-label*="Calendar"], div[data-baseweb="calendar"] {{
-        background-color: #ffffff !important;
-        color: #0f172a !important;
+        background-color: {card_bg} !important;
+        color: {text_color} !important;
         border-radius: 12px !important;
         box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
     }}
     div[data-baseweb="calendar"] *, div[data-baseweb="popover"] * {{
-        color: #0f172a !important;
+        color: {text_color} !important;
         background-color: transparent !important;
     }}
     div[data-baseweb="calendar"] button {{
-        color: #0f172a !important;
-        background-color: #f1f5f9 !important;
+        color: {text_color} !important;
+        background-color: {card_bg} !important;
         border-radius: 6px !important;
         font-weight: 900 !important;
     }}
@@ -285,11 +292,11 @@ st.markdown(f"""
     }}
 
     div[data-baseweb="popover"], div[role="listbox"] div {{
-        background-color: #ffffff !important;
-        color: #0f172a !important;
+        background-color: {card_bg} !important;
+        color: {text_color} !important;
     }}
     div[role="option"] span, div[role="option"] div {{
-        color: #0f172a !important;
+        color: {text_color} !important;
     }}
 
     body, h1, h2, h3, h4, h5, h6, .stMarkdown, .stSelectbox, .stTextInput, .stTextArea {{
