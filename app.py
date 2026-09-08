@@ -404,7 +404,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب الشاملة
+# 1. واجهة الطالب الشاملة (مع أيقونات الفيديوهات الخضراء والتعليقات وزوم والتايمر)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -511,19 +511,8 @@ if is_student_mode:
             with col_hero_txt:
                 st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
                 st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.</p>", unsafe_allow_html=True)
                 
-                st.markdown("""
-                    <div class="social-top-container">
-                        <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-                        <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
-                        <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-top telegram-bg"><svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
-                        <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-top tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
-                        <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                st.write("")
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
                     if st.button("🔐 تسجيل الدخول الآن"):
@@ -538,70 +527,10 @@ if is_student_mode:
                 if img_b64:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <div style="position: absolute; width: 240px; height: 240px; background: #059669; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
-                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
 
-            st.write("---")
-
-            # كورسات درسلي
-            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
-
-            courses_grid = [
-                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans"),
-                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans"),
-                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans")
-            ]
-
-            c_cols = st.columns(2)
-            for idx, (icon, title, desc, link) in enumerate(courses_grid):
-                col_target = c_cols[idx % 2]
-                with col_target:
-                    st.markdown(f"""
-                        <div class="course-card">
-                            <div>
-                                <div class="course-icon-box">{icon}</div>
-                                <div class="course-title">{title}</div>
-                                <div class="course-desc">{desc}</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
-                    st.write("")
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            # --- قسم حجز الدروس أونلاين ---
-            st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
-            with st.form("online_booking_form", clear_on_submit=True):
-                book_name = st.text_input("اسم الطالب بالكامل:")
-                book_curr = st.selectbox("اختر المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="book_c")
-                book_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[book_curr], key="book_g")
-                book_phone = st.text_input("رقم هاتف الطالب:")
-                book_parent_phone = st.text_input("رقم تليفون ولي الأمر:")
-                
-                if st.form_submit_button("🚀 إرسال طلب حجز الدرس أونلاين"):
-                    if not book_name.strip() or not book_phone.strip():
-                        st.error("يرجى كتابة اسم الطالب ورقم الهاتف على الأقل.")
-                    else:
-                        new_booking = {
-                            "تاريخ_الحجز": str(date.today()),
-                            "اسم الطالب": book_name.strip(),
-                            "المنهج_الدولة": book_curr,
-                            "المرحلة_الصف": book_grade,
-                            "رقم_الهاتف": book_phone.strip(),
-                            "رقم_ولي_الأمر": book_parent_phone.strip(),
-                            "الحالة": "قيد المتابعة"
-                        }
-                        st.session_state.bookings_df = pd.concat([st.session_state.bookings_df, pd.DataFrame([new_booking])], ignore_index=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                        st.success("✓ تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً لتأكيد الموعد.")
-
-        # --- تسجيل الدخول برقم الهاتف ---
         elif st.session_state.page_view == "login":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب (برقم الهاتف):</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
@@ -636,8 +565,8 @@ if is_student_mode:
         elif st.session_state.page_view == "register":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
             with st.form("student_register_form"):
-                reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
-                reg_phone = st.text_input("رقم الهاتف المحمول (لتسجيل الدخول به لاحقاً):*", placeholder="010XXXXXXXX")
+                reg_name = st.text_input("اسمك بالكامل:")
+                reg_phone = st.text_input("رقم الهاتف المحمول (لتسجيل الدخول به):*")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
                 reg_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[reg_curr])
                 reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك:", type="password")
@@ -674,28 +603,14 @@ if is_student_mode:
                             st.query_params["st_phone"] = new_user["رقم الهاتف"]
                             st.success(f"تم إنشاء حسابك بنجاح يا {reg_name}!")
                             st.rerun()
-
-        st.markdown("<div class='vertical-section-header'>🎥 حصص سريعة وملخصات هامة في أقل من دقيقة</div>", unsafe_allow_html=True)
-        col_vid1, col_vid2, col_vid3 = st.columns([1, 2, 1])
-        with col_vid2:
-            st.video("https://www.youtube.com/watch?v=6PleAxZCNZM")
-
     else:
         st_user = st.session_state.logged_student
-        fresh_user = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(st_user.get("رقم الهاتف", "")).strip()]
-        if not fresh_user.empty and fresh_user.iloc[0].get("الحالة_حظر") == "محظور":
-            st.error("🚫 عذراً، تم حظر حسابك.")
-            st.session_state.logged_student = None
-            st.query_params.clear()
-            st.query_params["role"] = "student"
-            st.rerun()
-
         col_u1, col_u2 = st.columns([4, 1])
         with col_u1:
             st.markdown(f"""
                 <div style="background: {card_bg}; padding: 14px 20px; border-radius: 12px; border-right: 5px solid #10b981; margin-bottom: 20px; border: 1px solid {card_border};">
                     <h3 style="margin: 0; color: #059669; font-size: 20px;">أهلاً بك: {st_user['اسم الطالب']} 🌟</h3>
-                    <p style="margin: 4px 0 10px 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')} | الهاتف: {st_user.get('رقم الهاتف', '')}</p>
+                    <p style="margin: 4px 0 0 0; font-weight: 900; color: {text_color}; font-size: 16px;">{st_user.get('المنهج/الدولة', '')} | {st_user.get('المجموعة/الصف', '')} | الهاتف: {st_user.get('رقم الهاتف', '')}</p>
                 </div>
             """, unsafe_allow_html=True)
         with col_u2:
@@ -714,7 +629,7 @@ if is_student_mode:
         st_sched = os_df[os_df["اسم الطالب"].astype(str).str.strip().str.lower() == student_name_str.lower()]
 
         if st_sched.empty:
-            st.info("لا توجد حصص أونلاين مسجلة في الجدول المخصص لك حالياً. سيقوم المعلم بإضافتها قريباً.")
+            st.info("لا توجد حصص أونلاين مسجلة في الجدول المخصص لك حالياً.")
         else:
             for _, s_row in st_sched.iterrows():
                 academy_name = s_row.get("اسم الأكاديمية", "أكاديمية البشمهندس")
@@ -772,7 +687,7 @@ if is_student_mode:
         if st.button("🎥 الفيديوهات والشروحات التعليمية", use_container_width=True):
             st.session_state.student_sub_page = "videos"
             st.rerun()
-        if st.button("📚 بنك الأسئلة الشامل (مغلق للاشتراك)", use_container_width=True):
+        if st.button("📚 بنك الأسئلة الشامل", use_container_width=True):
             st.session_state.student_sub_page = "bank"
             st.rerun()
         if st.button("🧠 اختبارات ونتائج موقع عبقري 💡", use_container_width=True):
@@ -784,10 +699,10 @@ if is_student_mode:
         if st.button("📝 تسجيل حضور حصة اليوم", use_container_width=True):
             st.session_state.student_sub_page = "attendance"
             st.rerun()
-        if st.button("📊 متابعة درجات الواجبات المنزلية", use_container_width=True):
+        if st.button("📊 متابعة درجات الواجبات", use_container_width=True):
             st.session_state.student_sub_page = "hw_grades"
             st.rerun()
-        if st.button("📈 متابعة درجات الاختبارات والكويزات", use_container_width=True):
+        if st.button("📈 متابعة درجات الاختبارات", use_container_width=True):
             st.session_state.student_sub_page = "exam_grades"
             st.rerun()
         if st.button("💬 مركز الدردشة والدعم المباشر", use_container_width=True):
@@ -798,10 +713,9 @@ if is_student_mode:
         st.write("---")
 
         if sub_page == "abqary":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
             abq_df = st.session_state.abqary_df
-            
             st_abq = abq_df[abq_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
             if st_abq.empty: st_abq = abq_df.copy()
 
@@ -817,7 +731,6 @@ if is_student_mode:
                     st.markdown(f"""
                         <div style="background:{card_bg}; border:2px solid #059669; border-radius:14px; padding:20px; margin-bottom:20px;">
                             <h4 style="color:#059669; margin-top:0;">💡 اختبار عبقري: {ab_title}</h4>
-                            <p style="font-size:16px;">اضغط على الزر أدناه للانتقال إلى موقع عبقري وإجراء الاختبار:</p>
                         </div>
                     """, unsafe_allow_html=True)
                     if ab_link and ab_link != "nan":
@@ -836,8 +749,9 @@ if is_student_mode:
                                 st.error("❌ الرقم السري غير صحيح.")
                     st.write("---")
 
+        # --- قسم الفيديوهات المعدل بالأيقونات الخضراء تماماً كما أردت ---
         elif sub_page == "videos":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 الفيديوهات والشروحات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
             v_df = st.session_state.videos_df
             st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
@@ -845,10 +759,71 @@ if is_student_mode:
             if st_videos.empty:
                 st.info(f"لا توجد فيديوهات مرفوعة لمرحلتك الدراسية ({student_grade}) حالياً.")
             else:
-                for _, v_row in st_videos.iterrows():
-                    st.markdown(f"**{v_row['عنوان_الفيديو']}**")
-                    v_link = str(v_row.get("رابط_الفيديو", ""))
-                    if v_link: st.video(v_link)
+                if "selected_video_idx" not in st.session_state:
+                    st.session_state.selected_video_idx = 0
+
+                st.markdown("<p style='font-size:16px; margin-bottom:12px;'>اختر الدرس من الأيقونات الخضراء أدناه لعرض الشرح والتعليقات:</p>", unsafe_allow_html=True)
+                
+                v_cols = st.columns(min(len(st_videos), 3))
+                for v_i, v_row in st_videos.reset_index(drop=True).iterrows():
+                    target_col = v_cols[v_i % len(v_cols)]
+                    with target_col:
+                        if st.button(f"🟢 {v_row['عنوان_الفيديو']}", key=f"green_v_btn_{v_i}", use_container_width=True):
+                            st.session_state.selected_video_idx = v_i
+                            st.rerun()
+
+                st.write("---")
+                selected_row = st_videos.iloc[st.session_state.selected_video_idx] if st.session_state.selected_video_idx < len(st_videos) else st_videos.iloc[0]
+
+                st.markdown(f"""
+                    <div style="background:linear-gradient(135deg, #059669, #10b981); color:#ffffff; padding:15px 20px; border-radius:10px; margin-bottom:15px;">
+                        <h3 style="margin:0; color:#ffffff; font-size:20px;">📺 {selected_row['عنوان_الفيديو']}</h3>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                v_link = str(selected_row.get("رابط_الفيديو", "")).strip()
+                v_bytes = selected_row.get("فيديو_base64", "")
+
+                if v_link and v_link != "nan" and v_link != "":
+                    st.video(v_link)
+                elif pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
+                    try:
+                        vid_bytes_dec = base64.b64decode(v_bytes)
+                        st.video(vid_bytes_dec)
+                    except Exception:
+                        st.error("⚠️ يتعذر تشغيل ملف الفيديو.")
+                else:
+                    st.info("لا يوجد فيديو متاح لهذا الدرس.")
+
+                st.write("---")
+                current_vid_title = selected_row['عنوان_الفيديو']
+                vc_df = st.session_state.video_comments_df
+                vid_comments = vc_df[vc_df["عنوان_الفيديو"].astype(str).str.strip() == current_vid_title.strip()]
+
+                st.markdown(f"<h4 style='font-size:18px;'>❓ التعليقات والآراء ({len(vid_comments)})</h4>", unsafe_allow_html=True)
+                if not vid_comments.empty:
+                    for _, c_row in vid_comments.iterrows():
+                        st.markdown(f"""
+                            <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:10px; padding:12px 15px; margin-bottom:10px;">
+                                <p style="margin:0; font-size:14px; color:#0284c7;"><b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
+                                <p style="margin:5px 0 0 0; font-size:16px;">{c_row['نص_التعليق']}</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                with st.form(f"comment_form_{selected_row['معرف_الفيديو']}"):
+                    user_comment_text = st.text_area("أكتب تعليقك أو رأيك حول الشرح:", placeholder="اكتب رأيك هنا...")
+                    if st.form_submit_button("إرسال التعليق"):
+                        if user_comment_text.strip():
+                            new_comment = {
+                                "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                "عنوان_الفيديو": current_vid_title.strip(),
+                                "اسم الطالب": st_user["اسم الطالب"],
+                                "نص_التعليق": user_comment_text.strip()
+                            }
+                            st.session_state.video_comments_df = pd.concat([st.session_state.video_comments_df, pd.DataFrame([new_comment])], ignore_index=True)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                            st.success("✓ تم إرسال تعليقك بنجاح!")
+                            st.rerun()
 
         elif sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل</h3>", unsafe_allow_html=True)
