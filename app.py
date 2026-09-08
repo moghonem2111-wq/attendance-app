@@ -179,6 +179,7 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         abqary_df.to_excel(writer, sheet_name="AbqaryExams", index=False)
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
 
+# التأكد من تحميل كافة الجداول في الـ session_state
 if "users_df" not in st.session_state:
     u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df = load_all_data()
     st.session_state.users_df = u_df
@@ -771,6 +772,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
+        # --- قسم اختبارات موقع عبقري للطالب ---
         if sub_page == "abqary":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
@@ -814,6 +816,7 @@ if is_student_mode:
                                 st.error("❌ الرقم السري غير صحيح. يرجى مراجعة معلم المادة.")
                     st.write("---")
 
+        # --- صفحة الفيديوهات بتصميم "درسلي" الاحترافي ---
         elif sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
@@ -901,6 +904,7 @@ if is_student_mode:
                                 st.success("✓ تم إرسال تعليقك أو سؤالك بنجاح وسيظهر للمعلم فوراً!")
                                 st.rerun()
 
+        # --- بنك الأسئلة للطالب ---
         elif sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
@@ -1389,7 +1393,7 @@ if is_student_mode:
 
 
 # ==============================================================================
-# 2. لوحة تحكم المعلم (نظام البطاقات الاحترافي مع صفحات مستقلة وشامل لكل الأقسام)
+# 2. لوحة تحكم المعلم (شاملة بالكامل وبدون أي نقص)
 # ==============================================================================
 total_exams_count = len(st.session_state.exams_df)
 total_students_count = len(st.session_state.users_df)
