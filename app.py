@@ -511,9 +511,8 @@ if is_student_mode:
             with col_hero_txt:
                 st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
                 st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.</p>", unsafe_allow_html=True)
                 
-                st.write("")
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
                     if st.button("🔐 تسجيل الدخول الآن"):
@@ -533,8 +532,7 @@ if is_student_mode:
                     """, unsafe_allow_html=True)
 
             st.write("---")
-
-            # كورسات درسلي
+            # --- كورسات درسلي ---
             st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
             st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
             st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
@@ -769,10 +767,10 @@ if is_student_mode:
         if st.button("📝 تسجيل حضور حصة اليوم", use_container_width=True):
             st.session_state.student_sub_page = "attendance"
             st.rerun()
-        if st.button("📊 متابعة درجات الواجبات المنزلية", use_container_width=True):
+        if st.button("📊 متابعة درجات الواجبات", use_container_width=True):
             st.session_state.student_sub_page = "hw_grades"
             st.rerun()
-        if st.button("📈 متابعة درجات الاختبارات والكويزات", use_container_width=True):
+        if st.button("📈 متابعة درجات الاختبارات", use_container_width=True):
             st.session_state.student_sub_page = "exam_grades"
             st.rerun()
         if st.button("💬 مركز الدردشة والدعم المباشر", use_container_width=True):
@@ -783,10 +781,9 @@ if is_student_mode:
         st.write("---")
 
         if sub_page == "abqary":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
             abq_df = st.session_state.abqary_df
-            
             st_abq = abq_df[abq_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
             if st_abq.empty: st_abq = abq_df.copy()
 
@@ -802,14 +799,13 @@ if is_student_mode:
                     st.markdown(f"""
                         <div style="background:{card_bg}; border:2px solid #059669; border-radius:14px; padding:20px; margin-bottom:20px;">
                             <h4 style="color:#059669; margin-top:0;">💡 اختبار عبقري: {ab_title}</h4>
-                            <p style="font-size:16px;">اضغط على الزر أدناه للانتقال إلى موقع عبقري وإجراء الاختبار:</p>
                         </div>
                     """, unsafe_allow_html=True)
                     if ab_link and ab_link != "nan":
                         st.link_button(f"🔗 الذهاب لامتحان عبقري: {ab_title} 🚀", ab_link, use_container_width=True)
 
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
                                 st.success("✓ الرقم السري صحيح!")
