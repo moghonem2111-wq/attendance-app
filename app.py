@@ -404,7 +404,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب الشاملة
+# 1. واجهة الطالب الشاملة (مع إطار موقع عبقري iframe وتصميم درسلي للفيديوهات)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -783,6 +783,7 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
+        # --- قسم اختبارات عبقري مع عرض الموقع بالكامل داخل إطار iframe ---
         if sub_page == "abqary":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
@@ -800,15 +801,22 @@ if is_student_mode:
                     secret_code = str(ab_row.get("الرقم_السري_للنتيجة", "")).strip()
 
                     st.markdown(f"""
-                        <div style="background:{card_bg}; border:2px solid #059669; border-radius:14px; padding:20px; margin-bottom:20px;">
-                            <h4 style="color:#059669; margin-top:0;">💡 اختبار عبقري: {ab_title}</h4>
+                        <div style="background:{card_bg}; border:2px solid #059669; border-radius:14px; padding:20px; margin-bottom:15px;">
+                            <h4 style="color:#059669; margin-top:0;">💡 امتحان عبقري: {ab_title}</h4>
+                            <p style="font-size:15px;">إليك امتحان موقع عبقري معروض بالكامل داخل المنصة:</p>
                         </div>
                     """, unsafe_allow_html=True)
-                    if ab_link and ab_link != "nan":
-                        st.link_button(f"🔗 الذهاب لامتحان عبقري: {ab_title} 🚀", ab_link, use_container_width=True)
 
+                    if ab_link and ab_link != "nan" and ab_link != "":
+                        # عرض موقع عبقري بالكامل في إطار iframe داخل صفحة الطالب
+                        st.components.v1.iframe(ab_link, height=650, scrolling=True)
+                        st.write("")
+                        st.link_button(f"🔗 فتح امتحان عبقري في نافذة جديدة 🚀", ab_link, use_container_width=True)
+
+                    st.write("")
+                    st.markdown("##### 🔍 استعلام عن نتيجة هذا الاختبار برقم سري:")
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
                                 st.success("✓ الرقم السري صحيح!")
@@ -820,7 +828,7 @@ if is_student_mode:
                                 st.error("❌ الرقم السري غير صحيح.")
                     st.write("---")
 
-        # --- قسم الفيديوهات تماماً مثل تصميم درسلي (Sidebar يمين، فيديو شمال) ---
+        # --- الفيديوهات بتصميم درسلي (Sidebar يمين، والفيديو شمال) ---
         elif sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
