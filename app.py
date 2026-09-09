@@ -404,7 +404,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب الشاملة (تصميم درسلي الحقيقي للفيديوهات)
+# 1. واجهة الطالب الشاملة
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -532,6 +532,36 @@ if is_student_mode:
                     """, unsafe_allow_html=True)
 
             st.write("---")
+            # --- كورسات درسلي ---
+            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
+
+            courses_grid = [
+                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
+                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans"),
+                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans"),
+                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans")
+            ]
+
+            c_cols = st.columns(2)
+            for idx, (icon, title, desc, link) in enumerate(courses_grid):
+                col_target = c_cols[idx % 2]
+                with col_target:
+                    st.markdown(f"""
+                        <div class="course-card">
+                            <div>
+                                <div class="course-icon-box">{icon}</div>
+                                <div class="course-title">{title}</div>
+                                <div class="course-desc">{desc}</div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
+                    st.write("")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
             # --- حجز الدروس ---
             st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
             with st.form("online_booking_form", clear_on_submit=True):
@@ -728,6 +758,9 @@ if is_student_mode:
         if st.button("🎥 الفيديوهات والشروحات التعليمية", use_container_width=True):
             st.session_state.student_sub_page = "videos"
             st.rerun()
+        if st.button("📚 بنك الأسئلة الشامل (الاشتراك والدفع)", use_container_width=True):
+            st.session_state.student_sub_page = "bank"
+            st.rerun()
         if st.button("🧠 اختبارات ونتائج موقع عبقري 💡", use_container_width=True):
             st.session_state.student_sub_page = "abqary"
             st.rerun()
@@ -787,7 +820,7 @@ if is_student_mode:
                                 st.error("❌ الرقم السري غير صحيح.")
                     st.write("---")
 
-        # --- عرض الفيديوهات تماماً مثل منصة درسلي (Sidebar يمين والفيديو شمال) ---
+        # --- قسم الفيديوهات تماماً مثل تصميم درسلي (Sidebar يمين، فيديو شمال) ---
         elif sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
@@ -800,7 +833,6 @@ if is_student_mode:
                 if "selected_video_idx" not in st.session_state:
                     st.session_state.selected_video_idx = 0
 
-                # تقسيم الشاشة بالطريقة الاحترافية (شريط جانبي للدروس يمين، وفيديو شمال)
                 col_main_v, col_side_v = st.columns([2.5, 1])
 
                 with col_side_v:
@@ -811,7 +843,6 @@ if is_student_mode:
                     """, unsafe_allow_html=True)
 
                     search_vid_query = st.text_input("🔍 ابحث في الحصص...", placeholder="اكتب اسم الدرس...")
-                    
                     filtered_videos = st_videos
                     if search_vid_query.strip():
                         filtered_videos = st_videos[st_videos["عنوان_الفيديو"].astype(str).str.contains(search_vid_query, case=False, na=False)]
@@ -881,6 +912,100 @@ if is_student_mode:
                                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                                 st.success("✓ تم إرسال تعليقك بنجاح!")
                                 st.rerun()
+
+        # --- قسم بنك الأسئلة والاشتراك والدفع عبر انستا باي للطالب ---
+        elif sub_page == "bank":
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
+            
+            curr_user_row = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(st_user.get("رقم الهاتف", "")).strip()]
+            sub_status = curr_user_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not curr_user_row.empty else "غير مشترك"
+
+            if sub_status != "مشترك":
+                st.warning("🔒 عذراً، بنك الأسئلة مغلق ويحتاج إلى اشتراك خاص بمرحلتك الدراسية بقيمة **100 جنيه** فقط.")
+                st.markdown(f"""
+                    <div style="background:{card_bg}; border:2px solid #dc2626; border-radius:15px; padding:25px; margin-bottom:20px;">
+                        <h3 style="color:#dc2626; margin-top:0;">💳 تعليمات الاشتراك في بنك الأسئلة:</h3>
+                        <p style="font-size:18px;">1. قم بالدفع بقيمة <b>100 جنيه</b> عبر تطبيق InstaPay باستخدام زر الدفع السريع بالأسفل.</p>
+                        <p style="font-size:18px;">2. اكتب رقم هاتفك المحول منه، وكود التحقق (OTP)، وارفق صورة اسكرين (إيصال) الدفع لتأكيد طلبك.</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                with st.form("bank_subscription_form"):
+                    pay_phone = st.text_input("رقم الهاتف المحول منه (فودافون كاش، اتصالات كاش، أو وي كاش):", placeholder="010XXXXXXXX")
+                    pay_otp = st.text_input("كود التحقق الخاص بـ InstaPay أو معاملة التحويل (OTP):", placeholder="مثال: 4589")
+                    pay_receipt = st.file_uploader("📷 رفع اسكرين (إيصال) الدفع:", type=["jpg", "png", "jpeg"])
+                    
+                    if st.form_submit_button("📤 إرسال طلب الاشتراك لتأكيد المعلم"):
+                        if not pay_phone.strip() or not pay_otp.strip() or pay_receipt is None:
+                            st.error("يرجى إدخال رقم الهاتف، وكود الـ OTP، وإرفاق صورة إيصال الدفع.")
+                        else:
+                            rcpt_str = base64.b64encode(pay_receipt.read()).decode()
+                            new_req = {
+                                "تاريخ_الطلب": str(date.today()),
+                                "اسم الطالب": st_user["اسم الطالب"],
+                                "رقم_الهاتف": pay_phone.strip(),
+                                "كود_OTP": pay_otp.strip(),
+                                "حالة_الدفع": "قيد المراجعة",
+                                "إيصال_الدفع_base64": rcpt_str
+                            }
+                            st.session_state.bank_requests_df = pd.concat([st.session_state.bank_requests_df, pd.DataFrame([new_req])], ignore_index=True)
+                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                            st.success("✓ تم إرسال طلب اشتراكك بنجاح! سيقوم المعلم بمراجعة الإيصال وتفعيل حسابك خلال دقائق.")
+                
+                st.link_button("📲 اضغط هنا للدفع من خلال انستا باي", "https://ipn.eg/S/moghonem2002/instapay/6EyvZs")
+            else:
+                st.success("🎉 أهلاً بك! حسابك مفعل ومسجل في بنك الأسئلة الخاص بمرحلتك الدراسية.")
+                student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
+                qb_df = st.session_state.question_bank_df
+                
+                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
+                if st_qb.empty: st_qb = qb_df.copy()
+
+                if st_qb.empty:
+                    st.info("لا توجد أسئلة مضافة في بنك الأسئلة لمرحلتك حالياً.")
+                else:
+                    for qb_i, qb_r in st_qb.iterrows():
+                        raw_json_data = qb_r.get("بيانات_السؤال_JSON", "{}")
+                        try:
+                            q_data = json.loads(raw_json_data) if pd.notnull(raw_json_data) and str(raw_json_data).strip() else {}
+                        except Exception:
+                            q_data = {}
+
+                        if not q_data: continue
+
+                        st.markdown(f"""
+                            <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:20px; margin-bottom:15px;">
+                                <p style="font-size:18px; color:{text_color};"><b>سؤال ({qb_i+1}) — الدرجة: {q_data.get('points', 1.0)}</b></p>
+                                <p style="font-size:17px; color:{text_color};">{q_data.get('text', '')}</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        if q_data.get("q_img"):
+                            st.image(f"data:image/jpeg;base64,{q_data['q_img']}", use_container_width=True)
+
+                        q_type_val = q_data.get("type", "اختيار من متعدد")
+                        if "اختيار" in q_type_val or q_type_val == "موضوعي":
+                            opts = ["أ", "ب", "ج", "د"]
+                            ans_choice = st.radio(f"اختر الإجابة الصحيحة للسؤال ({qb_i+1}):", opts, key=f"qb_radio_{qb_i}")
+                            
+                            opt1 = q_data.get('opt1', '')
+                            opt2 = q_data.get('opt2', '')
+                            opt3 = q_data.get('opt3', '')
+                            opt4 = q_data.get('opt4', '')
+                            if opt1 or opt2 or opt3 or opt4:
+                                st.markdown(f"""
+                                    <div style="padding: 10px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px;">
+                                        أ) {opt1} &nbsp;&nbsp;|&nbsp;&nbsp; ب) {opt2} &nbsp;&nbsp;|&nbsp;&nbsp; ج) {opt3} &nbsp;&nbsp;|&nbsp;&nbsp; د) {opt4}
+                                    </div>
+                                """, unsafe_allow_html=True)
+
+                            if st.button(f"تحقق من إجابة السؤال ({qb_i+1})", key=f"check_qb_{qb_i}"):
+                                correct_idx = int(q_data.get("correct", 1))
+                                correct_letter = opts[correct_idx - 1] if 0 <= correct_idx - 1 < 4 else 'أ'
+                                if ans_choice == correct_letter:
+                                    st.success("إجابة صحيحة تماماً! أحسنت ✅")
+                                else:
+                                    st.error(f"إجابة خاطئة ❌. الإجابة الصحيحة هي: الخيار ({correct_letter})")
 
         elif sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية</h3>", unsafe_allow_html=True)
@@ -1822,6 +1947,37 @@ elif t_page == "students":
                 st.rerun()
         st.write("---")
 
+    bank_req_state = st.session_state.bank_requests_df
+    if not bank_req_state.empty:
+        st.markdown("#### 💳 طلبات اشتراكات بنك الأسئلة الواردة (تأكيد الدفع):")
+        for br_idx, br_row in bank_req_state.iterrows():
+            st_req_name = br_row["اسم الطالب"]
+            req_phone = br_row["رقم_الهاتف"]
+            req_otp = br_row["كود_OTP"]
+            req_status = br_row["حالة_الدفع"]
+            req_receipt = br_row["إيصال_الدفع_base64"]
+
+            with st.expander(f"طلب اشتراك بنك الأسئلة: الطالب ({st_req_name}) — الهاتف: ({req_phone}) — كود OTP: ({req_otp}) | الحالة: [{req_status}]"):
+                if pd.notnull(req_receipt) and str(req_receipt).strip() and str(req_receipt) != "nan":
+                    st.markdown("**📷 صورة إيصال التحويل المرفق:**")
+                    st.image(f"data:image/jpeg;base64,{req_receipt}", width=350)
+                
+                c_bk1, c_bk2 = st.columns(2)
+                with c_bk1:
+                    if st.button(f"✅ تأكيد وتفعيل الاشتراك للطالب {st_req_name}", key=f"confirm_bank_{br_idx}"):
+                        bank_req_state.at[br_idx, "حالة_الدفع"] = "مؤكد ومفعل"
+                        st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(st_req_name).strip(), "حالة_الاشتراك_البنك"] = "مشترك"
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                        st.success(f"✓ تم تفعيل اشتراك بنك الأسئلة للطالب {st_req_name} بنجاح!")
+                        st.rerun()
+                with c_bk2:
+                    if st.button(f"🗑️ حذف طلب الاشتراك", key=f"del_bank_req_{br_idx}"):
+                        st.session_state.bank_requests_df = bank_req_state.drop(br_idx).reset_index(drop=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                        st.warning("تم حذف طلب الاشتراك.")
+                        st.rerun()
+        st.write("---")
+
     all_known_students = sorted(list(set(
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -1850,6 +2006,11 @@ elif t_page == "students":
             st_pass = u_row.iloc[0].get("كلمة المرور", "-") if not u_row.empty else "-"
             st_phone = u_row.iloc[0].get("رقم الهاتف", "-") if not u_row.empty else "-"
             is_banned = u_row.iloc[0].get("الحالة_حظر") == "محظور" if not u_row.empty else False
+            bank_sub_state = u_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not u_row.empty else "غير مشترك"
+
+            status_badge = "🚫 محظور" if is_banned else "✅ نشط"
+            badge_color = "#dc2626" if is_banned else "#16a34a"
+            bank_badge = "📚 مشترك بالبنك" if bank_sub_state == "مشترك" else "🔒 غير مشترك بالبنك"
 
             st_sessions_card = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
             total_st_sessions = len(st_sessions_card)
@@ -1863,6 +2024,7 @@ elif t_page == "students":
                         <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
                         <p style="margin: 3px 0; font-size: 14px; font-weight: 900;">{st_curr} — {st_grade}</p>
                         <p style="margin: 0; font-size: 13px; color: #64748b;">الهاتف: {st_phone} | كلمة المرور: <b>{st_pass}</b></p>
+                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #0284c7;"><b>{bank_badge}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c2:
                     st.markdown(f"""
@@ -1917,6 +2079,14 @@ elif t_page == "students":
                         st.info("لا توجد درجات مرصودة لهذا الطالب حتى الآن.")
                     else:
                         st.dataframe(st_grades_df[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
+
+                        with st.form(f"clear_st_grades_form_{idx}"):
+                            del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
+                            if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
+                                st.session_state.assessments_df = st.session_state.assessments_df.drop(del_grade_choice).reset_index(drop=True)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                                st.success("✓ تم مسح الدرجة بنجاح!")
+                                st.rerun()
 
                 if is_banned:
                     if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
