@@ -404,7 +404,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب الشاملة
+# 1. واجهة الطالب الشاملة (تصميم درسلي الحقيقي للفيديوهات)
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -532,37 +532,7 @@ if is_student_mode:
                     """, unsafe_allow_html=True)
 
             st.write("---")
-            # --- كورسات درسلي ---
-            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
-
-            courses_grid = [
-                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans"),
-                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans"),
-                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans")
-            ]
-
-            c_cols = st.columns(2)
-            for idx, (icon, title, desc, link) in enumerate(courses_grid):
-                col_target = c_cols[idx % 2]
-                with col_target:
-                    st.markdown(f"""
-                        <div class="course-card">
-                            <div>
-                                <div class="course-icon-box">{icon}</div>
-                                <div class="course-title">{title}</div>
-                                <div class="course-desc">{desc}</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
-                    st.write("")
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            # --- قسم حجز الدروس أونلاين ---
+            # --- حجز الدروس ---
             st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
             with st.form("online_booking_form", clear_on_submit=True):
                 book_name = st.text_input("اسم الطالب بالكامل:")
@@ -693,7 +663,7 @@ if is_student_mode:
                 st.query_params["role"] = "student"
                 st.rerun()
 
-        # --- قسم جدول حصص الأونلاين وزوم الخاص بالطالب مع التايمر ---
+        # --- جدول الأونلاين وزوم مع التايمر ---
         st.markdown("<div class='vertical-section-header'>💻 حصص الأونلاين وجدول زوم الخاص بي</div>", unsafe_allow_html=True)
         student_name_str = str(st_user.get("اسم الطالب", "")).strip()
         os_df = st.session_state.online_schedule_df
@@ -805,7 +775,7 @@ if is_student_mode:
                         st.link_button(f"🔗 الذهاب لامتحان عبقري: {ab_title} 🚀", ab_link, use_container_width=True)
 
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
                                 st.success("✓ الرقم السري صحيح!")
@@ -817,8 +787,9 @@ if is_student_mode:
                                 st.error("❌ الرقم السري غير صحيح.")
                     st.write("---")
 
+        # --- عرض الفيديوهات تماماً مثل منصة درسلي (Sidebar يمين والفيديو شمال) ---
         elif sub_page == "videos":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 الفيديوهات والشروحات التعليمية</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
             student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
             v_df = st.session_state.videos_df
             st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
@@ -829,65 +800,87 @@ if is_student_mode:
                 if "selected_video_idx" not in st.session_state:
                     st.session_state.selected_video_idx = 0
 
-                st.markdown("<p style='font-size:16px; margin-bottom:12px;'>اختر الدرس من الأيقونات الخضراء أدناه لعرض الشرح والتعليقات:</p>", unsafe_allow_html=True)
-                
-                for v_i, v_row in st_videos.reset_index(drop=True).iterrows():
-                    if st.button(f"🟢 {v_row['عنوان_الفيديو']}", key=f"green_v_btn_{v_i}", use_container_width=True):
-                        st.session_state.selected_video_idx = v_i
-                        st.rerun()
+                # تقسيم الشاشة بالطريقة الاحترافية (شريط جانبي للدروس يمين، وفيديو شمال)
+                col_main_v, col_side_v = st.columns([2.5, 1])
 
-                st.write("---")
-                selected_row = st_videos.iloc[st.session_state.selected_video_idx] if st.session_state.selected_video_idx < len(st_videos) else st_videos.iloc[0]
+                with col_side_v:
+                    st.markdown(f"""
+                        <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:12px; padding:15px; margin-bottom:15px;">
+                            <h4 style="margin:0 0 10px 0; color:#059669; font-size:18px;">📚 محتوى الدرس</h4>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                st.markdown(f"""
-                    <div style="background:linear-gradient(135deg, #059669, #10b981); color:#ffffff; padding:15px 20px; border-radius:10px; margin-bottom:15px;">
-                        <h3 style="margin:0; color:#ffffff; font-size:20px;">📺 {selected_row['عنوان_الفيديو']}</h3>
-                    </div>
-                """, unsafe_allow_html=True)
+                    search_vid_query = st.text_input("🔍 ابحث في الحصص...", placeholder="اكتب اسم الدرس...")
+                    
+                    filtered_videos = st_videos
+                    if search_vid_query.strip():
+                        filtered_videos = st_videos[st_videos["عنوان_الفيديو"].astype(str).str.contains(search_vid_query, case=False, na=False)]
 
-                v_link = str(selected_row.get("رابط_الفيديو", "")).strip()
-                v_bytes = selected_row.get("فيديو_base64", "")
+                    if filtered_videos.empty:
+                        st.info("لا توجد نتائج مطابقة للبحث.")
+                    else:
+                        for v_i, v_row in filtered_videos.reset_index(drop=True).iterrows():
+                            v_title_btn = f"🟢 {v_row['عنوان_الفيديو']}"
+                            if st.button(v_title_btn, key=f"darssly_sidebar_v_{v_i}", use_container_width=True):
+                                st.session_state.selected_video_idx = v_i
+                                st.rerun()
 
-                if v_link and v_link != "nan" and v_link != "":
-                    st.video(v_link)
-                elif pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
-                    try:
-                        vid_bytes_dec = base64.b64decode(v_bytes)
-                        st.video(vid_bytes_dec)
-                    except Exception:
-                        st.error("⚠️ يتعذر تشغيل ملف الفيديو.")
-                else:
-                    st.info("لا يوجد فيديو متاح لهذا الدرس.")
+                with col_main_v:
+                    selected_row = filtered_videos.iloc[0] if filtered_videos.empty else (filtered_videos.iloc[st.session_state.selected_video_idx] if st.session_state.selected_video_idx < len(filtered_videos) else filtered_videos.iloc[0])
 
-                st.write("---")
-                current_vid_title = selected_row['عنوان_الفيديو']
-                vc_df = st.session_state.video_comments_df
-                vid_comments = vc_df[vc_df["عنوان_الفيديو"].astype(str).str.strip() == current_vid_title.strip()]
+                    st.markdown(f"""
+                        <div style="background:linear-gradient(135deg, #059669, #10b981); color:#ffffff; padding:15px 20px; border-radius:10px; margin-bottom:15px;">
+                            <h3 style="margin:0; color:#ffffff; font-size:20px;">📺 {selected_row['عنوان_الفيديو']}</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                st.markdown(f"<h4 style='font-size:18px;'>❓ التعليقات والآراء ({len(vid_comments)})</h4>", unsafe_allow_html=True)
-                if not vid_comments.empty:
-                    for _, c_row in vid_comments.iterrows():
-                        st.markdown(f"""
-                            <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:10px; padding:12px 15px; margin-bottom:10px;">
-                                <p style="margin:0; font-size:14px; color:#0284c7;"><b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
-                                <p style="margin:5px 0 0 0; font-size:16px;">{c_row['نص_التعليق']}</p>
-                            </div>
-                        """, unsafe_allow_html=True)
+                    v_link = str(selected_row.get("رابط_الفيديو", "")).strip()
+                    v_bytes = selected_row.get("فيديو_base64", "")
 
-                with st.form(f"comment_form_{selected_row['معرف_الفيديو']}"):
-                    user_comment_text = st.text_area("أكتب تعليقك أو رأيك حول الشرح:", placeholder="اكتب رأيك هنا...")
-                    if st.form_submit_button("إرسال التعليق"):
-                        if user_comment_text.strip():
-                            new_comment = {
-                                "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                                "عنوان_الفيديو": current_vid_title.strip(),
-                                "اسم الطالب": st_user["اسم الطالب"],
-                                "نص_التعليق": user_comment_text.strip()
-                            }
-                            st.session_state.video_comments_df = pd.concat([st.session_state.video_comments_df, pd.DataFrame([new_comment])], ignore_index=True)
-                            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                            st.success("✓ تم إرسال تعليقك بنجاح!")
-                            st.rerun()
+                    if v_link and v_link != "nan" and v_link != "":
+                        st.video(v_link)
+                    elif pd.notnull(v_bytes) and str(v_bytes).strip() and str(v_bytes) != "nan":
+                        try:
+                            vid_bytes_dec = base64.b64decode(v_bytes)
+                            st.video(vid_bytes_dec)
+                        except Exception:
+                            st.error("⚠️ يتعذر تشغيل ملف الفيديو.")
+                    else:
+                        st.info("لا يوجد فيديو متاح لهذا الدرس.")
+
+                    st.write("---")
+                    st.markdown(f"#### 📌 {selected_row['عنوان_الفيديو']}")
+                    st.caption(f"المرحلة الدراسية: {selected_row.get('المجموعة/الصف', '')} | أكملت هذه الحصة")
+
+                    st.write("---")
+                    current_vid_title = selected_row['عنوان_الفيديو']
+                    vc_df = st.session_state.video_comments_df
+                    vid_comments = vc_df[vc_df["عنوان_الفيديو"].astype(str).str.strip() == current_vid_title.strip()]
+
+                    st.markdown(f"<h4 style='font-size:18px;'>الأسئلة والتعليقات ({len(vid_comments)})</h4>", unsafe_allow_html=True)
+                    if not vid_comments.empty:
+                        for _, c_row in vid_comments.iterrows():
+                            st.markdown(f"""
+                                <div style="background:{card_bg}; border:1px solid {card_border}; border-radius:10px; padding:12px 15px; margin-bottom:10px;">
+                                    <p style="margin:0; font-size:14px; color:#0284c7;"><b>{c_row['اسم الطالب']}</b> — <span style="font-size:12px; opacity:0.7;">{c_row['التاريخ_والوقت']}</span></p>
+                                    <p style="margin:5px 0 0 0; font-size:16px;">{c_row['نص_التعليق']}</p>
+                                </div>
+                            """, unsafe_allow_html=True)
+
+                    with st.form(f"comment_form_{selected_row['معرف_الفيديو']}"):
+                        user_comment_text = st.text_area("أكتب سؤالك أو تعليقك هنا:", placeholder="اطرح سؤالك على المعلم...")
+                        if st.form_submit_button("إرسال التعليق"):
+                            if user_comment_text.strip():
+                                new_comment = {
+                                    "التاريخ_والوقت": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                    "عنوان_الفيديو": current_vid_title.strip(),
+                                    "اسم الطالب": st_user["اسم الطالب"],
+                                    "نص_التعليق": user_comment_text.strip()
+                                }
+                                st.session_state.video_comments_df = pd.concat([st.session_state.video_comments_df, pd.DataFrame([new_comment])], ignore_index=True)
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                                st.success("✓ تم إرسال تعليقك بنجاح!")
+                                st.rerun()
 
         elif sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية</h3>", unsafe_allow_html=True)
