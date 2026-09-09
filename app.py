@@ -404,7 +404,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 1. واجهة الطالب الشاملة (مع إطار موقع عبقري iframe وتصميم درسلي للفيديوهات)
+# 1. واجهة الطالب الشاملة
 # ==============================================================================
 if is_student_mode:
     st.markdown("""
@@ -668,6 +668,11 @@ if is_student_mode:
 
     else:
         st_user = st.session_state.logged_student
+        
+        # فلترة ذكية ومرنة لمرحلة الطالب بصرف النظر عن أي فروق بسيطة في الأحرف أو الأقواس
+        user_grade_raw = str(st_user.get("المجموعة/الصف", "")).strip()
+        user_grade_clean = user_grade_raw.split("(")[0].strip().lower()
+
         fresh_user = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(st_user.get("رقم الهاتف", "")).strip()]
         if not fresh_user.empty and fresh_user.iloc[0].get("الحالة_حظر") == "محظور":
             st.error("🚫 عذراً، تم حظر حسابك.")
@@ -783,13 +788,17 @@ if is_student_mode:
         sub_page = st.session_state.student_sub_page
         st.write("---")
 
-        # --- قسم اختبارات عبقري مع عرض الموقع بالكامل داخل إطار iframe ---
+        # --- قسم اختبارات عبقري مع فلترة مرنة ومطابقة شاملة ---
         if sub_page == "abqary":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🧠 اختبارات ونتائج موقع عبقري</h3>", unsafe_allow_html=True)
-            student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
             abq_df = st.session_state.abqary_df
-            st_abq = abq_df[abq_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
-            if st_abq.empty: st_abq = abq_df.copy()
+            
+            # فلترة مرنة جداً تتأكد من ظهور الامتحان بغض النظر عن الأقواس أو التشكيل
+            st_abq = abq_df[abq_df["المجموعة/الصف"].astype(str).str.strip().str.lower().apply(
+                lambda x: user_grade_clean in x or user_grade_raw.lower() in x or x in user_grade_clean
+            )]
+            if st_abq.empty:
+                st_abq = abq_df.copy() # لو مفيش تطابق حرفي تام، اعرض الكل عشان الطالب ميتعطلش
 
             if st_abq.empty:
                 st.info("لا توجد اختبارات منشورة عبر موقع عبقري لمرحلتك حالياً.")
@@ -808,7 +817,6 @@ if is_student_mode:
                     """, unsafe_allow_html=True)
 
                     if ab_link and ab_link != "nan" and ab_link != "":
-                        # عرض موقع عبقري بالكامل في إطار iframe داخل صفحة الطالب
                         st.components.v1.iframe(ab_link, height=650, scrolling=True)
                         st.write("")
                         st.link_button(f"🔗 فتح امتحان عبقري في نافذة جديدة 🚀", ab_link, use_container_width=True)
@@ -831,12 +839,17 @@ if is_student_mode:
         # --- الفيديوهات بتصميم درسلي (Sidebar يمين، والفيديو شمال) ---
         elif sub_page == "videos":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🎥 محتوى الشروحات والفيديوهات التعليمية</h3>", unsafe_allow_html=True)
-            student_grade = str(st_user.get("المجموعة/الصف", "")).strip()
             v_df = st.session_state.videos_df
-            st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip().str.lower() == student_grade.lower()]
+            
+            # فلترة مرنة للفيديوهات حسب المرحلة
+            st_videos = v_df[v_df["المجموعة/الصف"].astype(str).str.strip().str.lower().apply(
+                lambda x: user_grade_clean in x or user_grade_raw.lower() in x or x in user_grade_clean
+            )]
+            if st_videos.empty:
+                st_videos = v_df.copy()
 
             if st_videos.empty:
-                st.info(f"لا توجد فيديوهات مرفوعة لمرحلتك الدراسية ({student_grade}) حالياً.")
+                st.info("لا توجد فيديوهات مرفوعة لمرحلتك الدراسية حالياً.")
             else:
                 if "selected_video_idx" not in st.session_state:
                     st.session_state.selected_video_idx = 0
@@ -921,7 +934,7 @@ if is_student_mode:
                                 st.success("✓ تم إرسال تعليقك بنجاح!")
                                 st.rerun()
 
-        # --- قسم بنك الأسئلة والاشتراك والدفع عبر انستا باي للطالب ---
+        # --- بنك الأسئلة والاشتراك والدفع عبر انستا باي ---
         elif sub_page == "bank":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
@@ -939,8 +952,8 @@ if is_student_mode:
                 """, unsafe_allow_html=True)
 
                 with st.form("bank_subscription_form"):
-                    pay_phone = st.text_input("رقم الهاتف المحول منه (فودافون كاش، اتصالات كاش، أو وي كاش):", placeholder="010XXXXXXXX")
-                    pay_otp = st.text_input("كود التحقق الخاص بـ InstaPay أو معاملة التحويل (OTP):", placeholder="مثال: 4589")
+                    pay_phone = st.text_input("رقم الهاتف المحول منه:", placeholder="010XXXXXXXX")
+                    pay_otp = st.text_input("كود التحقق الخاص بـ InstaPay (OTP):", placeholder="مثال: 4589")
                     pay_receipt = st.file_uploader("📷 رفع اسكرين (إيصال) الدفع:", type=["jpg", "png", "jpeg"])
                     
                     if st.form_submit_button("📤 إرسال طلب الاشتراك لتأكيد المعلم"):
@@ -963,10 +976,10 @@ if is_student_mode:
                 st.link_button("📲 اضغط هنا للدفع من خلال انستا باي", "https://ipn.eg/S/moghonem2002/instapay/6EyvZs")
             else:
                 st.success("🎉 أهلاً بك! حسابك مفعل ومسجل في بنك الأسئلة الخاص بمرحلتك الدراسية.")
-                student_grade = str(st_user.get("المجموعة/الصف", "")).strip().lower()
                 qb_df = st.session_state.question_bank_df
-                
-                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower().str.contains(student_grade, na=False)]
+                st_qb = qb_df[qb_df["المجموعة/الصف"].astype(str).str.strip().str.lower().apply(
+                    lambda x: user_grade_clean in x or user_grade_raw.lower() in x or x in user_grade_clean
+                )]
                 if st_qb.empty: st_qb = qb_df.copy()
 
                 if st_qb.empty:
