@@ -513,16 +513,6 @@ if is_student_mode:
                 st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية. هنتعلم بأسلوب مبسط وجميل، مع شرح احترافي وتجارب تفاعلية، وتدريب شامل على أحدث أنماط الأسئلة عشان تدخل الامتحان وأنت جاهز تحقق أفضل نتيجة.</p>", unsafe_allow_html=True)
                 
-                st.markdown("""
-                    <div class="social-top-container">
-                        <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-                        <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
-                        <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-top telegram-bg"><svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
-                        <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-top tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
-                        <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
-                    </div>
-                """, unsafe_allow_html=True)
-                
                 st.write("")
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
@@ -538,8 +528,7 @@ if is_student_mode:
                 if img_b64:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <div style="position: absolute; width: 240px; height: 240px; background: #059669; border-radius: 50%; z-index: 0; filter: blur(15px); opacity: 0.7;"></div>
-                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; z-index: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -599,9 +588,8 @@ if is_student_mode:
                         }
                         st.session_state.bookings_df = pd.concat([st.session_state.bookings_df, pd.DataFrame([new_booking])], ignore_index=True)
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                        st.success("✓ تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً لتأكيد الموعد.")
+                        st.success("✓ تم إرسال طلب الحجز بنجاح!")
 
-        # --- تسجيل الدخول برقم الهاتف ---
         elif st.session_state.page_view == "login":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب (برقم الهاتف):</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
@@ -636,8 +624,8 @@ if is_student_mode:
         elif st.session_state.page_view == "register":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
             with st.form("student_register_form"):
-                reg_name = st.text_input("اسمك بالكامل (ثلاثي أو رباعي):", placeholder="مثال: أحمد محمود علي")
-                reg_phone = st.text_input("رقم الهاتف المحمول (لتسجيل الدخول به لاحقاً):*", placeholder="010XXXXXXXX")
+                reg_name = st.text_input("اسمك بالكامل:")
+                reg_phone = st.text_input("رقم الهاتف المحمول (لتسجيل الدخول به لاحقاً):*")
                 reg_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
                 reg_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[reg_curr])
                 reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك:", type="password")
@@ -714,7 +702,7 @@ if is_student_mode:
         st_sched = os_df[os_df["اسم الطالب"].astype(str).str.strip().str.lower() == student_name_str.lower()]
 
         if st_sched.empty:
-            st.info("لا توجد حصص أونلاين مسجلة في الجدول المخصص لك حالياً. سيقوم المعلم بإضافتها قريباً.")
+            st.info("لا توجد حصص أونلاين مسجلة في الجدول المخصص لك حالياً.")
         else:
             for _, s_row in st_sched.iterrows():
                 academy_name = s_row.get("اسم الأكاديمية", "أكاديمية البشمهندس")
@@ -772,9 +760,6 @@ if is_student_mode:
         if st.button("🎥 الفيديوهات والشروحات التعليمية", use_container_width=True):
             st.session_state.student_sub_page = "videos"
             st.rerun()
-        if st.button("📚 بنك الأسئلة الشامل (مغلق للاشتراك)", use_container_width=True):
-            st.session_state.student_sub_page = "bank"
-            st.rerun()
         if st.button("🧠 اختبارات ونتائج موقع عبقري 💡", use_container_width=True):
             st.session_state.student_sub_page = "abqary"
             st.rerun()
@@ -824,16 +809,16 @@ if is_student_mode:
                         st.link_button(f"🔗 الذهاب لامتحان عبقري: {ab_title} 🚀", ab_link, use_container_width=True)
 
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
-                                st.success("✓ الرقم السري صحيح! تم جلب النتيجة بنجاح:")
+                                st.success("✓ الرقم السري صحيح!")
                                 if res_link and res_link != "nan":
                                     st.link_button("📊 اضغط هنا لعرض نتيجة امتحان عبقري 🏆", res_link, use_container_width=True)
                                 else:
                                     st.info("النتيجة متاحة وسيتم إضافتها قريباً.")
                             else:
-                                st.error("❌ الرقم السري غير صحيح. يرجى مراجعة معلم المادة.")
+                                st.error("❌ الرقم السري غير صحيح.")
                     st.write("---")
 
         elif sub_page == "videos":
@@ -850,13 +835,10 @@ if is_student_mode:
 
                 st.markdown("<p style='font-size:16px; margin-bottom:12px;'>اختر الدرس من الأيقونات الخضراء أدناه لعرض الشرح والتعليقات:</p>", unsafe_allow_html=True)
                 
-                v_cols = st.columns(min(len(st_videos), 3))
                 for v_i, v_row in st_videos.reset_index(drop=True).iterrows():
-                    target_col = v_cols[v_i % len(v_cols)]
-                    with target_col:
-                        if st.button(f"🟢 {v_row['عنوان_الفيديو']}", key=f"green_v_btn_{v_i}", use_container_width=True):
-                            st.session_state.selected_video_idx = v_i
-                            st.rerun()
+                    if st.button(f"🟢 {v_row['عنوان_الفيديو']}", key=f"green_v_btn_{v_i}", use_container_width=True):
+                        st.session_state.selected_video_idx = v_i
+                        st.rerun()
 
                 st.write("---")
                 selected_row = st_videos.iloc[st.session_state.selected_video_idx] if st.session_state.selected_video_idx < len(st_videos) else st_videos.iloc[0]
@@ -910,10 +892,6 @@ if is_student_mode:
                             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                             st.success("✓ تم إرسال تعليقك بنجاح!")
                             st.rerun()
-
-        elif sub_page == "bank":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل</h3>", unsafe_allow_html=True)
-            st.info("بنك الأسئلة يتطلب تفعيل الاشتراك الخاص بالمرحلة.")
 
         elif sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية</h3>", unsafe_allow_html=True)
@@ -1855,37 +1833,6 @@ elif t_page == "students":
                 st.rerun()
         st.write("---")
 
-    bank_req_state = st.session_state.bank_requests_df
-    if not bank_req_state.empty:
-        st.markdown("#### 💳 طلبات اشتراكات بنك الأسئلة الواردة (تأكيد الدفع):")
-        for br_idx, br_row in bank_req_state.iterrows():
-            st_req_name = br_row["اسم الطالب"]
-            req_phone = br_row["رقم_الهاتف"]
-            req_otp = br_row["كود_OTP"]
-            req_status = br_row["حالة_الدفع"]
-            req_receipt = br_row["إيصال_الدفع_base64"]
-
-            with st.expander(f"طلب اشتراك بنك الأسئلة: الطالب ({st_req_name}) — الهاتف: ({req_phone}) — كود OTP: ({req_otp}) | الحالة: [{req_status}]"):
-                if pd.notnull(req_receipt) and str(req_receipt).strip() and str(req_receipt) != "nan":
-                    st.markdown("**📷 صورة إيصال التحويل المرفق:**")
-                    st.image(f"data:image/jpeg;base64,{req_receipt}", width=350)
-                
-                c_bk1, c_bk2 = st.columns(2)
-                with c_bk1:
-                    if st.button(f"✅ تأكيد وتفعيل الاشتراك للطالب {st_req_name}", key=f"confirm_bank_{br_idx}"):
-                        bank_req_state.at[br_idx, "حالة_الدفع"] = "مؤكد ومفعل"
-                        st.session_state.users_df.loc[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == str(st_req_name).strip(), "حالة_الاشتراك_البنك"] = "مشترك"
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                        st.success(f"✓ تم تفعيل اشتراك بنك الأسئلة للطالب {st_req_name} بنجاح!")
-                        st.rerun()
-                with c_bk2:
-                    if st.button(f"🗑️ حذف طلب الاشتراك", key=f"del_bank_req_{br_idx}"):
-                        st.session_state.bank_requests_df = bank_req_state.drop(br_idx).reset_index(drop=True)
-                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                        st.warning("تم حذف طلب الاشتراك.")
-                        st.rerun()
-        st.write("---")
-
     all_known_students = sorted(list(set(
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -1914,11 +1861,6 @@ elif t_page == "students":
             st_pass = u_row.iloc[0].get("كلمة المرور", "-") if not u_row.empty else "-"
             st_phone = u_row.iloc[0].get("رقم الهاتف", "-") if not u_row.empty else "-"
             is_banned = u_row.iloc[0].get("الحالة_حظر") == "محظور" if not u_row.empty else False
-            bank_sub_state = u_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not u_row.empty else "غير مشترك"
-
-            status_badge = "🚫 محظور" if is_banned else "✅ نشط"
-            badge_color = "#dc2626" if is_banned else "#16a34a"
-            bank_badge = "📚 مشترك بالبنك" if bank_sub_state == "مشترك" else "🔒 غير مشترك بالبنك"
 
             st_sessions_card = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
             total_st_sessions = len(st_sessions_card)
@@ -1932,7 +1874,6 @@ elif t_page == "students":
                         <h4 style="margin: 0; color: #0052cc;">{st_name}</h4>
                         <p style="margin: 3px 0; font-size: 14px; font-weight: 900;">{st_curr} — {st_grade}</p>
                         <p style="margin: 0; font-size: 13px; color: #64748b;">الهاتف: {st_phone} | كلمة المرور: <b>{st_pass}</b></p>
-                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #0284c7;"><b>{bank_badge}</b></p>
                     """, unsafe_allow_html=True)
                 with col_c2:
                     st.markdown(f"""
@@ -1987,14 +1928,6 @@ elif t_page == "students":
                         st.info("لا توجد درجات مرصودة لهذا الطالب حتى الآن.")
                     else:
                         st.dataframe(st_grades_df[["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]], use_container_width=True)
-
-                        with st.form(f"clear_st_grades_form_{idx}"):
-                            del_grade_choice = st.selectbox("اختر النتيجة المراد مسحها لهذا الطالب:", options=list(st_grades_df.index), format_func=lambda x: f"{st_grades_df.loc[x, 'عنوان التكليف']} ({st_grades_df.loc[x, 'التاريخ']})")
-                            if st.form_submit_button("🗑️ مسح هذه الدرجة المحددة للطالب"):
-                                st.session_state.assessments_df = st.session_state.assessments_df.drop(del_grade_choice).reset_index(drop=True)
-                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                                st.success("✓ تم مسح الدرجة بنجاح!")
-                                st.rerun()
 
                 if is_banned:
                     if st.button("فك الحظر 🔓", key=f"unban_{idx}"):
