@@ -6,6 +6,10 @@ from datetime import date, datetime, time
 import pandas as pd
 from PIL import Image
 import streamlit as st
+try:
+    from weasyprint import HTML as WeasyHTML
+except Exception:
+    WeasyHTML = None
 
 st.set_page_config(
     page_title="م/ محمد غنيم | منصة شرح الرياضيات والإحصاء",
@@ -101,7 +105,7 @@ def base64_to_pil(b64_str):
 img_b64 = get_image_base64(found_img_path)
 
 COL_SESSIONS = ["التاريخ", "اسم الطالب", "المنهج/الدولة", "المجموعة/الصف", "الحالة", "سعر الحصة", "عدد الحصص الكلي", "نظام الدفع", "مستوى الطالب", "ملاحظات"]
-COL_USERS = ["اسم الطالب", "رقم الهاتف", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "تاريخ التسجيل", "الحالة_حظر", "حالة_الاشتراك_البنك"]
+COL_USERS = ["اسم الطالب", "رقم الهاتف", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "اسم ولي الأمر", "رقم ولي الأمر", "تاريخ التسجيل", "الحالة_حظر", "حالة_الاشتراك_البنك"]
 COL_ASSESSMENTS = ["التاريخ", "اسم الطالب", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"]
 COL_MESSAGES = ["التاريخ_والوقت", "اسم الطالب", "المرسل", "نص الرسالة", "الصورة_base64"]
 COL_EXAMS = ["معرف_الامتحان", "عنوان الامتحان", "وصف الامتحان", "كلمة المرور", "المنهج/الدولة", "المجموعة/الصف", "المادة", "الفصل الدراسي", "مدة الامتحان بالدقائق", "الأسئلة_JSON", "تاريخ الإنشاء"]
@@ -114,6 +118,46 @@ COL_VIDEO_COMMENTS = ["التاريخ_والوقت", "عنوان_الفيديو"
 COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنهج/الدولة", "المجموعة/الصف", "رابط_الإمتحان", "رابط_النتيجة", "الرقم_السري_للنتيجة", "تاريخ_النشر"]
 COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
 COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "اليوم", "الموعد", "اللون", "حالة الموعد"]
+COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
+
+def load_teacher_profile():
+    profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
+    if os.path.exists(FILE_NAME):
+        try:
+            with pd.ExcelFile(FILE_NAME) as xls:
+                if "TeacherProfile" in xls.sheet_names:
+                    profile = pd.read_excel(xls, "TeacherProfile")
+        except Exception:
+            pass
+    for c in COL_TEACHER_PROFILE:
+        if c not in profile.columns:
+            profile[c] = ""
+    if profile.empty:
+        profile = pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])
+    elif not str(profile.iloc[0].get("الصورة_base64", "")).strip() and img_b64:
+        profile.at[0,"الصورة_base64"] = img_b64
+    return profile
+
+def make_print_html(title, rows_html, headers_html, subtitle=""):
+    return f"""<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><title>{title}</title><style>@page{{size:A4 landscape;margin:12mm}}body{{font-family:Tahoma,Arial,sans-serif;font-weight:700;color:#111;padding:10px}}h1{{text-align:center;color:#075985}}p{{text-align:center}}table{{width:100%;border-collapse:collapse;margin-top:18px}}th,td{{border:1.5px solid #111;padding:7px;text-align:center;font-size:11px}}th{{background:#e2e8f0}}.footer{{margin-top:20px;text-align:center;font-size:11px}}</style></head><body onload='window.print()'><h1>{title}</h1><p>{subtitle}</p><table><thead><tr>{headers_html}</tr></thead><tbody>{rows_html}</tbody></table><div class='footer'>م/ محمد غنيم | منصة الرياضيات والإحصاء</div></body></html>"""
+
+def html_to_pdf_bytes(html_text):
+    if WeasyHTML is None:
+        return None
+    try:
+        return WeasyHTML(string=html_text, base_url=os.getcwd()).write_pdf()
+    except Exception:
+        return None
+
+def build_student_roster_html(names, title="كشف الطلاب المسجلين"):
+    rows=[]
+    for nm in names:
+        ur=st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip()==nm]
+        wr=st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip()==nm]
+        src=ur.iloc[0].to_dict() if not ur.empty else (wr.iloc[0].to_dict() if not wr.empty else {})
+        rows.append(f"<tr><td>{nm}</td><td>{src.get('رقم الهاتف',src.get('رقم الطالب',''))}</td><td>{src.get('اسم ولي الأمر','')}</td><td>{src.get('رقم ولي الأمر','')}</td><td>{src.get('المنهج/الدولة','')}</td><td>{src.get('المجموعة/الصف','')}</td></tr>")
+    return make_print_html(title,''.join(rows) or "<tr><td colspan='6'>لا توجد بيانات</td></tr>","<th>اسم الطالب</th><th>رقم الطالب</th><th>اسم ولي الأمر</th><th>رقم ولي الأمر</th><th>المنهج</th><th>المرحلة</th>",f"إجمالي الطلاب: {len(names)}")
+
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -155,6 +199,7 @@ def load_all_data():
     for col in COL_USERS:
         if col not in users_df.columns:
             if col == "رقم الهاتف": users_df[col] = ""
+            elif col in ["اسم ولي الأمر", "رقم ولي الأمر"]: users_df[col] = ""
             elif col == "الحالة_حظر": users_df[col] = "نشط"
             elif col == "حالة_الاشتراك_البنك": users_df[col] = "غير مشترك"
             else: users_df[col] = ""
@@ -191,6 +236,7 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         abqary_df.to_excel(writer, sheet_name="AbqaryExams", index=False)
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
         weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
+        st.session_state.get("teacher_profile_df", pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])).to_excel(writer, sheet_name="TeacherProfile", index=False)
 
 if "users_df" not in st.session_state:
     u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df = load_all_data()
@@ -208,6 +254,7 @@ if "users_df" not in st.session_state:
     st.session_state.abqary_df = ab_df
     st.session_state.online_schedule_df = os_df
     st.session_state.weekly_schedule_df = ws_df
+    st.session_state.teacher_profile_df = load_teacher_profile()
 
 # تأكد من وجود جدول المواعيد حتى لو كانت جلسة Streamlit قديمة قبل إضافة الميزة
 if "weekly_schedule_df" not in st.session_state:
@@ -216,6 +263,8 @@ if "weekly_schedule_df" not in st.session_state:
         st.session_state.weekly_schedule_df = ws_df
     except Exception:
         st.session_state.weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
+if "teacher_profile_df" not in st.session_state:
+    st.session_state.teacher_profile_df = load_teacher_profile()
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
@@ -1188,15 +1237,21 @@ st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", languag
 t_page = st.session_state.teacher_page
 
 if t_page == "dashboard":
+    dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
+    profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
     col_main_top, col_stat_sidebar = st.columns([3, 1])
     
     with col_main_top:
-        st.markdown(f"""
-            <div style="background: {card_bg}; padding: 25px; border-radius: 16px; border: 1px solid {card_border}; margin-bottom: 25px;">
-                <h2 style="color: #059669; margin: 0 0 10px 0;">أهلاً، م / محمد غنيم 📌</h2>
-                <p style="font-size: 16px; margin: 0; opacity: 0.85;">لوحة تحكم المعلمين – الوصول السريع لأدواتك وخدماتك التعليمية المتقدمة.</p>
-            </div>
-        """, unsafe_allow_html=True)
+        profile_tag = f'<img src="data:image/png;base64,{profile_b64}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid #10b981;">' if profile_b64 and profile_b64 != "nan" else '<div style="width:90px;height:90px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:40px">👨‍🏫</div>'
+        st.markdown(f"""<div style="background:linear-gradient(135deg,#0f766e,#0284c7);padding:28px;border-radius:22px;margin-bottom:20px;display:flex;align-items:center;gap:22px;direction:rtl;box-shadow:0 12px 30px rgba(2,132,199,.18)">{profile_tag}<div><h2 style="color:white!important;margin:0 0 8px">أهلاً، م/ محمد غنيم 👨‍🏫</h2><p style="color:white!important;margin:0">لوحة التحكم الاحترافية لإدارة الطلاب والمواعيد والحصص والواجبات والاختبارات والتقارير.</p></div></div>""", unsafe_allow_html=True)
+        with st.expander("📷 تحديث صورة المعلم", expanded=False):
+            teacher_photo = st.file_uploader("ارفع صورتك الشخصية", type=["png","jpg","jpeg"], key="teacher_profile_upload")
+            if teacher_photo is not None and st.button("💾 حفظ صورتي", key="save_teacher_photo"):
+                b64=base64.b64encode(teacher_photo.getvalue()).decode("utf-8")
+                st.session_state.teacher_profile_df=pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":b64}])
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                st.success("✓ تم حفظ الصورة")
+                st.rerun()
 
     with col_stat_sidebar:
         st.markdown(f"""
@@ -1205,10 +1260,15 @@ if t_page == "dashboard":
                 <h3 style="color: #059669; margin: 5px 0;">{total_exams_count}</h3>
                 <hr style="margin: 8px 0;">
                 <p style="margin:0; font-size:14px;">المتقدمين (إجمالي)</p>
-                <h3 style="color: #0284c7; margin: 5px 0;">{total_students_count}</h3>
+                <h3 style="color: #0284c7; margin: 5px 0;">{len(dashboard_students)}</h3>
             </div>
         """, unsafe_allow_html=True)
 
+    d1,d2,d3,d4=st.columns(4)
+    d1.metric("👥 الطلاب",len(dashboard_students))
+    d2.metric("🗓️ المواعيد الأسبوعية",len(st.session_state.weekly_schedule_df))
+    d3.metric("💻 مواعيد Zoom",len(st.session_state.online_schedule_df))
+    d4.metric("📝 الحصص المرصودة",len(st.session_state.sessions_df))
     st.markdown("### أدواتي السريعة")
     
     bc1, bc2, bc3 = st.columns(3)
@@ -1312,6 +1372,39 @@ elif t_page == "weekly_schedule":
         old_colors = ws_df.loc[ws_df["اسم الطالب"].astype(str).str.strip() == name, "اللون"] if not ws_df.empty else pd.Series(dtype=str)
         color_map[name] = str(old_colors.iloc[0]) if len(old_colors) and str(old_colors.iloc[0]).startswith("#") else palette[i % len(palette)]
 
+    st.markdown("### 👥 إدارة طلاب لوحة المواعيد")
+    wm1,wm2,wm3=st.columns(3)
+    with wm1:
+        with st.expander("➕ إضافة طالب جديد", expanded=False):
+            with st.form("weekly_manual_student_form", clear_on_submit=True):
+                ms_name=st.text_input("اسم الطالب")
+                ms_phone=st.text_input("رقم الطالب")
+                ms_parent=st.text_input("اسم ولي الأمر")
+                ms_parent_phone=st.text_input("رقم ولي الأمر")
+                ms_curr=st.selectbox("المنهج",list(CURRICULUM_DATA.keys()),key="wm_curr")
+                ms_grade=st.selectbox("المرحلة",CURRICULUM_DATA[ms_curr],key="wm_grade")
+                ms_pass=st.text_input("كلمة المرور",value="123456")
+                if st.form_submit_button("💾 إضافة الطالب"):
+                    target=ms_name.strip()
+                    if not target: st.error("اكتب اسم الطالب.")
+                    elif target in known_students: st.warning("الطالب موجود بالفعل.")
+                    else:
+                        row={"اسم الطالب":target,"رقم الهاتف":ms_phone.strip(),"كلمة المرور":ms_pass.strip() or "123456","المنهج/الدولة":ms_curr,"المجموعة/الصف":ms_grade,"اسم ولي الأمر":ms_parent.strip(),"رقم ولي الأمر":ms_parent_phone.strip(),"تاريخ التسجيل":str(date.today()),"الحالة_حظر":"نشط","حالة_الاشتراك_البنك":"غير مشترك"}
+                        st.session_state.users_df=pd.concat([st.session_state.users_df,pd.DataFrame([row])],ignore_index=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                        st.success("✓ تمت إضافة الطالب لكشف المسجلين وبطاقات الطلاب والسجلات.")
+                        st.rerun()
+    with wm2:
+        if known_students:
+            wd=st.selectbox("اختر طالباً",known_students,key="weekly_delete_student")
+            if st.button("🗑️ حذف الطالب نهائياً",key="weekly_delete_student_btn"):
+                delete_student_completely(wd); st.success(f"تم حذف {wd} من جميع السجلات."); st.rerun()
+    with wm3:
+        wh=build_student_roster_html(known_students,"كشف طلاب لوحة المواعيد")
+        wp=html_to_pdf_bytes(wh)
+        if wp: st.download_button("📄 طباعة الطلاب PDF",wp,file_name="كشف_طلاب_لوحة_المواعيد.pdf",mime="application/pdf",key="weekly_students_pdf")
+        else: st.download_button("🖨️ طباعة الطلاب",wh.encode("utf-8"),file_name="كشف_طلاب_لوحة_المواعيد.html",mime="text/html",key="weekly_students_html")
+    st.write("---")
     # بيانات الموعد السابق: عند اختيار "إضافة موعد آخر" لنفس الطالب، يتم الاحتفاظ بكل بياناته
     # ونحتاج فقط لتغيير اليوم والساعة (ويمكن تعديل أي بيان قبل الحفظ).
     prefill_student = st.session_state.pop("schedule_prefill_student", "")
@@ -1383,6 +1476,16 @@ elif t_page == "weekly_schedule":
                         "اللون": color_map.get(student_clean, palette[len(color_map) % len(palette)]),
                         "حالة الموعد": "نشط"
                     }
+                    # ربط الموعد بسجل الطالب الرئيسي حتى يظهر تلقائياً في كشف المسجلين والبطاقات والسجلات والتقارير والواجبات
+                    existing_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == student_clean]
+                    if existing_user.empty:
+                        auto_user = {"اسم الطالب":student_clean,"رقم الهاتف":ws_phone.strip(),"كلمة المرور":"123456","المنهج/الدولة":ws_curr,"المجموعة/الصف":ws_grade,"اسم ولي الأمر":"","رقم ولي الأمر":"","تاريخ التسجيل":str(date.today()),"الحالة_حظر":"نشط","حالة_الاشتراك_البنك":"غير مشترك"}
+                        st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([auto_user])], ignore_index=True)
+                    else:
+                        ui = existing_user.index[0]
+                        if not str(st.session_state.users_df.at[ui,"رقم الهاتف"]).strip() and ws_phone.strip(): st.session_state.users_df.at[ui,"رقم الهاتف"] = ws_phone.strip()
+                        st.session_state.users_df.at[ui,"المنهج/الدولة"] = ws_curr
+                        st.session_state.users_df.at[ui,"المجموعة/الصف"] = ws_grade
                     st.session_state.weekly_schedule_df = pd.concat([st.session_state.weekly_schedule_df, pd.DataFrame([new_ws])], ignore_index=True)
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                     st.success(f"✓ تم إضافة موعد {student_clean} يوم {ws_day} الساعة {ws_time.strftime('%H:%M')}.")
@@ -1446,21 +1549,56 @@ elif t_page == "weekly_schedule":
                         st.rerun()
 
     st.write("---")
-    st.markdown("### 📋 كشف المواعيد القابل للتصدير")
+    st.markdown("### 📋 كشف المواعيد القابل للطباعة والتصدير")
     st.dataframe(st.session_state.weekly_schedule_df, use_container_width=True)
-    buf_ws = io.BytesIO()
-    with pd.ExcelWriter(buf_ws, engine="openpyxl") as writer:
-        st.session_state.weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
-    st.download_button("📥 تصدير جدول المواعيد Excel", data=buf_ws.getvalue(), file_name="جدول_مواعيد_الطلاب.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ws_rows="".join(f"<tr><td>{r.get('اسم الطالب','')}</td><td>{r.get('اليوم','')}</td><td>{r.get('الموعد','')}</td><td>{r.get('اسم الأكاديمية','')}</td><td>{r.get('المنهج/الدولة','')}</td><td>{r.get('المجموعة/الصف','')}</td><td>{r.get('سعر الحصة','')}</td></tr>" for _,r in st.session_state.weekly_schedule_df.iterrows())
+    ws_html=make_print_html("جدول مواعيد الطلاب الأسبوعي",ws_rows,"<th>الطالب</th><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>السعر</th>")
+    ws_pdf=html_to_pdf_bytes(ws_html)
+    e1,e2=st.columns(2)
+    with e1:
+        if ws_pdf: st.download_button("📄 طباعة جدول المواعيد PDF",ws_pdf,file_name="جدول_مواعيد_الطلاب.pdf",mime="application/pdf",key="weekly_schedule_pdf")
+        else: st.download_button("🖨️ طباعة جدول المواعيد",ws_html.encode("utf-8"),file_name="جدول_مواعيد_الطلاب.html",mime="text/html",key="weekly_schedule_html")
+    with e2:
+        buf_ws=io.BytesIO()
+        with pd.ExcelWriter(buf_ws,engine="openpyxl") as writer: st.session_state.weekly_schedule_df.to_excel(writer,sheet_name="WeeklySchedule",index=False)
+        st.download_button("📥 تصدير جدول المواعيد Excel",data=buf_ws.getvalue(),file_name="جدول_مواعيد_الطلاب.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 elif t_page == "online_schedule":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
     st.subheader("💻 إدارة جدول حصص الأونلاين (Zoom) وتحديد مواعيد الطلاب:")
 
     all_registered_names = sorted(list(set(
-        [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
-        + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        [str(s).strip() for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [str(s).strip() for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [str(s).strip() for s in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [str(s).strip() for s in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
+
+    st.markdown("### 👥 إدارة طلاب Zoom")
+    zm1,zm2,zm3=st.columns(3)
+    with zm1:
+        with st.expander("➕ إضافة طالب",expanded=False):
+            with st.form("zoom_manual_student_form",clear_on_submit=True):
+                zn=st.text_input("اسم الطالب"); zp=st.text_input("رقم الطالب"); zpn=st.text_input("اسم ولي الأمر"); zpp=st.text_input("رقم ولي الأمر")
+                zc=st.selectbox("المنهج",list(CURRICULUM_DATA.keys()),key="zm_curr"); zg=st.selectbox("المرحلة",CURRICULUM_DATA[zc],key="zm_grade"); zpass=st.text_input("كلمة المرور",value="123456")
+                if st.form_submit_button("💾 إضافة الطالب"):
+                    target=zn.strip()
+                    if not target: st.error("اكتب اسم الطالب.")
+                    elif target in all_registered_names: st.warning("الطالب موجود بالفعل.")
+                    else:
+                        row={"اسم الطالب":target,"رقم الهاتف":zp.strip(),"كلمة المرور":zpass.strip() or "123456","المنهج/الدولة":zc,"المجموعة/الصف":zg,"اسم ولي الأمر":zpn.strip(),"رقم ولي الأمر":zpp.strip(),"تاريخ التسجيل":str(date.today()),"الحالة_حظر":"نشط","حالة_الاشتراك_البنك":"غير مشترك"}
+                        st.session_state.users_df=pd.concat([st.session_state.users_df,pd.DataFrame([row])],ignore_index=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                        st.success("✓ تمت إضافة الطالب لكشف المسجلين وبطاقات الطلاب."); st.rerun()
+    with zm2:
+        if all_registered_names:
+            zd=st.selectbox("اختر طالباً",all_registered_names,key="zoom_delete_student")
+            if st.button("🗑️ حذف الطالب نهائياً",key="zoom_delete_student_btn"):
+                delete_student_completely(zd); st.success(f"تم حذف {zd} من جميع السجلات."); st.rerun()
+    with zm3:
+        zh=build_student_roster_html(all_registered_names,"كشف طلاب Zoom"); zpdata=html_to_pdf_bytes(zh)
+        if zpdata: st.download_button("📄 طباعة الطلاب PDF",zpdata,file_name="كشف_طلاب_Zoom.pdf",mime="application/pdf",key="zoom_roster_pdf")
+        else: st.download_button("🖨️ طباعة الطلاب",zh.encode("utf-8"),file_name="كشف_طلاب_Zoom.html",mime="text/html",key="zoom_roster_html")
 
     with st.form("add_online_sched_form", clear_on_submit=True):
         col_os1, col_os2 = st.columns(2)
@@ -1494,6 +1632,11 @@ elif t_page == "online_schedule":
                     "رابط زوم": os_zoom.strip(),
                     "حالة فتح الحصة": "مغلقة"
                 }
+                online_student_clean = str(os_student).strip()
+                existing_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == online_student_clean]
+                if existing_user.empty:
+                    auto_user = {"اسم الطالب":online_student_clean,"رقم الهاتف":os_phone.strip(),"كلمة المرور":"123456","المنهج/الدولة":os_curr,"المجموعة/الصف":os_grade,"اسم ولي الأمر":"","رقم ولي الأمر":"","تاريخ التسجيل":str(date.today()),"الحالة_حظر":"نشط","حالة_الاشتراك_البنك":"غير مشترك"}
+                    st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([auto_user])], ignore_index=True)
                 st.session_state.online_schedule_df = pd.concat([st.session_state.online_schedule_df, pd.DataFrame([new_sched_row])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                 st.success(f"✓ تم إضافة الطالب ({os_student}) إلى جدول الأونلاين بنجاح!")
@@ -1535,6 +1678,16 @@ elif t_page == "online_schedule":
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                         st.warning("تم حذف السجل.")
                         st.rerun()
+                oa,ob,oc=st.columns(3)
+                with oa:
+                    if st.button("📝 رصد حصة الطالب",key=f"zoom_session_{os_idx}"):
+                        st.session_state.prefill_student=str(st_n); st.session_state.teacher_page="add_session"; st.rerun()
+                with ob:
+                    if st.button("📚 رصد واجب الطالب",key=f"zoom_hw_{os_idx}"):
+                        st.session_state.prefill_student=str(st_n); st.session_state.teacher_page="add_hw"; st.rerun()
+                with oc:
+                    if st.button("➕ إضافة موعد آخر",key=f"zoom_add_other_{os_idx}"):
+                        st.session_state.schedule_prefill_student=str(st_n); st.session_state.schedule_prefill_record=os_row.to_dict(); st.session_state.teacher_page="weekly_schedule"; st.rerun()
 
 elif t_page == "exam_maker":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
@@ -2214,9 +2367,26 @@ elif t_page == "students":
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
 
     if all_known_students:
+        st.markdown("### 📒 كشف الطلاب المسجلين")
+        roster_html = build_student_roster_html(all_known_students, "كشف الطلاب المسجلين - م/ محمد غنيم")
+        roster_pdf = html_to_pdf_bytes(roster_html)
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            if roster_pdf:
+                st.download_button("📄 طباعة كشف المسجلين PDF", roster_pdf, file_name="كشف_الطلاب_المسجلين.pdf", mime="application/pdf", key="students_roster_pdf")
+            else:
+                st.download_button("🖨️ طباعة كشف المسجلين", roster_html.encode("utf-8"), file_name="كشف_الطلاب_المسجلين.html", mime="text/html", key="students_roster_html")
+        with rc2:
+            roster_buf = io.BytesIO()
+            with pd.ExcelWriter(roster_buf, engine="openpyxl") as writer:
+                st.session_state.users_df.to_excel(writer, sheet_name="Students", index=False)
+            st.download_button("📥 تصدير كشف المسجلين Excel", roster_buf.getvalue(), file_name="كشف_الطلاب_المسجلين.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="students_roster_excel")
+        st.write("---")
         with st.expander("🗑️ حذف طالب محدد نهائياً من كافة السجلات"):
             del_selected_st = st.selectbox("اختر الطالب المراد حذفه نهائياً:", all_known_students, key="del_box_select")
             if st.button("🚨 تأكيد حذف هذا الطالب نهائياً", key="btn_confirm_del_box"):
@@ -2304,6 +2474,20 @@ elif t_page == "students":
                     if st.button("📊 درجات الطالب", key=f"btn_grades_{idx}"):
                         st.session_state[f"show_grades_{idx}"] = not st.session_state.get(f"show_grades_{idx}", False)
 
+                # بيانات ولي الأمر قابلة للتعديل وتظهر في التقرير والكشوف
+                if not u_row.empty:
+                    with st.expander("👨‍👩‍👦 بيانات ولي الأمر", expanded=False):
+                        with st.form(f"parent_data_form_{idx}"):
+                            p_name = st.text_input("اسم ولي الأمر", value=str(u_row.iloc[0].get("اسم ولي الأمر", "")), key=f"parent_name_{idx}")
+                            p_phone = st.text_input("رقم ولي الأمر", value=str(u_row.iloc[0].get("رقم ولي الأمر", "")), key=f"parent_phone_{idx}")
+                            if st.form_submit_button("💾 حفظ بيانات ولي الأمر"):
+                                ui = u_row.index[0]
+                                st.session_state.users_df.at[ui, "اسم ولي الأمر"] = p_name.strip()
+                                st.session_state.users_df.at[ui, "رقم ولي الأمر"] = p_phone.strip()
+                                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                                st.success("✓ تم حفظ بيانات ولي الأمر")
+                                st.rerun()
+
                 if st.session_state.get(f"show_grades_{idx}", False):
                     st.markdown(f"**سجل درجات الطالب: {st_name}**")
                     st_grades_df = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip() == st_name.strip()]
@@ -2350,7 +2534,12 @@ elif t_page == "add_session":
         col1, col2 = st.columns(2)
         with col1:
             session_date = st.date_input("تاريخ الحصة", value=date.today())
-            student_name = st.text_input("اسم الطالب", value=str(st.session_state.get("prefill_student", "")), placeholder="مثال: أحمد محمد")
+            session_names = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
+            prefill_session = str(st.session_state.get("prefill_student", "")).strip()
+            if session_names:
+                student_name = st.selectbox("اسم الطالب", session_names, index=(session_names.index(prefill_session) if prefill_session in session_names else 0), key="session_student_select")
+            else:
+                student_name = st.text_input("اسم الطالب", value=prefill_session, placeholder="مثال: أحمد محمد")
             group_name = st.selectbox("المرحلة / الصف الدراسي:", t_grades)
             status = st.selectbox("حالة الحضور", ["حاضر", "غائب", "متأخر", "بعذر"])
         with col2:
@@ -2382,6 +2571,8 @@ elif t_page == "add_hw":
     all_registered_names = sorted(list(set(
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
 
     with st.form("assessment_form", clear_on_submit=True):
@@ -2491,6 +2682,8 @@ elif t_page == "all_records":
         [str(s).strip() for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [str(s).strip() for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [str(s).strip() for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [str(s).strip() for s in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [str(s).strip() for s in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
 
     if not all_students_master:
@@ -2594,6 +2787,7 @@ elif t_page == "all_records":
             master_data_list.append({
                 "اسم الطالب": st_name,
                 "حالة التسجيل": is_registered,
+                "ولي الأمر": str(u_r.iloc[0].get("اسم ولي الأمر", "")) if not u_r.empty else "",
                 "المرحلة/الصف": grade_val,
                 "إجمالي الحصص": total_sess,
                 "الحصص الحاضرة": attended_sess,
@@ -2614,7 +2808,7 @@ elif t_page == "all_records":
             <table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin-top:15px;">
                 <tr style="background:#f1f5f9;">
                     <th style="padding:8px;">اسم الطالب</th>
-                    <th>حالة التسجيل</th>
+                    <th>حالة التسجيل</th><th>ولي الأمر</th>
                     <th>المرحلة/الصف</th>
                     <th>إجمالي الحصص</th>
                     <th>الحصص الحاضرة</th>
@@ -2627,7 +2821,7 @@ elif t_page == "all_records":
             all_students_pdf_html += f"""
                 <tr>
                     <td style="padding:6px;">{item['اسم الطالب']}</td>
-                    <td>{item['حالة التسجيل']}</td>
+                    <td>{item['حالة التسجيل']}</td><td>{item['ولي الأمر']}</td>
                     <td>{item['المرحلة/الصف']}</td>
                     <td>{item['إجمالي الحصص']}</td>
                     <td>{item['الحصص الحاضرة']}</td>
@@ -2669,6 +2863,8 @@ elif t_page == "parent_report":
         [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
+        + [s for s in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
 
     if not all_names:
@@ -2681,6 +2877,8 @@ elif t_page == "parent_report":
             st_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
             
             u_r_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student]
+            parent_name_rep = str(u_r_rep.iloc[0].get("اسم ولي الأمر", "")) if not u_r_rep.empty else ""
+            parent_phone_rep = str(u_r_rep.iloc[0].get("رقم ولي الأمر", "")) if not u_r_rep.empty else ""
 
             curr_val = "-"
             group_val = "-"
@@ -2791,7 +2989,7 @@ elif t_page == "parent_report":
                         </div>
                     </div>
                     <div style="text-align: left;">
-                        <h2 style="color: #0052cc; margin: 0; font-size: 26px; font-weight: 900;">الطالب: {selected_student}</h2>
+                        <h2 style="color: #0052cc; margin: 0; font-size: 26px; font-weight: 900;">الطالب: {selected_student}</h2><p style="margin:3px 0;font-weight:900;">ولي الأمر: {parent_name_rep or "غير مسجل"} | {parent_phone_rep or "غير مسجل"}</p>
                         <p style="margin: 5px 0 0 0; color: #000000; font-size: 15px; font-weight: 900;">تاريخ إصدار التقرير: {date.today()}</p>
                     </div>
                 </div>
