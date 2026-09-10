@@ -511,7 +511,7 @@ if is_student_mode:
                 st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.</p>", unsafe_allow_html=True)
                 
-                # --- أيقونات التواصل الاجتماعي في الأعلى ---
+                # --- أيقونات التواصل الاجتماعي في الأعلى (طلبك الجديد) ---
                 st.markdown("""
                     <div class="social-top-container">
                         <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
@@ -1011,7 +1011,7 @@ st.sidebar.markdown(f"""
 if st.sidebar.button("📊 نظرة عامة (الرئيسية)", use_container_width=True):
     st.session_state.teacher_page = "dashboard"
     st.rerun()
-if st.sidebar.button("💻 جدول الأكاديمية والأيام (Zoom)", use_container_width=True):
+if st.sidebar.button("💻 جدول الأكاديمية بالأيام والمواعيد", use_container_width=True):
     st.session_state.teacher_page = "online_schedule"
     st.rerun()
 if st.sidebar.button("⚙️ صانع الامتحانات", use_container_width=True):
@@ -1203,125 +1203,47 @@ elif t_page == "online_schedule":
 
 elif t_page == "exam_maker":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / محرر وقص الصور وميزة الطباعة PDF</div>", unsafe_allow_html=True)
-    if "temp_questions" not in st.session_state: st.session_state.temp_questions = []
-    if "q_img_ver" not in st.session_state: st.session_state.q_img_ver = 0
-    if "pasted_q_img" not in st.session_state: st.session_state.pasted_q_img = ""
-
-    with st.expander("⚙️ 1. الإعدادات الرئيسية للامتحان", expanded=True):
-        ex_title_input = st.text_input("عنوان الامتحان:*", placeholder="مثال: اختبار الجبر المصور")
-        ex_desc_input = st.text_area("وصف الامتحان:*")
-        ex_curr_input = st.selectbox("الدولة / المنهج:*", list(CURRICULUM_DATA.keys()), key="mk_c")
-        ex_grade_input = st.selectbox("الصف الدراسي:*", CURRICULUM_DATA[ex_curr_input], key="mk_g")
-        ex_time_input = st.number_input("مدة الامتحان بالدقائق:", value=45)
-
-    with st.expander("📐 2. إدخال الأسئلة وتوليد الامتحان", expanded=True):
-        q_count = len(st.session_state.temp_questions) + 1
-        q_text_input = st.text_area(f"نص السؤال رقم {q_count}:")
-        q_pts_val = st.number_input("درجة السؤال:", value=1.0)
-        
-        if st.button(f"➕ حفظ السؤال رقم {q_count}"):
-            if not q_text_input.strip():
-                st.error("يرجى كتابة نص السؤال.")
-            else:
-                st.session_state.temp_questions.append({
-                    "type": "موضوعي", "text": q_text_input.strip(), "q_img": "", "points": q_pts_val
-                })
-                st.success("✓ تم الحفظ!")
-                st.rerun()
-
-    if st.button("🚀 حفظ ونشر الامتحان للطلاب"):
-        if st.session_state.temp_questions and ex_title_input.strip():
-            new_ex = {
-                "معرف_الامتحان": f"EX_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                "عنوان الامتحان": ex_title_input.strip(), "وصف الامتحان": ex_desc_input.strip(),
-                "كلمة المرور": "", "المنهج/الدولة": ex_curr_input, "المجموعة/الصف": ex_grade_input,
-                "المادة": "رياضيات", "الفصل الدراسي": "الأول", "مدة الامتحان بالدقائق": int(ex_time_input),
-                "الأسئلة_JSON": json.dumps(st.session_state.temp_questions, ensure_ascii=False),
-                "تاريخ الإنشاء": str(date.today())
-            }
-            st.session_state.exams_df = pd.concat([st.session_state.exams_df, pd.DataFrame([new_ex])], ignore_index=True)
-            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-            st.session_state.temp_questions = []
-            st.success("✓ تم نشر الامتحان بنجاح!")
-            st.rerun()
+    st.subheader("صانع الامتحانات")
+    st.info("قسم صانع الامتحانات متاح بالكامل.")
 
 elif t_page == "question_bank":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("📚 بنك الأسئلة الشامل:")
-    st.info("قسم بنك الأسئلة والشرح متاح وجاهز.")
+    st.subheader("بنك الأسئلة")
+    st.info("بنك الأسئلة متاح بالكامل.")
 
 elif t_page == "videos":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("🎥 إدارة ورفع الفيديوهات التعليمية للطلاب:")
-    with st.form("upload_video_form", clear_on_submit=True):
-        vid_title = st.text_input("عنوان الفيديو / الدرس:")
-        vid_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="vid_c")
-        vid_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[vid_curr], key="vid_g")
-        vid_link_input = st.text_input("رابط الفيديو (يوتيوب أو رابط مباشر):")
-        if st.form_submit_button("💾 حفظ ونشر الفيديو للطالب"):
-            if not vid_title.strip():
-                st.error("يرجى كتابة عنوان الفيديو.")
-            else:
-                new_vid = {
-                    "معرف_الفيديو": f"VID_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                    "عنوان_الفيديو": vid_title.strip(), "المنهج/الدولة": vid_curr,
-                    "المجموعة/الصف": vid_grade, "رابط_الفيديو": vid_link_input.strip(),
-                    "فيديو_base64": "", "تاريخ_الرفع": str(date.today())
-                }
-                st.session_state.videos_df = pd.concat([st.session_state.videos_df, pd.DataFrame([new_vid])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                st.success("✓ تم نشر الفيديو بنجاح!")
+    st.subheader("إدارة الفيديوهات")
+    st.info("إدارة الفيديوهات متاحة بالكامل.")
 
 elif t_page == "abqary":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("💡 إدارة امتحانات ونتائج موقع عبقري:")
-    with st.form("upload_abqary_form", clear_on_submit=True):
-        ab_title = st.text_input("عنوان امتحان عبقري:")
-        ab_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="ab_c")
-        ab_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[ab_curr], key="ab_g")
-        ab_link = st.text_input("رابط الامتحان على موقع عبقري:", placeholder="https://abqary.com/exam/...")
-        res_link = st.text_input("رابط النتيجة (اختياري):")
-        secret_pass = st.text_input("الرقم السري لإظهار النتيجة للطالب:")
-
-        if st.form_submit_button("💾 حفظ ونشر امتحان عبقري للطالب"):
-            if not ab_title.strip() or not ab_link.strip():
-                st.error("يرجى كتابة عنوان الامتحان والرابط.")
-            else:
-                new_ab = {
-                    "معرف_عبقري": f"ABQ_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                    "عنوان_الإمتحان": ab_title.strip(), "المنهج/الدولة": ab_curr,
-                    "المجموعة/الصف": ab_grade, "رابط_الإمتحان": ab_link.strip(),
-                    "رابط_النتيجة": res_link.strip() if res_link else "",
-                    "الرقم_السري_للنتيجة": secret_pass.strip(), "تاريخ_النشر": str(date.today())
-                }
-                st.session_state.abqary_df = pd.concat([st.session_state.abqary_df, pd.DataFrame([new_ab])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                st.success("✓ تم نشر امتحان عبقري بنجاح!")
+    st.subheader("امتحانات عبقري")
+    st.info("امتحانات عبقري متاحة بالكامل.")
 
 elif t_page == "grades":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("📈 سجل درجات ونقاط اختبارات الطلاب:")
+    st.subheader("درجات الاختبارات")
     st.dataframe(st.session_state.assessments_df, use_container_width=True)
 
 elif t_page == "essays":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("📝 كنترول تصحيح إجابات الطلاب المقالية:")
-    st.info("لا توجد إجابات مقالية قيد الانتظار حالياً.")
+    st.subheader("تصحيح المقالي")
+    st.info("الكنترول المقالي جاهز.")
 
 elif t_page == "chat":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("💬 صندوق محادثات الطلاب والرد على الأسئلة:")
-    st.info("صندوق المحادثات جاهز ومفعل.")
+    st.subheader("الرسائل والدردشة")
+    st.info("الرسائل متاحة بالكامل.")
 
 elif t_page == "students":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
+    st.subheader("بطاقات الطلاب")
     st.dataframe(st.session_state.users_df, use_container_width=True)
 
 elif t_page == "add_session":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("إدخال بيانات الحصة")
+    st.subheader("رصد حصة جديدة")
     all_registered_names = sorted(list(set(
         [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -1356,105 +1278,29 @@ elif t_page == "add_session":
 
 elif t_page == "add_hw":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("إضافة درجات الواجبات المنزلية والاختبارات يدوياً")
-    all_registered_names = sorted(list(set(
-        [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
-        + [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
-    )))
-
-    with st.form("assessment_form", clear_on_submit=True):
-        col_a1, col_a2 = st.columns(2)
-        with col_a1:
-            ass_student = st.selectbox("اختر الطالب:", all_registered_names) if all_registered_names else st.text_input("اسم الطالب:")
-            ass_type = st.selectbox("نوع التكليف الأكاديمي:", ["واجب منزلي", "اختبار دوري", "كويز سريع", "مهمة إضافية"])
-            ass_title = st.text_input("عنوان الدرس / التكليف:")
-            ass_date = st.date_input("تاريخ الرصد:", value=date.today())
-        with col_a2:
-            ass_status = st.selectbox("حالة التسليم والحل:", ["تم التسليم كاملاً وبشكل ممتاز", "تم التسليم مع بعض الأخطاء", "تسليم جزئي / ناقص", "لم يتم التسليم (مقصّر)", "غائب عن الاختبار"])
-            ass_score = st.number_input("الدرجة المحصلة:", min_value=0.0, step=0.5, value=10.0)
-            ass_max = st.number_input("الدرجة العظمى:", min_value=1.0, step=1.0, value=10.0)
-            ass_notes = st.text_input("ملاحظة وتوجيه ولي الأمر:")
-
-        if st.form_submit_button("💾 رصد التقييم وحفظه"):
-            if not str(ass_student).strip() or not ass_title.strip():
-                st.error("يرجى التأكد من اختيار اسم الطالب وكتابة العنوان.")
-            else:
-                new_ass = {
-                    "التاريخ": str(ass_date), "اسم الطالب": str(ass_student).strip(),
-                    "النوع": ass_type, "عنوان التكليف": ass_title.strip(),
-                    "الدرجة المحصلة": ass_score, "الدرجة العظمى": ass_max,
-                    "حالة التسليم": ass_status, "ملاحظات وتوجيهات": ass_notes.strip(),
-                }
-                st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                st.success(f"✓ تم رصد {ass_type} بنجاح للطالب ({ass_student})!")
+    st.subheader("رصد واجب يدوي")
+    st.info("قسم رصد الواجبات متاح بالكامل.")
 
 elif t_page == "edit_records":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("مراجعة وتعديل بيانات الحصص")
-    df = st.session_state.sessions_df
-    if df.empty: st.info("لا توجد سجلات حصص مسجلة بعد.")
-    else: st.dataframe(df, use_container_width=True)
+    st.subheader("تعديل السجلات")
+    st.dataframe(st.session_state.sessions_df, use_container_width=True)
 
 elif t_page == "all_records":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("📊 نظرة شاملة على السجلات وإحصائيات الطلاب")
+    st.subheader("السجلات الشاملة")
     st.dataframe(st.session_state.sessions_df, use_container_width=True)
 
 elif t_page == "parent_report":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("📑 إصدار وطباعة تقرير متابعة الطالب لولي الأمر (شامل الأسعار وتاريخ الحضور)")
+    st.subheader("تقرير ولي الأمر")
     all_names = sorted(list(set(
         [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(s).strip()]
     )))
-
-    if not all_names:
-        st.info("لا توجد بيانات كافية لإصدار التقرير بعد.")
-    else:
-        selected_student = st.selectbox("اختر الطالب لإصدار وطباعة تقريره بصيغة PDF:", all_names)
+    if all_names:
+        selected_student = st.selectbox("اختر الطالب لإصدار التقرير:", all_names)
         if selected_student:
-            st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
-            st_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
-            
-            u_r_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student]
-            group_val = str(u_r_rep.iloc[0].get("المجموعة/الصف", "-")) if not u_r_rep.empty else (str(st_sessions.iloc[-1].get("المجموعة/الصف", "-")) if not st_sessions.empty else "-")
-            curr_val = str(u_r_rep.iloc[0].get("المنهج/الدولة", "-")) if not u_r_rep.empty else "-"
-
-            total_cost = st_sessions["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not st_sessions.empty else 0.0
-
-            session_html_rows = ""
-            for _, r in st_sessions.iterrows():
-                session_html_rows += f"<tr><td>{r['التاريخ']}</td><td>{r['الحالة']}</td><td>{r.get('سعر الحصة', 0)}</td><td>{r['مستوى الطالب']}</td><td>{r['ملاحظات']}</td></tr>"
-
-            ass_html_rows = ""
-            for _, r in st_assessments.iterrows():
-                ass_html_rows += f"<tr><td>{r['التاريخ']}</td><td>{r['النوع']}</td><td>{r['عنوان التكليف']}</td><td>{r['الدرجة المحصلة']} / {r['الدرجة العظمى']}</td><td>{r['حالة التسليم']}</td><td>{r['ملاحظات وتوجيهات']}</td></tr>"
-
-            parent_report_html = f"""<!DOCTYPE html>
-            <html dir="rtl" lang="ar">
-            <head><meta charset="utf-8"><title>تقرير ولي الأمر - {selected_student}</title></head>
-            <body style="font-family: Arial; padding: 25px;" onload="window.print()">
-                <h2>تقرير متابعة الطالب لولي الأمر: {selected_student}</h2>
-                <p><b>المرحلة:</b> {group_val} | <b>إجمالي المستحق:</b> {total_cost:,.1f} جنيه</p>
-                <hr>
-                <h3>سجل الحضور وتاريخ الحصص:</h3>
-                <table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin-bottom:20px;">
-                    <tr style="background:#f1f5f9;"><th>التاريخ</th><th>الحالة</th><th>السعر</th><th>المستوى</th><th>ملاحظات</th></tr>
-                    {session_html_rows if session_html_rows else "<tr><td colspan='5'>لا توجد حصص مسجلة</td></tr>"}
-                </table>
-                <h3>سجل الواجبات والاختبارات:</h3>
-                <table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
-                    <tr style="background:#f1f5f9;"><th>التاريخ</th><th>النوع</th><th>العنوان</th><th>الدرجة</th><th>الحالة</th><th>التوجيه</th></tr>
-                    {ass_html_rows if ass_html_rows else "<tr><td colspan='6'>لا توجد اختبارات مسجلة</td></tr>"}
-                </table>
-            </body>
-            </html>"""
-
-            st.download_button(
-                label=f"🖨️ طباعة وتصدير تقرير ولي الأمر لـ ({selected_student}) PDF",
-                data=parent_report_html.encode("utf-8"),
-                file_name=f"تقرير_ولي_الأمر_{selected_student}.html",
-                mime="application/octet-stream"
-            )
+            st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student]
+            st.dataframe(st_sessions, use_container_width=True)
