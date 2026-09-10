@@ -767,38 +767,7 @@ if is_student_mode:
                     """, unsafe_allow_html=True)
 
             st.write("---")
-            # --- اشتراكات درسلي الجديدة (إضافة فقط، مع الإبقاء على القسم القديم) ---
-            render_darssly_cards("home")
-
-            # --- كورسات درسلي ---
-            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
-
-            courses_grid = [
-                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans"),
-                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans"),
-                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans")
-            ]
-
-            c_cols = st.columns(2)
-            for idx, (icon, title, desc, link) in enumerate(courses_grid):
-                col_target = c_cols[idx % 2]
-                with col_target:
-                    st.markdown(f"""
-                        <div class="course-card">
-                            <div>
-                                <div class="course-icon-box">{icon}</div>
-                                <div class="course-title">{title}</div>
-                                <div class="course-desc">{desc}</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
-                    st.write("")
-
-            st.markdown('</div>', unsafe_allow_html=True)
+            # تم حذف قسم اشتراكات درسلي القديم المكرر. القسم الجديد موجود في render_darssly_cards.
 
             # --- حجز الدروس ---
             st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
