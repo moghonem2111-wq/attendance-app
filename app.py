@@ -209,6 +209,14 @@ if "users_df" not in st.session_state:
     st.session_state.online_schedule_df = os_df
     st.session_state.weekly_schedule_df = ws_df
 
+# تأكد من وجود جدول المواعيد حتى لو كانت جلسة Streamlit قديمة قبل إضافة الميزة
+if "weekly_schedule_df" not in st.session_state:
+    try:
+        _, _, _, _, _, _, _, _, _, _, _, _, _, ws_df = load_all_data()
+        st.session_state.weekly_schedule_df = ws_df
+    except Exception:
+        st.session_state.weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
+
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
 
