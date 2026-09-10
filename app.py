@@ -113,6 +113,7 @@ COL_VIDEOS = ["معرف_الفيديو", "عنوان_الفيديو", "المن�
 COL_VIDEO_COMMENTS = ["التاريخ_والوقت", "عنوان_الفيديو", "اسم الطالب", "نص_التعليق"]
 COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنهج/الدولة", "المجموعة/الصف", "رابط_الإمتحان", "رابط_النتيجة", "الرقم_السري_للنتيجة", "تاريخ_النشر"]
 COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
+COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "اليوم", "الموعد", "اللون", "حالة الموعد"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -128,6 +129,7 @@ def load_all_data():
     video_comments_df = pd.DataFrame(columns=COL_VIDEO_COMMENTS)
     abqary_df = pd.DataFrame(columns=COL_ABQARY)
     online_schedule_df = pd.DataFrame(columns=COL_ONLINE_SCHEDULE)
+    weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
 
     if os.path.exists(FILE_NAME):
         try:
@@ -146,6 +148,7 @@ def load_all_data():
                 if "VideoComments" in xls.sheet_names: video_comments_df = pd.read_excel(xls, "VideoComments")
                 if "AbqaryExams" in xls.sheet_names: abqary_df = pd.read_excel(xls, "AbqaryExams")
                 if "OnlineSchedule" in xls.sheet_names: online_schedule_df = pd.read_excel(xls, "OnlineSchedule")
+                if "WeeklySchedule" in xls.sheet_names: weekly_schedule_df = pd.read_excel(xls, "WeeklySchedule")
         except Exception:
             pass
 
@@ -155,6 +158,12 @@ def load_all_data():
             elif col == "الحالة_حظر": users_df[col] = "نشط"
             elif col == "حالة_الاشتراك_البنك": users_df[col] = "غير مشترك"
             else: users_df[col] = ""
+    for col in COL_WEEKLY_SCHEDULE:
+        if col not in weekly_schedule_df.columns:
+            if col == "اللون": weekly_schedule_df[col] = "#2563eb"
+            elif col == "حالة الموعد": weekly_schedule_df[col] = "نشط"
+            else: weekly_schedule_df[col] = ""
+
     for col in COL_ONLINE_SCHEDULE:
         if col not in online_schedule_df.columns:
             if col == "رابط زوم": online_schedule_df[col] = "https://us05web.zoom.us/j/83526892910?pwd=2jWRgATgBRPbXttdnm0QpLwBApsZL4.1"
@@ -162,9 +171,11 @@ def load_all_data():
             elif col == "اسم الأكاديمية": online_schedule_df[col] = "أكاديمية البشمهندس"
             else: online_schedule_df[col] = ""
 
-    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df
+    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None):
+    if weekly_schedule_df is None:
+        weekly_schedule_df = st.session_state.get("weekly_schedule_df", pd.DataFrame(columns=COL_WEEKLY_SCHEDULE))
     with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
@@ -179,9 +190,10 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         video_comments_df.to_excel(writer, sheet_name="VideoComments", index=False)
         abqary_df.to_excel(writer, sheet_name="AbqaryExams", index=False)
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
+        weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
 
 if "users_df" not in st.session_state:
-    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df = load_all_data()
+    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df = load_all_data()
     st.session_state.users_df = u_df
     st.session_state.sessions_df = s_df
     st.session_state.assessments_df = a_df
@@ -195,6 +207,7 @@ if "users_df" not in st.session_state:
     st.session_state.video_comments_df = vc_df
     st.session_state.abqary_df = ab_df
     st.session_state.online_schedule_df = os_df
+    st.session_state.weekly_schedule_df = ws_df
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
@@ -231,6 +244,7 @@ def delete_student_completely(student_name_to_del):
     st.session_state.bank_requests_df = st.session_state.bank_requests_df[st.session_state.bank_requests_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.video_comments_df = st.session_state.video_comments_df[st.session_state.video_comments_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.online_schedule_df = st.session_state.online_schedule_df[st.session_state.online_schedule_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
+    st.session_state.weekly_schedule_df = st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
 
 if st.session_state.dark_mode:
@@ -455,6 +469,18 @@ if is_student_mode:
             if st.button(mode_label):
                 st.session_state.dark_mode = not st.session_state.dark_mode
                 st.rerun()
+
+    # --- أيقونات التواصل أعلى صفحة الطالب (إضافة جديدة بدون حذف الفوتر القديم) ---
+    st.markdown(f"""
+        <div class="social-top-container" style="justify-content:flex-start; margin-top:0; margin-bottom:12px; padding:8px 12px; background:{card_bg}; border:1px solid {card_border}; border-radius:14px;">
+            <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+            <a href="https://wa.me/201016361440" target="_blank" title="WhatsApp" class="social-btn-top whatsapp-bg"><svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.669-.699c.971.53 1.77.822 2.791.823h.002c3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.77-5.766zm9.969 5.828c0 5.519-4.481 10-10 10-1.761 0-3.424-.46-4.881-1.267l-5.619 1.474 1.499-5.485c-.911-1.516-1.43-3.285-1.43-5.176 0-5.519 4.481-10 10-10 5.519 0 10 4.481 10 10z"/></svg></a>
+            <a href="https://t.me/mrmaths22" target="_blank" title="Telegram" class="social-btn-top telegram-bg"><svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg></a>
+            <a href="https://www.tiktok.com/@eng_mohamedghonaim?_r=1&_t=ZS-99VdklZPBUS" target="_blank" title="TikTok" class="social-btn-top tiktok-bg"><svg viewBox="0 0 24 24"><path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 2.373-4.513c.277 0 .546.039.803.111V9.417a6.338 6.338 0 0 0-.803-.051C6.017 9.366 3.2 12.183 3.2 15.647 3.2 19.11 6.017 22 9.479 22c3.462 0 6.279-2.817 6.279-6.353V9.07c1.378.983 3.054 1.564 4.869 1.584V7.209a4.845 4.845 0 0 1-1.038-.523z"/></svg></a>
+            <a href="https://youtube.com/@engineermaths?si=8C6T808VuAU5OMOt" target="_blank" title="YouTube" class="social-btn-top youtube-bg"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+            <span style="font-weight:900; margin-right:8px; color:{text_color};">تابعنا وتواصل معنا</span>
+        </div>
+    """, unsafe_allow_html=True)
 
     st.write("---")
 
@@ -757,6 +783,18 @@ if is_student_mode:
                         st.link_button("🚀 انضم الآن إلى حصة زوم 🟢", "https://us05web.zoom.us/j/83526892910?pwd=2jWRgATgBRPbXttdnm0QpLwBApsZL4.1", use_container_width=True)
                 else:
                     st.warning("⏳ الحصة مغلقة حالياً. سيتم فتحها من قبل المعلم في موعدها المحدد.")
+
+        # --- موعد الطالب الأسبوعي المرتبط بملف الطالب ---
+        student_weekly = st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip().str.lower() == student_name_str.lower()]
+        if not student_weekly.empty:
+            st.markdown("<div class='vertical-section-header'>🗓️ مواعيدي الأسبوعية</div>", unsafe_allow_html=True)
+            for _, wr in student_weekly.iterrows():
+                w_color = str(wr.get("اللون", "#2563eb"))
+                st.markdown(f"""<div style='border-right:6px solid {w_color};background:{card_bg};border:1px solid {card_border};border-radius:12px;padding:14px;margin-bottom:10px;'>
+                <b>📅 {wr.get('اليوم','')} — ⏰ {wr.get('الموعد','')}</b><br>
+                🏛️ الأكاديمية: {wr.get('اسم الأكاديمية','')} | 📚 {wr.get('المنهج/الدولة','')} — {wr.get('المجموعة/الصف','')}<br>
+                💰 سعر الحصة: {wr.get('سعر الحصة',0)} جنيه | 📞 مشرف الأكاديمية: {wr.get('رقم مشرف الأكاديمية','')}
+                </div>""", unsafe_allow_html=True)
 
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
         
@@ -1093,6 +1131,9 @@ if st.sidebar.button("📊 نظرة عامة (الرئيسية)", use_container_
 if st.sidebar.button("💻 جدول حصص الأونلاين (Zoom)", use_container_width=True):
     st.session_state.teacher_page = "online_schedule"
     st.rerun()
+if st.sidebar.button("🗓️ لوحة مواعيد الطلاب", use_container_width=True):
+    st.session_state.teacher_page = "weekly_schedule"
+    st.rerun()
 if st.sidebar.button("⚙️ صانع الامتحانات", use_container_width=True):
     st.session_state.teacher_page = "exam_maker"
     st.rerun()
@@ -1241,6 +1282,124 @@ if t_page == "dashboard":
         if st.button("عرض التقارير", key="card_btn_rep"):
             st.session_state.teacher_page = "parent_report"
             st.rerun()
+
+elif t_page == "weekly_schedule":
+    if st.button("⬅️ العودة للرئيسية"):
+        st.session_state.teacher_page = "dashboard"
+        st.rerun()
+
+    st.markdown("<div class='vertical-section-header'>🗓️ لوحة مواعيد الطلاب الأسبوعية</div>", unsafe_allow_html=True)
+    st.caption("لوحة مستقلة لإضافة الطلاب ومواعيدهم. كل طالب يظهر بلون مختلف، ويمكن إضافة أكثر من موعد للطالب نفسه.")
+
+    ws_df = st.session_state.weekly_schedule_df
+    known_students = sorted(list(set(
+        [str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] +
+        [str(x).strip() for x in ws_df["اسم الطالب"].dropna().unique() if str(x).strip()]
+    )))
+
+    # ألوان جاهزة ومتعددة للطلاب
+    palette = ["#2563eb", "#16a34a", "#dc2626", "#9333ea", "#ea580c", "#0891b2", "#db2777", "#65a30d", "#7c3aed", "#0f766e"]
+    color_map = {}
+    for i, name in enumerate(known_students):
+        old_colors = ws_df.loc[ws_df["اسم الطالب"].astype(str).str.strip() == name, "اللون"] if not ws_df.empty else pd.Series(dtype=str)
+        color_map[name] = str(old_colors.iloc[0]) if len(old_colors) and str(old_colors.iloc[0]).startswith("#") else palette[i % len(palette)]
+
+    with st.expander("➕ إضافة موعد طالب جديد / إضافة موعد آخر", expanded=True):
+        with st.form("weekly_schedule_add_form", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                ws_student = st.selectbox("اسم الطالب:", known_students) if known_students else st.text_input("اسم الطالب:")
+                ws_academy = st.text_input("اسم الأكاديمية:", value="أكاديمية البشمهندس")
+                ws_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="weekly_curr")
+                ws_grade = st.selectbox("المرحلة / الصف:", CURRICULUM_DATA[ws_curr], key="weekly_grade")
+                ws_phone = st.text_input("رقم الطالب:")
+            with c2:
+                ws_sup = st.text_input("رقم مشرف الأكاديمية:")
+                ws_price = st.number_input("سعر الحصة (جنيه):", min_value=0.0, step=10.0, value=100.0)
+                ws_day = st.selectbox("يوم الحصة:", ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"])
+                ws_time = st.time_input("موعد الحصة:", value=time(18, 0), step=900)
+            if st.form_submit_button("💾 إضافة الموعد إلى الجدول"):
+                if not str(ws_student).strip():
+                    st.error("يرجى اختيار أو كتابة اسم الطالب.")
+                else:
+                    student_clean = str(ws_student).strip()
+                    new_ws = {
+                        "اسم الطالب": student_clean,
+                        "اسم الأكاديمية": ws_academy.strip(),
+                        "المنهج/الدولة": ws_curr,
+                        "المجموعة/الصف": ws_grade,
+                        "رقم الطالب": ws_phone.strip(),
+                        "رقم مشرف الأكاديمية": ws_sup.strip(),
+                        "سعر الحصة": ws_price,
+                        "اليوم": ws_day,
+                        "الموعد": ws_time.strftime("%H:%M"),
+                        "اللون": color_map.get(student_clean, palette[len(color_map) % len(palette)]),
+                        "حالة الموعد": "نشط"
+                    }
+                    st.session_state.weekly_schedule_df = pd.concat([st.session_state.weekly_schedule_df, pd.DataFrame([new_ws])], ignore_index=True)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                    st.success(f"✓ تم إضافة موعد {student_clean} يوم {ws_day} الساعة {ws_time.strftime('%H:%M')}.")
+                    st.rerun()
+
+    # جدول أسبوعي حقيقي: الأيام أعمدة والطلاب داخل الخلايا حسب الموعد
+    st.markdown("### 📅 الجدول الأسبوعي")
+    days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"]
+    if ws_df.empty:
+        st.info("لا توجد مواعيد مضافة حتى الآن.")
+    else:
+        rows = []
+        times = sorted([str(x) for x in ws_df["الموعد"].dropna().unique()])
+        for tm in times:
+            row = {"الساعة": tm}
+            for d in days:
+                matches = ws_df[(ws_df["الموعد"].astype(str) == tm) & (ws_df["اليوم"].astype(str) == d) & (ws_df["حالة الموعد"].astype(str) != "متوقف")]
+                parts = []
+                for _, r in matches.iterrows():
+                    col = str(r.get("اللون", "#2563eb"))
+                    parts.append(f"<div style='background:{col};color:#fff;padding:7px;border-radius:8px;margin:2px 0;font-weight:900;'>👤 {r['اسم الطالب']}<br><small>{r['المجموعة/الصف']} | {r['اسم الأكاديمية']}</small></div>")
+                row[d] = "".join(parts) if parts else "—"
+            rows.append(row)
+        schedule_html = "<table style='width:100%;border-collapse:collapse;text-align:center;direction:rtl'><tr style='background:#f1f5f9'><th style='padding:10px;border:1px solid #cbd5e1'>الساعة</th>" + "".join([f"<th style='padding:10px;border:1px solid #cbd5e1'>{d}</th>" for d in days]) + "</tr>"
+        for row in rows:
+            schedule_html += f"<tr><td style='padding:10px;border:1px solid #cbd5e1;font-weight:900'>{row['الساعة']}</td>" + "".join([f"<td style='padding:5px;border:1px solid #cbd5e1;vertical-align:top'>{row[d]}</td>" for d in days]) + "</tr>"
+        schedule_html += "</table>"
+        st.markdown(schedule_html, unsafe_allow_html=True)
+
+        st.write("---")
+        st.markdown("### 👥 تفاصيل المواعيد وإدارتها")
+        for ws_idx, r in ws_df.iterrows():
+            student_nm = str(r.get("اسم الطالب", ""))
+            with st.expander(f"{student_nm} — {r.get('اليوم','')} {r.get('الموعد','')} | {r.get('اسم الأكاديمية','')}"):
+                c1, c2, c3 = st.columns(3)
+                c1.write(f"**المنهج:** {r.get('المنهج/الدولة','')}\n\n**المرحلة:** {r.get('المجموعة/الصف','')}")
+                c2.write(f"**سعر الحصة:** {r.get('سعر الحصة',0)} جنيه\n\n**مشرف الأكاديمية:** {r.get('رقم مشرف الأكاديمية','')}")
+                c3.write(f"**رقم الطالب:** {r.get('رقم الطالب','')}\n\n**الحالة:** {r.get('حالة الموعد','نشط')}")
+                b1, b2, b3 = st.columns(3)
+                with b1:
+                    if st.button("📝 رصد حصة الطالب", key=f"ws_session_{ws_idx}"):
+                        st.session_state.prefill_student = student_nm
+                        st.session_state.prefill_schedule_idx = ws_idx
+                        st.session_state.teacher_page = "add_session"
+                        st.rerun()
+                with b2:
+                    if st.button("📚 رصد واجب الطالب", key=f"ws_hw_{ws_idx}"):
+                        st.session_state.prefill_student = student_nm
+                        st.session_state.teacher_page = "add_hw"
+                        st.rerun()
+                with b3:
+                    if st.button("🗑️ حذف الموعد", key=f"ws_del_{ws_idx}"):
+                        st.session_state.weekly_schedule_df = ws_df.drop(ws_idx).reset_index(drop=True)
+                        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                        st.success("تم حذف الموعد فقط، ولن يتم حذف الطالب أو سجلاته.")
+                        st.rerun()
+
+    st.write("---")
+    st.markdown("### 📋 كشف المواعيد القابل للتصدير")
+    st.dataframe(st.session_state.weekly_schedule_df, use_container_width=True)
+    buf_ws = io.BytesIO()
+    with pd.ExcelWriter(buf_ws, engine="openpyxl") as writer:
+        st.session_state.weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
+    st.download_button("📥 تصدير جدول المواعيد Excel", data=buf_ws.getvalue(), file_name="جدول_مواعيد_الطلاب.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 elif t_page == "online_schedule":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
@@ -2139,7 +2298,7 @@ elif t_page == "add_session":
         col1, col2 = st.columns(2)
         with col1:
             session_date = st.date_input("تاريخ الحصة", value=date.today())
-            student_name = st.text_input("اسم الطالب", placeholder="مثال: أحمد محمد")
+            student_name = st.text_input("اسم الطالب", value=str(st.session_state.get("prefill_student", "")), placeholder="مثال: أحمد محمد")
             group_name = st.selectbox("المرحلة / الصف الدراسي:", t_grades)
             status = st.selectbox("حالة الحضور", ["حاضر", "غائب", "متأخر", "بعذر"])
         with col2:
@@ -2162,6 +2321,8 @@ elif t_page == "add_session":
                 st.session_state.sessions_df = pd.concat([st.session_state.sessions_df, pd.DataFrame([new_row])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                 st.success(f"✓ تم حفظ سجل الحصة للطالب ({student_name}) بنجاح!")
+                st.session_state.pop("prefill_student", None)
+                st.session_state.pop("prefill_schedule_idx", None)
 
 elif t_page == "add_hw":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
@@ -2174,7 +2335,12 @@ elif t_page == "add_hw":
     with st.form("assessment_form", clear_on_submit=True):
         col_a1, col_a2 = st.columns(2)
         with col_a1:
-            ass_student = st.selectbox("اختر الطالب:", all_registered_names) if all_registered_names else st.text_input("اسم الطالب:")
+            if all_registered_names:
+                prefill_hw = str(st.session_state.get("prefill_student", ""))
+                hw_index = all_registered_names.index(prefill_hw) if prefill_hw in all_registered_names else 0
+                ass_student = st.selectbox("اختر الطالب:", all_registered_names, index=hw_index)
+            else:
+                ass_student = st.text_input("اسم الطالب:")
             ass_type = st.selectbox("نوع التكليف الأكاديمي:", ["واجب منزلي", "اختبار دوري", "كويز سريع", "مهمة إضافية"])
             ass_title = st.text_input("عنوان الدرس / التكليف:", placeholder="مثال: تمارين الهندسة صـ 25")
             ass_date = st.date_input("تاريخ الرصد:", value=date.today())
@@ -2197,6 +2363,7 @@ elif t_page == "add_hw":
                 st.session_state.assessments_df = pd.concat([st.session_state.assessments_df, pd.DataFrame([new_ass])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                 st.success(f"✓ تم رصد {ass_type} بنجاح للطالب ({ass_student})!")
+                st.session_state.pop("prefill_student", None)
 
     st.write("---")
     st.dataframe(st.session_state.assessments_df, use_container_width=True)
@@ -2535,6 +2702,11 @@ elif t_page == "parent_report":
 
             teacher_img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
 
+            student_weekly_rep = st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip() == selected_student.strip()].copy()
+            weekly_report_rows = ""
+            for _, wr in student_weekly_rep.iterrows():
+                weekly_report_rows += f"<tr><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('اليوم','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('الموعد','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('اسم الأكاديمية','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('المنهج/الدولة','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('المجموعة/الصف','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('سعر الحصة',0)}</td></tr>"
+
             parent_report_html = f"""<!DOCTYPE html>
             <html dir="rtl" lang="ar">
             <head>
@@ -2584,12 +2756,17 @@ elif t_page == "parent_report":
                         <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
                     </tr>
                 </table>
-                <div class="section-title">1. تقرير الواجبات المنزلية والاختبارات الدورية:</div>
+                <div class="section-title">1. جدول المواعيد الأسبوعية:</div>
+                <table class="table-main">
+                    <tr><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>سعر الحصة</th></tr>
+                    {weekly_report_rows if weekly_report_rows else "<tr><td colspan='6'>لا توجد مواعيد أسبوعية مسجلة.</td></tr>"}
+                </table>
+                <div class="section-title">2. تقرير الواجبات المنزلية والاختبارات الدورية:</div>
                 <table class="table-main">
                     <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف / الاختبار</th><th>الدرجة المحصلة</th><th>حالة التسليم والالتزام</th><th>ملاحظات وتوجيهات</th></tr>
                     {ass_html_rows}
                 </table>
-                <div class="section-title">2. سجل الحضور وتفاصيل سعر كل حصة:</div>
+                <div class="section-title">3. سجل الحضور وتفاصيل سعر كل حصة:</div>
                 <table class="table-main">
                     <tr><th>التاريخ</th><th>حالة الحضور</th><th>سعر الحصة</th><th>مستوى الطالب بالحصة</th><th>ملاحظات التفاعل والاستيعاب</th></tr>
                     {session_html_rows}
