@@ -816,7 +816,7 @@ if is_student_mode:
 
                     st.write("")
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
                                 st.success("✓ الرقم السري صحيح!")
@@ -1157,7 +1157,6 @@ elif t_page == "online_schedule":
     if os_state.empty:
         st.info("لا توجد مواعيد حصص مسجلة في جدول الأكاديمية حتى الآن.")
     else:
-        # تلوين الطلاب تلقائياً بألوان مميزة في الجدول
         unique_students_list = os_state["اسم الطالب"].unique()
         color_palette = ["#e0f2fe", "#fce7f3", "#d1fae5", "#fef3c7", "#ede9fe", "#ffedd5"]
         student_color_map = {st_n: color_palette[i % len(color_palette)] for i, st_n in enumerate(unique_students_list)}
