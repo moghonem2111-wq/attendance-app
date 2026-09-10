@@ -112,7 +112,7 @@ COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "ال
 COL_VIDEOS = ["معرف_الفيديو", "عنوان_الفيديو", "المنهج/الدولة", "المجموعة/الصف", "رابط_الفيديو", "فيديو_base64", "تاريخ_الرفع"]
 COL_VIDEO_COMMENTS = ["التاريخ_والوقت", "عنوان_الفيديو", "اسم الطالب", "نص_التعليق"]
 COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنهج/الدولة", "المجموعة/الصف", "رابط_الإمتحان", "رابط_النتيجة", "الرقم_السري_للنتيجة", "تاريخ_النشر"]
-COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "يوم الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
+COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -160,7 +160,6 @@ def load_all_data():
             if col == "رابط زوم": online_schedule_df[col] = "https://us05web.zoom.us/j/83526892910?pwd=2jWRgATgBRPbXttdnm0QpLwBApsZL4.1"
             elif col == "حالة فتح الحصة": online_schedule_df[col] = "مغلقة"
             elif col == "اسم الأكاديمية": online_schedule_df[col] = "أكاديمية البشمهندس"
-            elif col == "يوم الحصة": online_schedule_df[col] = "السبت"
             else: online_schedule_df[col] = ""
 
     return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df
@@ -816,7 +815,7 @@ if is_student_mode:
 
                     st.write("")
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
                                 st.success("✓ الرقم السري صحيح!")
@@ -930,7 +929,7 @@ if is_student_mode:
             if sub_status != "مشترك":
                 st.warning("🔒 عذراً، بنك الأسئلة مغلق ويحتاج إلى اشتراك خاص بمرحلتك الدراسية بقيمة **100 جنيه** فقط.")
                 with st.form("bank_subscription_form"):
-                    pay_phone = st.text_input("رقم الهاتف المحول منه:", placeholder="010XXXXXXXX")
+                    pay_phone = st.text_input("رقم الهاتف المحمول:", placeholder="010XXXXXXXX")
                     pay_otp = st.text_input("كود التحقق الخاص بـ InstaPay (OTP):")
                     pay_receipt = st.file_uploader("📷 رفع اسكرين (إيصال) الدفع:", type=["jpg", "png", "jpeg"])
                     if st.form_submit_button("📤 إرسال طلب الاشتراك لتأكيد المعلم"):
@@ -1011,7 +1010,7 @@ st.sidebar.markdown(f"""
 if st.sidebar.button("📊 نظرة عامة (الرئيسية)", use_container_width=True):
     st.session_state.teacher_page = "dashboard"
     st.rerun()
-if st.sidebar.button("💻 جدول الأكاديمية والأيام (Zoom)", use_container_width=True):
+if st.sidebar.button("💻 جدول الأكاديمية بالأيام والمواعيد", use_container_width=True):
     st.session_state.teacher_page = "online_schedule"
     st.rerun()
 if st.sidebar.button("⚙️ صانع الامتحانات", use_container_width=True):
