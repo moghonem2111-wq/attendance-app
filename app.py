@@ -1,4 +1,4 @@
-والله حضرتك ناقص بردوا 
+
 import os
 import io
 import json
