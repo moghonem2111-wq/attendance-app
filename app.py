@@ -72,16 +72,21 @@ CURRICULUM_DATA = {
 }
 
 possible_images = ["teacher.jpg", "teacher.png", "teacher.jpeg", "photo_2026-08-02_00-34-53.jpg"]
-found_img_path = None
-for img_cand in possible_images:
-    if os.path.exists(img_cand):
-        found_img_path = img_cand
-        break
+# استخدم مسار التطبيق نفسه حتى تعمل الصورة بشكل صحيح على Streamlit Cloud
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+found_img_path = next(
+    (os.path.join(APP_DIR, name) for name in possible_images
+     if os.path.exists(os.path.join(APP_DIR, name))),
+    None
+)
 
 def get_image_base64(path):
-    if path and os.path.exists(path):
+    if path:
+        full_path = path if os.path.isabs(path) else os.path.join(APP_DIR, path)
+        if not os.path.exists(full_path):
+            return ""
         try:
-            with open(path, "rb") as img_file:
+            with open(full_path, "rb") as img_file:
                 return base64.b64encode(img_file.read()).decode()
         except Exception:
             return ""
