@@ -1312,20 +1312,59 @@ elif t_page == "weekly_schedule":
         old_colors = ws_df.loc[ws_df["اسم الطالب"].astype(str).str.strip() == name, "اللون"] if not ws_df.empty else pd.Series(dtype=str)
         color_map[name] = str(old_colors.iloc[0]) if len(old_colors) and str(old_colors.iloc[0]).startswith("#") else palette[i % len(palette)]
 
+    # بيانات الموعد السابق: عند اختيار "إضافة موعد آخر" لنفس الطالب، يتم الاحتفاظ بكل بياناته
+    # ونحتاج فقط لتغيير اليوم والساعة (ويمكن تعديل أي بيان قبل الحفظ).
+    prefill_student = st.session_state.pop("schedule_prefill_student", "")
+    prefill_record = st.session_state.pop("schedule_prefill_record", None)
+    prefill_student = str(prefill_student).strip()
+
     with st.expander("➕ إضافة موعد طالب جديد / إضافة موعد آخر", expanded=True):
         with st.form("weekly_schedule_add_form", clear_on_submit=True):
+            # تحديد الطالب تلقائياً إذا ضغطنا "إضافة موعد آخر" من موعد موجود
+            if known_students:
+                default_student_idx = known_students.index(prefill_student) if prefill_student in known_students else 0
+                ws_student = st.selectbox("اسم الطالب:", known_students, index=default_student_idx, key="weekly_student")
+            else:
+                ws_student = st.text_input("اسم الطالب:", value=prefill_student, key="weekly_student_text")
+
+            # نأخذ بيانات الطالب من آخر موعد مسجل له لتسهيل إضافة موعد جديد
+            student_existing = pd.DataFrame()
+            if str(ws_student).strip() and not ws_df.empty:
+                student_existing = ws_df[ws_df["اسم الطالب"].astype(str).str.strip() == str(ws_student).strip()]
+            base_record = prefill_record if isinstance(prefill_record, dict) else (student_existing.iloc[-1].to_dict() if not student_existing.empty else {})
+
             c1, c2 = st.columns(2)
             with c1:
-                ws_student = st.selectbox("اسم الطالب:", known_students) if known_students else st.text_input("اسم الطالب:")
-                ws_academy = st.text_input("اسم الأكاديمية:", value="أكاديمية البشمهندس")
-                ws_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="weekly_curr")
-                ws_grade = st.selectbox("المرحلة / الصف:", CURRICULUM_DATA[ws_curr], key="weekly_grade")
-                ws_phone = st.text_input("رقم الطالب:")
+                ws_academy = st.text_input("اسم الأكاديمية:", value=str(base_record.get("اسم الأكاديمية", "أكاديمية البشمهندس")))
+                base_curr = str(base_record.get("المنهج/الدولة", list(CURRICULUM_DATA.keys())[0]))
+                curr_options = list(CURRICULUM_DATA.keys())
+                curr_index = curr_options.index(base_curr) if base_curr in curr_options else 0
+                ws_curr = st.selectbox("المنهج الدراسي / الدولة:", curr_options, index=curr_index, key="weekly_curr")
+                grade_options = CURRICULUM_DATA[ws_curr]
+                base_grade = str(base_record.get("المجموعة/الصف", grade_options[0] if grade_options else ""))
+                grade_index = grade_options.index(base_grade) if base_grade in grade_options else 0
+                ws_grade = st.selectbox("المرحلة / الصف:", grade_options, index=grade_index, key="weekly_grade")
+                ws_phone = st.text_input("رقم الطالب:", value=str(base_record.get("رقم الطالب", "")))
             with c2:
-                ws_sup = st.text_input("رقم مشرف الأكاديمية:")
-                ws_price = st.number_input("سعر الحصة (جنيه):", min_value=0.0, step=10.0, value=100.0)
-                ws_day = st.selectbox("يوم الحصة:", ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"])
-                ws_time = st.time_input("موعد الحصة:", value=time(18, 0), step=900)
+                ws_sup = st.text_input("رقم مشرف الأكاديمية:", value=str(base_record.get("رقم مشرف الأكاديمية", "")))
+                try:
+                    base_price = float(base_record.get("سعر الحصة", 100.0))
+                except Exception:
+                    base_price = 100.0
+                ws_price = st.number_input("سعر الحصة (جنيه):", min_value=0.0, step=10.0, value=base_price)
+                days_options = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"]
+                base_day = str(base_record.get("اليوم", "السبت"))
+                day_index = days_options.index(base_day) if base_day in days_options else 0
+                ws_day = st.selectbox("يوم الحصة:", days_options, index=day_index)
+                try:
+                    base_time = datetime.strptime(str(base_record.get("الموعد", "18:00"))[:5], "%H:%M").time()
+                except Exception:
+                    base_time = time(18, 0)
+                ws_time = st.time_input("موعد الحصة:", value=base_time, step=900)
+
+            if prefill_student:
+                st.info(f"📌 يتم الآن إضافة موعد آخر للطالب: **{prefill_student}** — غيّر اليوم والساعة ثم اضغط حفظ.")
+
             if st.form_submit_button("💾 إضافة الموعد إلى الجدول"):
                 if not str(ws_student).strip():
                     st.error("يرجى اختيار أو كتابة اسم الطالب.")
@@ -1382,19 +1421,24 @@ elif t_page == "weekly_schedule":
                 c1.write(f"**المنهج:** {r.get('المنهج/الدولة','')}\n\n**المرحلة:** {r.get('المجموعة/الصف','')}")
                 c2.write(f"**سعر الحصة:** {r.get('سعر الحصة',0)} جنيه\n\n**مشرف الأكاديمية:** {r.get('رقم مشرف الأكاديمية','')}")
                 c3.write(f"**رقم الطالب:** {r.get('رقم الطالب','')}\n\n**الحالة:** {r.get('حالة الموعد','نشط')}")
-                b1, b2, b3 = st.columns(3)
+                b1, b2, b3, b4 = st.columns(4)
                 with b1:
+                    if st.button("➕ إضافة موعد آخر", key=f"ws_add_another_{ws_idx}"):
+                        st.session_state.schedule_prefill_student = student_nm
+                        st.session_state.schedule_prefill_record = r.to_dict()
+                        st.rerun()
+                with b2:
                     if st.button("📝 رصد حصة الطالب", key=f"ws_session_{ws_idx}"):
                         st.session_state.prefill_student = student_nm
                         st.session_state.prefill_schedule_idx = ws_idx
                         st.session_state.teacher_page = "add_session"
                         st.rerun()
-                with b2:
+                with b3:
                     if st.button("📚 رصد واجب الطالب", key=f"ws_hw_{ws_idx}"):
                         st.session_state.prefill_student = student_nm
                         st.session_state.teacher_page = "add_hw"
                         st.rerun()
-                with b3:
+                with b4:
                     if st.button("🗑️ حذف الموعد", key=f"ws_del_{ws_idx}"):
                         st.session_state.weekly_schedule_df = ws_df.drop(ws_idx).reset_index(drop=True)
                         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
