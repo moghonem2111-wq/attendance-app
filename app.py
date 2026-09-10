@@ -1,4 +1,4 @@
-
+import os
 import io
 import json
 import base64
@@ -71,25 +71,27 @@ CURRICULUM_DATA = {
     ]
 }
 
-possible_images = ["teacher.jpg", "teacher.png", "teacher.jpeg", "photo_2026-08-02_00-34-53.jpg"]
-# استخدم مسار التطبيق نفسه حتى تعمل الصورة بشكل صحيح على Streamlit Cloud
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-found_img_path = next(
-    (os.path.join(APP_DIR, name) for name in possible_images
-     if os.path.exists(os.path.join(APP_DIR, name))),
-    None
-)
+# البحث عن صورة المعلم بدون الاعتماد على __file__ (متوافق مع Streamlit Cloud)
+possible_images = [
+    "teacher.jpg", "teacher.png", "teacher.jpeg",
+    "photo_2026-08-02_00-34-53.jpg"
+]
+found_img_path = None
+for _candidate in possible_images:
+    _candidate_path = os.path.join(os.getcwd(), _candidate)
+    if os.path.exists(_candidate_path):
+        found_img_path = _candidate_path
+        break
 
 def get_image_base64(path):
-    if path:
-        full_path = path if os.path.isabs(path) else os.path.join(APP_DIR, path)
-        if not os.path.exists(full_path):
-            return ""
-        try:
-            with open(full_path, "rb") as img_file:
+    if not path:
+        return ""
+    try:
+        if os.path.exists(path):
+            with open(path, "rb") as img_file:
                 return base64.b64encode(img_file.read()).decode()
-        except Exception:
-            return ""
+    except Exception:
+        pass
     return ""
 
 def pil_to_base64(pil_img):
@@ -767,6 +769,36 @@ if is_student_mode:
             st.write("---")
             # --- اشتراكات درسلي الجديدة (إضافة فقط، مع الإبقاء على القسم القديم) ---
             render_darssly_cards("home")
+
+            # --- كورسات درسلي ---
+            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
+
+            courses_grid = [
+                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
+                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans"),
+                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans"),
+                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans")
+            ]
+
+            c_cols = st.columns(2)
+            for idx, (icon, title, desc, link) in enumerate(courses_grid):
+                col_target = c_cols[idx % 2]
+                with col_target:
+                    st.markdown(f"""
+                        <div class="course-card">
+                            <div>
+                                <div class="course-icon-box">{icon}</div>
+                                <div class="course-title">{title}</div>
+                                <div class="course-desc">{desc}</div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
+                    st.write("")
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
             # --- حجز الدروس ---
             st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
