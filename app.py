@@ -511,7 +511,7 @@ if is_student_mode:
                 st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.</p>", unsafe_allow_html=True)
                 
-                # --- أيقونات التواصل الاجتماعي في الأعلى (طلبك الجديد) ---
+                # --- أيقونات التواصل الاجتماعي في الأعلى للطالب ---
                 st.markdown("""
                     <div class="social-top-container">
                         <a href="https://www.facebook.com/share/19fD41rV3H/" target="_blank" title="Facebook" class="social-btn-top facebook-bg"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
@@ -816,7 +816,7 @@ if is_student_mode:
 
                     st.write("")
                     with st.form(f"abqary_result_form_{ab_i}"):
-                        entered_pass = st.text_input("أدخل الرقم السري المخصص لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
+                        entered_pass = st.text_input("أدخل الرقم السري لإظهار النتيجة:", type="password", key=f"pass_input_{ab_i}")
                         if st.form_submit_button("🔓 إظهار النتيجة"):
                             if secret_code and entered_pass.strip() == secret_code:
                                 st.success("✓ الرقم السري صحيح!")
@@ -1011,7 +1011,7 @@ st.sidebar.markdown(f"""
 if st.sidebar.button("📊 نظرة عامة (الرئيسية)", use_container_width=True):
     st.session_state.teacher_page = "dashboard"
     st.rerun()
-if st.sidebar.button("💻 جدول الأكاديمية بالأيام والمواعيد", use_container_width=True):
+if st.sidebar.button("💻 جدول الأكاديمية والأيام (Zoom)", use_container_width=True):
     st.session_state.teacher_page = "online_schedule"
     st.rerun()
 if st.sidebar.button("⚙️ صانع الامتحانات", use_container_width=True):
