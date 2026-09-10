@@ -1,4 +1,4 @@
-import os
+
 import io
 import json
 import base64
@@ -763,36 +763,6 @@ if is_student_mode:
             # --- اشتراكات درسلي الجديدة (إضافة فقط، مع الإبقاء على القسم القديم) ---
             render_darssly_cards("home")
 
-            # --- كورسات درسلي ---
-            st.markdown('<div class="darssly-box">', unsafe_allow_html=True)
-            st.markdown("<h3 style='color: #ffffff; text-align: center; margin-bottom: 5px; font-size: 22px;'>📢 اشترك الآن في كورسات الرياضيات والإحصاء على منصة درسلي (Darssly)</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #ffffff; text-align: center; margin-bottom: 25px; font-size: 16px;'>اختر مرحلتك للاطلاع على الشرح والخطط الكاملة:</p>", unsafe_allow_html=True)
-
-            courses_grid = [
-                ("📊", "إحصاء الثالث الثانوي", "شرح مبسط وتدريبات متقدمة لامتحان العزم", "https://darssly.com/courses/mohamed-ghoneim-statistics/plans"),
-                ("📖", "رياضيات أول إعدادي", "شرح كامل وتدريبات دورية مبسطة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans"),
-                ("📘", "رياضيات ثاني إعدادي", "متابعة شاملة وأسئلة تفاعلية مميزة", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans"),
-                ("📐", "رياضيات ثالث إعدادي", "تأسيس قوي وضمان الدرجة النهائية", "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans")
-            ]
-
-            c_cols = st.columns(2)
-            for idx, (icon, title, desc, link) in enumerate(courses_grid):
-                col_target = c_cols[idx % 2]
-                with col_target:
-                    st.markdown(f"""
-                        <div class="course-card">
-                            <div>
-                                <div class="course-icon-box">{icon}</div>
-                                <div class="course-title">{title}</div>
-                                <div class="course-desc">{desc}</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.link_button(f"معرفة تفاصيل الاشتراك لـ {title} 👈", link, use_container_width=True)
-                    st.write("")
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
             # --- حجز الدروس ---
             st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
             with st.form("online_booking_form", clear_on_submit=True):
@@ -1490,14 +1460,20 @@ if t_page == "dashboard":
     with col_main_top:
         profile_tag = f'<img src="data:image/png;base64,{profile_b64}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid #10b981;">' if profile_b64 and profile_b64 != "nan" else '<div style="width:90px;height:90px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:40px">👨‍🏫</div>'
         st.markdown(f"""<div style="background:linear-gradient(135deg,#0f766e,#0284c7);padding:28px;border-radius:22px;margin-bottom:20px;display:flex;align-items:center;gap:22px;direction:rtl;box-shadow:0 12px 30px rgba(2,132,199,.18)">{profile_tag}<div><h2 style="color:white!important;margin:0 0 8px">أهلاً، م/ محمد غنيم 👨‍🏫</h2><p style="color:white!important;margin:0">لوحة التحكم الاحترافية لإدارة الطلاب والمواعيد والحصص والواجبات والاختبارات والتقارير.</p></div></div>""", unsafe_allow_html=True)
-        with st.expander("📷 تحديث صورة المعلم", expanded=False):
-            teacher_photo = st.file_uploader("ارفع صورتك الشخصية", type=["png","jpg","jpeg"], key="teacher_profile_upload")
-            if teacher_photo is not None and st.button("💾 حفظ صورتي", key="save_teacher_photo"):
-                b64=base64.b64encode(teacher_photo.getvalue()).decode("utf-8")
-                st.session_state.teacher_profile_df=pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":b64}])
-                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-                st.success("✓ تم حفظ الصورة")
-                st.rerun()
+        # قسم صورة المعلم بشكل منفصل ونظيف؛ لا يظهر مربع رفع الصورة إلا عند طلب تعديله
+        with st.container(border=True):
+            st.markdown("<div style='text-align:right;font-weight:800;font-size:18px;margin-bottom:8px'>📷 صورة المعلم</div>", unsafe_allow_html=True)
+            if profile_b64 and profile_b64 != "nan":
+                st.markdown("<div style='text-align:right;color:#64748b;font-size:13px;margin-bottom:8px'>صورتك الحالية محفوظة وتظهر في لوحة التحكم والتقارير.</div>", unsafe_allow_html=True)
+            change_photo = st.checkbox("✏️ أريد تغيير الصورة", key="change_teacher_photo")
+            if change_photo:
+                teacher_photo = st.file_uploader("اختر صورة جديدة", type=["png","jpg","jpeg"], key="teacher_profile_upload", label_visibility="visible")
+                if teacher_photo is not None and st.button("💾 حفظ صورتي الجديدة", key="save_teacher_photo", use_container_width=True):
+                    b64=base64.b64encode(teacher_photo.getvalue()).decode("utf-8")
+                    st.session_state.teacher_profile_df=pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":b64}])
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                    st.success("✓ تم حفظ الصورة الجديدة")
+                    st.rerun()
 
     with col_stat_sidebar:
         st.markdown(f"""
