@@ -941,6 +941,92 @@ if is_student_mode:
                 💰 سعر الحصة: {wr.get('سعر الحصة',0)} جنيه | 📞 مشرف الأكاديمية: {wr.get('رقم مشرف الأكاديمية','')}
                 </div>""", unsafe_allow_html=True)
 
+        # --- اشتراكات درسلي داخل منصة الطالب ---
+        # تصميم بطاقات مختصر وواضح، مع الأسعار المحددة لكل مرحلة وروابط الاشتراك الحالية.
+        darssly_subscriptions = [
+            {
+                "badge": "باقة شهرية",
+                "title": "باقة أولى إعدادي",
+                "grade": "الصف الأول الإعدادي",
+                "price": "200",
+                "icon": "📘",
+                "accent": "#f59e0b",
+                "link": "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans",
+            },
+            {
+                "badge": "باقة شهرية",
+                "title": "باقة ثانية إعدادي",
+                "grade": "الصف الثاني الإعدادي",
+                "price": "200",
+                "icon": "📗",
+                "accent": "#10b981",
+                "link": "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim/plans",
+            },
+            {
+                "badge": "باقة شهرية",
+                "title": "باقة ثالثة إعدادي",
+                "grade": "الصف الثالث الإعدادي",
+                "price": "200",
+                "icon": "📕",
+                "accent": "#8b5cf6",
+                "link": "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-2/plans",
+            },
+            {
+                "badge": "باقة شهرية",
+                "title": "إحصاء ثالثة ثانوي",
+                "grade": "الصف الثالث الثانوي — إحصاء",
+                "price": "250",
+                "icon": "📊",
+                "accent": "#ef4444",
+                "link": "https://darssly.com/courses/mohamed-ghoneim-statistics/plans",
+            },
+        ]
+
+        # إظهار الباقات فقط إذا كانت مرحلة الطالب من الباقات المحددة، مع إظهار الكل عند عدم وجود تطابق.
+        grade_for_package = str(user_grade_raw or user_grade_clean or "").strip().lower()
+        grade_aliases = {
+            "باقة أولى إعدادي": ["الأول الإعدادي", "اول اعدادي", "أولى إعدادي", "اولى اعدادي", "1 اعدادي", "الأول اعدادي"],
+            "باقة ثانية إعدادي": ["الثاني الإعدادي", "ثاني اعدادي", "ثانية إعدادي", "ثانيه اعدادي", "2 اعدادي", "الثاني اعدادي"],
+            "باقة ثالثة إعدادي": ["الثالث الإعدادي", "ثالث اعدادي", "ثالثة إعدادي", "ثالثه اعدادي", "3 اعدادي", "الثالث اعدادي"],
+            "إحصاء ثالثة ثانوي": ["ثالثة ثانوي", "ثالث ثانوي", "الثالث الثانوي", "إحصاء", "احصاء"],
+        }
+        matched_packages = []
+        for pkg in darssly_subscriptions:
+            aliases = [str(x).lower() for x in grade_aliases.get(pkg["title"], [])]
+            if any(a in grade_for_package for a in aliases) or any(grade_for_package in a for a in aliases if grade_for_package):
+                matched_packages.append(pkg)
+        if not matched_packages:
+            matched_packages = darssly_subscriptions
+
+        st.markdown("<div class='vertical-section-header'>💳 اشتراكات درسلي</div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="text-align:center; margin: -4px 0 18px; color:{text_color}; font-weight:800; font-size:16px;">
+            اشترك في باقتك الشهرية واستمتع بنظام شرح ومتابعة متكامل
+        </div>
+        """, unsafe_allow_html=True)
+
+        package_cols = st.columns(len(matched_packages))
+        for p_idx, pkg in enumerate(matched_packages):
+            with package_cols[p_idx]:
+                st.markdown(f"""
+                <div style="background:{card_bg}; border:1.5px solid {pkg['accent']}; border-radius:20px; padding:18px 16px 14px; min-height:365px; box-shadow:0 8px 24px rgba(15,23,42,.08); direction:rtl; text-align:right; margin-bottom:10px;">
+                    <div style="display:inline-block; background:{pkg['accent']}18; color:{pkg['accent']}; border:1px solid {pkg['accent']}55; border-radius:20px; padding:5px 12px; font-size:13px; font-weight:900;">{pkg['badge']}</div>
+                    <div style="font-size:46px; text-align:center; margin:14px 0 8px;">{pkg['icon']}</div>
+                    <h3 style="color:{text_color}; text-align:center; font-size:20px; margin:4px 0 6px;">{pkg['title']}</h3>
+                    <p style="color:{text_color}; opacity:.82; text-align:center; font-weight:800; font-size:14px; margin-bottom:16px;">{pkg['grade']}</p>
+                    <div style="font-size:30px; font-weight:950; color:{pkg['accent']}; text-align:center; margin-bottom:12px;">{pkg['price']} جنيه <span style="font-size:13px; color:{text_color};">/ شهر</span></div>
+                    <div style="background:{pkg['accent']}0d; border-radius:14px; padding:10px 12px; color:{text_color}; font-size:13px; line-height:1.9; font-weight:700;">
+                        ✓ فيديوهات شرح مسجلة<br>
+                        ✓ حصص Zoom مباشرة<br>
+                        ✓ متابعة مستمرة<br>
+                        ✓ حل وتدريب على الأسئلة
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.link_button("🔴 معرفة تفاصيل الباقة", pkg["link"], use_container_width=True)
+
+        st.write("")
+
         st.markdown("<div class='vertical-section-header'>🗂️ لوحة خدمات الطالب التفاعلية</div>", unsafe_allow_html=True)
         
         if st.button("🎥 الفيديوهات والشروحات التعليمية", use_container_width=True):
