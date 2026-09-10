@@ -29,6 +29,7 @@ except ImportError:
 
 FILE_NAME = "سجل_الغياب_والحصص.xlsx"
 IMG_NAME = "teacher.jpg"
+TEACHER_PHONE = "01016361440"
 
 CURRICULUM_DATA = {
     "المنهج المصري 🇪🇬": [
@@ -138,8 +139,66 @@ def load_teacher_profile():
         profile.at[0,"الصورة_base64"] = img_b64
     return profile
 
+def _get_print_profile():
+    """بيانات المعلم المستخدمة في رأس ملفات الطباعة."""
+    name = "م/ محمد غنيم"
+    photo_b64 = img_b64
+    try:
+        profile_df = st.session_state.get("teacher_profile_df", pd.DataFrame())
+        if profile_df is not None and not profile_df.empty:
+            saved_name = str(profile_df.iloc[0].get("اسم المعلم", "")).strip()
+            saved_photo = str(profile_df.iloc[0].get("الصورة_base64", "")).strip()
+            if saved_name and saved_name.lower() != "nan":
+                name = saved_name
+            if saved_photo and saved_photo.lower() != "nan":
+                photo_b64 = saved_photo
+    except Exception:
+        pass
+    return name, photo_b64, TEACHER_PHONE
+
 def make_print_html(title, rows_html, headers_html, subtitle=""):
-    return f"""<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='utf-8'><title>{title}</title><style>@page{{size:A4 landscape;margin:12mm}}body{{font-family:Tahoma,Arial,sans-serif;font-weight:700;color:#111;padding:10px}}h1{{text-align:center;color:#075985}}p{{text-align:center}}table{{width:100%;border-collapse:collapse;margin-top:18px}}th,td{{border:1.5px solid #111;padding:7px;text-align:center;font-size:11px}}th{{background:#e2e8f0}}.footer{{margin-top:20px;text-align:center;font-size:11px}}</style></head><body onload='window.print()'><h1>{title}</h1><p>{subtitle}</p><table><thead><tr>{headers_html}</tr></thead><tbody>{rows_html}</tbody></table><div class='footer'>م/ محمد غنيم | منصة الرياضيات والإحصاء</div></body></html>"""
+    teacher_name, teacher_photo_b64, teacher_phone = _get_print_profile()
+    photo_html = ""
+    if teacher_photo_b64:
+        photo_html = f"<img class='teacher-photo' src='data:image/png;base64,{teacher_photo_b64}' alt='صورة المعلم'>"
+    return f"""<!DOCTYPE html>
+<html dir='rtl' lang='ar'>
+<head>
+<meta charset='utf-8'>
+<title>{title}</title>
+<style>
+@page{{size:A4 landscape;margin:10mm}}
+*{{box-sizing:border-box}}
+body{{font-family:'Noto Kufi Arabic','Noto Sans Arabic','Amiri',Tahoma,Arial,sans-serif;font-weight:700;color:#10233f;padding:8px;background:#fff}}
+.header{{border:2px solid #0f766e;border-radius:18px;padding:14px 18px;margin-bottom:14px;background:linear-gradient(135deg,#effcf8,#eef7ff);display:flex;align-items:center;gap:16px;direction:rtl}}
+.teacher-photo{{width:82px;height:82px;border-radius:50%;object-fit:cover;border:4px solid #0f766e;background:#fff;display:block}}
+.brand{{flex:1;text-align:right}}
+.brand h2{{margin:0 0 4px;font-size:22px;color:#075985;font-weight:900}}
+.brand .phone{{font-size:13px;color:#334155;margin-top:4px}}
+.doc-title{{text-align:center;margin:10px 0 4px;font-size:21px;color:#0f172a;font-weight:900}}
+.subtitle{{text-align:center;margin:0 0 8px;color:#475569;font-size:12px}}
+.badge{{display:inline-block;background:#0f766e;color:white;border-radius:999px;padding:4px 12px;font-size:11px;margin-top:4px}}
+table{{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;overflow:hidden;border:1.5px solid #94a3b8;border-radius:10px}}
+th,td{{border-left:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;padding:7px 6px;text-align:center;font-size:10.5px;vertical-align:middle}}
+th{{background:#0f766e;color:#fff;font-size:11px;font-weight:900}}
+tr:last-child td{{border-bottom:0}}
+th:last-child,td:last-child{{border-left:0}}
+.student{{color:#fff;border-radius:9px;padding:6px 5px;margin:2px 0;line-height:1.45;box-shadow:0 2px 5px rgba(15,23,42,.12)}}
+.student b{{display:block;font-size:11px}}
+.student span,.student small{{display:block;font-size:8.5px}}
+.time{{font-weight:900;background:#f8fafc;font-size:11px;white-space:nowrap}}
+.footer{{margin-top:14px;padding-top:8px;border-top:1px solid #cbd5e1;text-align:center;font-size:9.5px;color:#475569}}
+@media print{{body{{padding:0}}}}
+</style>
+</head>
+<body>
+<div class='header'>{photo_html}<div class='brand'><h2>{teacher_name}</h2><div>منصة شرح الرياضيات والإحصاء</div><div class='phone'>📞 {teacher_phone}</div></div></div>
+<div class='doc-title'>{title}</div>
+<p class='subtitle'>{subtitle}</p>
+<table><thead><tr>{headers_html}</tr></thead><tbody>{rows_html}</tbody></table>
+<div class='footer'>إعداد ومتابعة: {teacher_name} &nbsp; | &nbsp; 📞 {teacher_phone} &nbsp; | &nbsp; جميع البيانات خاصة بالمنصة التعليمية</div>
+</body>
+</html>"""
 
 def html_to_pdf_bytes(html_text):
     if WeasyHTML is None:
@@ -158,6 +217,35 @@ def build_student_roster_html(names, title="كشف الطلاب المسجلين
         rows.append(f"<tr><td>{nm}</td><td>{src.get('رقم الهاتف',src.get('رقم الطالب',''))}</td><td>{src.get('اسم ولي الأمر','')}</td><td>{src.get('رقم ولي الأمر','')}</td><td>{src.get('المنهج/الدولة','')}</td><td>{src.get('المجموعة/الصف','')}</td></tr>")
     return make_print_html(title,''.join(rows) or "<tr><td colspan='6'>لا توجد بيانات</td></tr>","<th>اسم الطالب</th><th>رقم الطالب</th><th>اسم ولي الأمر</th><th>رقم ولي الأمر</th><th>المنهج</th><th>المرحلة</th>",f"إجمالي الطلاب: {len(names)}")
 
+
+def build_weekly_schedule_print_html(df, title="الجدول الأسبوعي لمواعيد الطلاب"):
+    """إنشاء نسخة طباعة/PDF مطابقة للجدول الأسبوعي بالأيام أعمدة، مع لون مستقل لكل طالب."""
+    days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"]
+    if df is None or df.empty:
+        return make_print_html(title, "<tr><td colspan='8'>لا توجد مواعيد</td></tr>", "<th>الساعة</th>" + "".join(f"<th>{d}</th>" for d in days))
+    work = df.copy()
+    work["_time"] = work["الموعد"].astype(str).str[:5]
+    work["_day"] = work["اليوم"].astype(str)
+    times = sorted([t for t in work["_time"].dropna().unique() if t and t != "nan"])
+    rows=[]
+    for tm in times:
+        cells=[f"<td class='time'>{tm}</td>"]
+        for d in days:
+            matches=work[(work["_time"]==tm) & (work["_day"]==d) & (work["حالة الموعد"].astype(str)!="متوقف")]
+            parts=[]
+            for _,r in matches.iterrows():
+                color=str(r.get("اللون","#2563eb"))
+                if not color.startswith("#"): color="#2563eb"
+                student=str(r.get("اسم الطالب",""))
+                grade=str(r.get("المجموعة/الصف",""))
+                academy=str(r.get("اسم الأكاديمية",""))
+                parts.append(f"<div class='student' style='background:{color};'><b>👤 {student}</b><span>{grade}</span><small>{academy}</small></div>")
+            cells.append("<td>"+("".join(parts) if parts else "—")+"</td>")
+        rows.append("<tr>"+"".join(cells)+"</tr>")
+    headers="<th>الساعة</th>"+"".join(f"<th>{d}</th>" for d in days)
+    css="""<style>body{font-family:Tahoma,Arial,sans-serif;font-weight:700;color:#111;direction:rtl}h1{text-align:center;color:#075985}.subtitle{text-align:center;margin-bottom:14px}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1.5px solid #111;padding:6px;text-align:center;vertical-align:top;font-size:10px;min-height:55px}th{background:#e2e8f0;font-size:12px}.time{width:55px;font-size:12px;vertical-align:middle}.student{color:#fff;border-radius:8px;padding:7px 4px;margin:2px 0;line-height:1.25}.student b,.student span,.student small{display:block}.student span{font-size:9px;margin-top:3px}.student small{font-size:8px;margin-top:2px}</style>"""
+    html=make_print_html(title, ''.join(rows), headers, f"إجمالي المواعيد: {len(work)}")
+    return html.replace("</head>", css+"</head>")
 
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
@@ -881,6 +969,10 @@ if is_student_mode:
             st.rerun()
 
         sub_page = st.session_state.student_sub_page
+        if sub_page != "dashboard":
+            if st.button("⬅️ رجوع إلى خدمات الطالب", key="student_subpage_back", use_container_width=True):
+                st.session_state.student_sub_page = "dashboard"
+                st.rerun()
         st.write("---")
 
         # --- قسم اختبارات عبقري مع فلترة مرنة ومطابقة شاملة ---
@@ -1236,6 +1328,14 @@ st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", languag
 
 t_page = st.session_state.teacher_page
 
+# زر رجوع موحد يظهر في أعلى أي قائمة/صفحة داخل لوحة المعلم
+if t_page != "dashboard":
+    _back_col, _ = st.columns([1, 5])
+    with _back_col:
+        if st.button("⬅️ رجوع", key="global_teacher_back", use_container_width=True):
+            st.session_state.teacher_page = "dashboard"
+            st.rerun()
+
 if t_page == "dashboard":
     dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
     profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
@@ -1352,10 +1452,6 @@ if t_page == "dashboard":
             st.rerun()
 
 elif t_page == "weekly_schedule":
-    if st.button("⬅️ العودة للرئيسية"):
-        st.session_state.teacher_page = "dashboard"
-        st.rerun()
-
     st.markdown("<div class='vertical-section-header'>🗓️ لوحة مواعيد الطلاب الأسبوعية</div>", unsafe_allow_html=True)
     st.caption("لوحة مستقلة لإضافة الطلاب ومواعيدهم. كل طالب يظهر بلون مختلف، ويمكن إضافة أكثر من موعد للطالب نفسه.")
 
@@ -1367,10 +1463,31 @@ elif t_page == "weekly_schedule":
 
     # ألوان جاهزة ومتعددة للطلاب
     palette = ["#2563eb", "#16a34a", "#dc2626", "#9333ea", "#ea580c", "#0891b2", "#db2777", "#65a30d", "#7c3aed", "#0f766e"]
+    # لون ثابت لكل طالب، ومختلف تلقائياً عن لون أي طالب آخر.
+    # إذا كانت البيانات القديمة أعطت أكثر من طالب نفس اللون، نعيد توزيع الألوان مرة واحدة.
     color_map = {}
-    for i, name in enumerate(known_students):
-        old_colors = ws_df.loc[ws_df["اسم الطالب"].astype(str).str.strip() == name, "اللون"] if not ws_df.empty else pd.Series(dtype=str)
-        color_map[name] = str(old_colors.iloc[0]) if len(old_colors) and str(old_colors.iloc[0]).startswith("#") else palette[i % len(palette)]
+    used_colors = set()
+    if not ws_df.empty:
+        for i, name in enumerate(known_students):
+            old_colors = [str(x).strip() for x in ws_df.loc[ws_df["اسم الطالب"].astype(str).str.strip() == name, "اللون"].dropna().tolist()]
+            old_color = next((c for c in old_colors if c.startswith("#")), "")
+            if old_color and old_color not in used_colors:
+                chosen = old_color
+            else:
+                chosen = palette[i % len(palette)]
+                # ضمان عدم تكرار اللون حتى لو عدد الطلاب أكبر من الألوان الجاهزة
+                if chosen in used_colors:
+                    chosen = palette[next(j for j in range(len(palette)) if palette[j] not in used_colors)] if len(used_colors) < len(palette) else f"hsl({(i*47)%360}, 75%, 48%)"
+            color_map[name] = chosen
+            used_colors.add(chosen)
+    else:
+        color_map = {name: palette[i % len(palette)] for i, name in enumerate(known_students)}
+
+    # تحديث ألوان الصفوف الموجودة لضمان أن كل اسم طالب له لون مختلف في الجدول والحفظ.
+    if not ws_df.empty and color_map:
+        ws_df = ws_df.copy()
+        ws_df["اللون"] = ws_df["اسم الطالب"].astype(str).str.strip().map(color_map).fillna(ws_df["اللون"])
+        st.session_state.weekly_schedule_df = ws_df
 
     st.markdown("### 👥 إدارة طلاب لوحة المواعيد")
     wm1,wm2,wm3=st.columns(3)
@@ -1551,20 +1668,26 @@ elif t_page == "weekly_schedule":
     st.write("---")
     st.markdown("### 📋 كشف المواعيد القابل للطباعة والتصدير")
     st.dataframe(st.session_state.weekly_schedule_df, use_container_width=True)
-    ws_rows="".join(f"<tr><td>{r.get('اسم الطالب','')}</td><td>{r.get('اليوم','')}</td><td>{r.get('الموعد','')}</td><td>{r.get('اسم الأكاديمية','')}</td><td>{r.get('المنهج/الدولة','')}</td><td>{r.get('المجموعة/الصف','')}</td><td>{r.get('سعر الحصة','')}</td></tr>" for _,r in st.session_state.weekly_schedule_df.iterrows())
-    ws_html=make_print_html("جدول مواعيد الطلاب الأسبوعي",ws_rows,"<th>الطالب</th><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>السعر</th>")
+    # نسخة الطباعة تكون بنفس شكل الجدول الأسبوعي: الأيام أعمدة والطلاب داخل الخلايا بألوانهم.
+    ws_html=build_weekly_schedule_print_html(st.session_state.weekly_schedule_df, "الجدول الأسبوعي لمواعيد الطلاب")
     ws_pdf=html_to_pdf_bytes(ws_html)
-    e1,e2=st.columns(2)
+    e1,e2,e3=st.columns(3)
     with e1:
-        if ws_pdf: st.download_button("📄 طباعة جدول المواعيد PDF",ws_pdf,file_name="جدول_مواعيد_الطلاب.pdf",mime="application/pdf",key="weekly_schedule_pdf")
-        else: st.download_button("🖨️ طباعة جدول المواعيد",ws_html.encode("utf-8"),file_name="جدول_مواعيد_الطلاب.html",mime="text/html",key="weekly_schedule_html")
+        if ws_pdf: st.download_button("📄 طباعة الجدول الأسبوعي PDF",ws_pdf,file_name="الجدول_الأسبوعي_للطلاب.pdf",mime="application/pdf",key="weekly_schedule_pdf")
+        else: st.download_button("🖨️ طباعة الجدول الأسبوعي",ws_html.encode("utf-8"),file_name="الجدول_الأسبوعي_للطلاب.html",mime="text/html",key="weekly_schedule_html")
     with e2:
+        # كشف تفصيلي منفصل لمن يريد طباعته كقائمة
+        detail_rows="".join(f"<tr><td>{r.get('اسم الطالب','')}</td><td>{r.get('اليوم','')}</td><td>{r.get('الموعد','')}</td><td>{r.get('اسم الأكاديمية','')}</td><td>{r.get('المنهج/الدولة','')}</td><td>{r.get('المجموعة/الصف','')}</td><td>{r.get('سعر الحصة','')}</td></tr>" for _,r in st.session_state.weekly_schedule_df.iterrows())
+        detail_html=make_print_html("كشف مواعيد الطلاب",detail_rows,"<th>الطالب</th><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>السعر</th>")
+        detail_pdf=html_to_pdf_bytes(detail_html)
+        if detail_pdf: st.download_button("📋 طباعة كشف المواعيد PDF",detail_pdf,file_name="كشف_مواعيد_الطلاب.pdf",mime="application/pdf",key="weekly_schedule_detail_pdf")
+        else: st.download_button("🖨️ طباعة كشف المواعيد",detail_html.encode("utf-8"),file_name="كشف_مواعيد_الطلاب.html",mime="text/html",key="weekly_schedule_detail_html")
+    with e3:
         buf_ws=io.BytesIO()
         with pd.ExcelWriter(buf_ws,engine="openpyxl") as writer: st.session_state.weekly_schedule_df.to_excel(writer,sheet_name="WeeklySchedule",index=False)
         st.download_button("📥 تصدير جدول المواعيد Excel",data=buf_ws.getvalue(),file_name="جدول_مواعيد_الطلاب.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 elif t_page == "online_schedule":
-    if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
     st.subheader("💻 إدارة جدول حصص الأونلاين (Zoom) وتحديد مواعيد الطلاب:")
 
     all_registered_names = sorted(list(set(
@@ -1690,7 +1813,6 @@ elif t_page == "online_schedule":
                         st.session_state.schedule_prefill_student=str(st_n); st.session_state.schedule_prefill_record=os_row.to_dict(); st.session_state.teacher_page="weekly_schedule"; st.rerun()
 
 elif t_page == "exam_maker":
-    if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
     st.markdown("<div class='exam-builder-header'>➕ إضافة امتحان جديد / محرر وقص الصور وميزة الطباعة PDF</div>", unsafe_allow_html=True)
 
     if "temp_questions" not in st.session_state: st.session_state.temp_questions = []
