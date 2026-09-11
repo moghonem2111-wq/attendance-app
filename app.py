@@ -1652,32 +1652,51 @@ elif t_page == "weekly_schedule":
     prefill_student = str(prefill_student).strip()
 
     with st.expander("➕ إضافة موعد طالب جديد / إضافة موعد آخر", expanded=True):
+        # اختيار الطالب خارج الفورم حتى تتحدث بياناته المرتبطة فوراً عند تغييره
+        if known_students:
+            default_student_idx = known_students.index(prefill_student) if prefill_student in known_students else 0
+            ws_student = st.selectbox("اسم الطالب:", known_students, index=default_student_idx, key="weekly_student")
+        else:
+            ws_student = st.text_input("اسم الطالب:", value=prefill_student, key="weekly_student_text")
+
+        # بيانات الطالب الأساسية تؤخذ تلقائياً من سجل الطالب الذي أضافه المعلم سابقاً
+        student_clean_for_lookup = str(ws_student).strip()
+        registered_student = st.session_state.users_df[
+            st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == student_clean_for_lookup
+        ] if student_clean_for_lookup else pd.DataFrame()
+
+        # نستخدم سجل الطالب الرئيسي أولاً، ثم آخر موعد له كاحتياط للبيانات القديمة
+        student_existing = pd.DataFrame()
+        if student_clean_for_lookup and not ws_df.empty:
+            student_existing = ws_df[ws_df["اسم الطالب"].astype(str).str.strip() == student_clean_for_lookup]
+        base_record = prefill_record if isinstance(prefill_record, dict) else (student_existing.iloc[-1].to_dict() if not student_existing.empty else {})
+
+        if not registered_student.empty:
+            user_record = registered_student.iloc[0]
+            ws_curr = str(user_record.get("المنهج/الدولة", "")).strip()
+            ws_grade = str(user_record.get("المجموعة/الصف", "")).strip()
+            if not ws_curr or ws_curr.lower() == "nan":
+                ws_curr = str(base_record.get("المنهج/الدولة", list(CURRICULUM_DATA.keys())[0]))
+            if not ws_grade or ws_grade.lower() == "nan":
+                ws_grade = str(base_record.get("المجموعة/الصف", "")).strip()
+            registered_phone = str(user_record.get("رقم الهاتف", "")).strip()
+        else:
+            ws_curr = str(base_record.get("المنهج/الدولة", list(CURRICULUM_DATA.keys())[0]))
+            ws_grade = str(base_record.get("المجموعة/الصف", "")).strip()
+            registered_phone = ""
+
+        if ws_curr.lower() == "nan":
+            ws_curr = list(CURRICULUM_DATA.keys())[0]
+        if ws_grade.lower() == "nan":
+            ws_grade = ""
+
         with st.form("weekly_schedule_add_form", clear_on_submit=True):
-            # تحديد الطالب تلقائياً إذا ضغطنا "إضافة موعد آخر" من موعد موجود
-            if known_students:
-                default_student_idx = known_students.index(prefill_student) if prefill_student in known_students else 0
-                ws_student = st.selectbox("اسم الطالب:", known_students, index=default_student_idx, key="weekly_student")
-            else:
-                ws_student = st.text_input("اسم الطالب:", value=prefill_student, key="weekly_student_text")
-
-            # نأخذ بيانات الطالب من آخر موعد مسجل له لتسهيل إضافة موعد جديد
-            student_existing = pd.DataFrame()
-            if str(ws_student).strip() and not ws_df.empty:
-                student_existing = ws_df[ws_df["اسم الطالب"].astype(str).str.strip() == str(ws_student).strip()]
-            base_record = prefill_record if isinstance(prefill_record, dict) else (student_existing.iloc[-1].to_dict() if not student_existing.empty else {})
-
             c1, c2 = st.columns(2)
             with c1:
                 ws_academy = st.text_input("اسم الأكاديمية:", value=str(base_record.get("اسم الأكاديمية", "أكاديمية البشمهندس")))
-                base_curr = str(base_record.get("المنهج/الدولة", list(CURRICULUM_DATA.keys())[0]))
-                curr_options = list(CURRICULUM_DATA.keys())
-                curr_index = curr_options.index(base_curr) if base_curr in curr_options else 0
-                ws_curr = st.selectbox("المنهج الدراسي / الدولة:", curr_options, index=curr_index, key="weekly_curr")
-                grade_options = CURRICULUM_DATA[ws_curr]
-                base_grade = str(base_record.get("المجموعة/الصف", grade_options[0] if grade_options else ""))
-                grade_index = grade_options.index(base_grade) if base_grade in grade_options else 0
-                ws_grade = st.selectbox("المرحلة / الصف:", grade_options, index=grade_index, key="weekly_grade")
-                ws_phone = st.text_input("رقم الطالب:", value=str(base_record.get("رقم الطالب", "")))
+                st.text_input("المنهج الدراسي / الدولة (تلقائي):", value=ws_curr, disabled=True)
+                st.text_input("المرحلة / الصف (تلقائي):", value=ws_grade, disabled=True)
+                ws_phone = st.text_input("رقم الطالب:", value=registered_phone or str(base_record.get("رقم الطالب", "")))
             with c2:
                 ws_sup = st.text_input("رقم مشرف الأكاديمية:", value=str(base_record.get("رقم مشرف الأكاديمية", "")))
                 try:
@@ -1710,6 +1729,7 @@ elif t_page == "weekly_schedule":
                 ws_time = time(hour24, ws_minute)
                 st.caption(f"🕐 الموعد المختار: **{ws_hour}:{ws_minute:02d} {ws_ampm}**")
 
+            st.caption("🔗 المنهج والمرحلة مرتبطان تلقائياً ببيانات الطالب المسجلة في حسابه، ولا يحتاجان لإعادة الاختيار هنا.")
             if prefill_student:
                 st.info(f"📌 يتم الآن إضافة موعد آخر للطالب: **{prefill_student}** — غيّر اليوم والساعة ثم اضغط حفظ.")
 
