@@ -147,7 +147,7 @@ COL_BANK_REQUESTS = ["تاريخ_الطلب", "اسم الطالب", "رقم_ا�
 COL_QUESTION_BANK = ["معرف_السؤال", "المنهج/الدولة", "المجموعة/الصف", "المادة", "نوع_السؤال", "بيانات_السؤال_JSON"]
 COL_VIDEOS = ["معرف_الفيديو", "عنوان_الفيديو", "المنهج/الدولة", "المجموعة/الصف", "رابط_الفيديو", "فيديو_base64", "تاريخ_الرفع"]
 COL_VIDEO_COMMENTS = ["التاريخ_والوقت", "عنوان_الفيديو", "اسم الطالب", "نص_التعليق"]
-COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنهج/الدولة", "المجموعة/الصف", "رابط_الإمتحان", "رابط_النتيجة", "الرقم_السري_للنتيجة", "تاريخ_النشر"]
+COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنهج/الدولة", "المجموعة/الصف", "رابط_الإمتحان", "كود_HTML", "رابط_النتيجة", "الرقم_السري_للنتيجة", "تاريخ_النشر"]
 COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
 COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "اليوم", "الموعد", "اللون", "حالة الموعد"]
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
@@ -327,7 +327,15 @@ def load_all_data():
                 if "QuestionBank" in xls.sheet_names: question_bank_df = pd.read_excel(xls, "QuestionBank")
                 if "Videos" in xls.sheet_names: videos_df = pd.read_excel(xls, "Videos")
                 if "VideoComments" in xls.sheet_names: video_comments_df = pd.read_excel(xls, "VideoComments")
-                if "AbqaryExams" in xls.sheet_names: abqary_df = pd.read_excel(xls, "AbqaryExams")
+                if "AbqaryExams" in xls.sheet_names:
+                    abqary_df = pd.read_excel(xls, "AbqaryExams")
+                    # دعم البيانات القديمة التي لا تحتوي على كود HTML
+                    if "كود_HTML" not in abqary_df.columns:
+                        abqary_df["كود_HTML"] = ""
+                    for _c in COL_ABQARY:
+                        if _c not in abqary_df.columns:
+                            abqary_df[_c] = ""
+                    abqary_df = abqary_df[COL_ABQARY]
                 if "OnlineSchedule" in xls.sheet_names: online_schedule_df = pd.read_excel(xls, "OnlineSchedule")
                 if "WeeklySchedule" in xls.sheet_names: weekly_schedule_df = pd.read_excel(xls, "WeeklySchedule")
                 if "PaymentRecords" in xls.sheet_names: payment_records_df = pd.read_excel(xls, "PaymentRecords")
@@ -1243,8 +1251,9 @@ if is_student_mode:
             else:
                 for ab_i, ab_row in st_abq.iterrows():
                     ab_title = ab_row["عنوان_الإمتحان"]
-                    ab_link = ab_row["رابط_الإمتحان"]
-                    res_link = ab_row["رابط_النتيجة"]
+                    ab_link = ab_row.get("رابط_الإمتحان", "")
+                    ab_html = str(ab_row.get("كود_HTML", "") or "").strip()
+                    res_link = ab_row.get("رابط_النتيجة", "")
                     secret_code = str(ab_row.get("الرقم_السري_للنتيجة", "")).strip()
 
                     st.markdown(f"""
@@ -1254,10 +1263,17 @@ if is_student_mode:
                         </div>
                     """, unsafe_allow_html=True)
 
-                    if ab_link and ab_link != "nan" and ab_link != "":
-                        st.components.v1.iframe(ab_link, height=650, scrolling=True)
+                    # إذا كان المعلم قد أضاف كود HTML، يظهر الاختبار تفاعلياً داخل المنصة.
+                    if ab_html and ab_html.lower() != "nan":
+                        st.markdown("### 📝 الاختبار الإلكتروني")
+                        st.components.v1.html(ab_html, height=800, scrolling=True)
                         st.write("")
-                        st.link_button(f"🔗 فتح امتحان عبقري في نافذة جديدة 🚀", ab_link, use_container_width=True)
+
+                    # الرابط القديم يظل موجوداً كما هو كخيار بديل.
+                    if ab_link and str(ab_link).lower() != "nan" and str(ab_link).strip() != "":
+                        st.components.v1.iframe(str(ab_link).strip(), height=650, scrolling=True)
+                        st.write("")
+                        st.link_button(f"🔗 فتح امتحان عبقري في نافذة جديدة 🚀", str(ab_link).strip(), use_container_width=True)
 
                     st.write("")
                     st.markdown("##### 🔍 استعلام عن نتيجة هذا الاختبار برقم سري:")
@@ -2656,20 +2672,27 @@ elif t_page == "abqary":
         ab_title = st.text_input("عنوان امتحان عبقري:")
         ab_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="ab_c")
         ab_grade = st.selectbox("المرحلة / الصف الدراسي المستهدف:", CURRICULUM_DATA[ab_curr], key="ab_g")
-        ab_link = st.text_input("رابط الامتحان على موقع عبقري:", placeholder="https://abqary.com/exam/...")
+        ab_link = st.text_input("رابط الامتحان على موقع عبقري (اختياري):", placeholder="https://abqary.com/exam/...")
+        ab_html = st.text_area(
+            "كود HTML للاختبار الإلكتروني (اختياري):",
+            height=280,
+            placeholder="الصق هنا كود HTML الكامل للاختبار الذي تريد أن يظهر للطالب داخل المنصة..."
+        )
+        st.caption("يمكنك استخدام الرابط أو كود HTML أو الاثنين معاً. إذا وضعت كود HTML سيظهر الاختبار تفاعلياً داخل صفحة الطالب.")
         res_link = st.text_input("رابط النتيجة (اختياري):", placeholder="https://abqary.com/result/...")
         secret_pass = st.text_input("الرقم السري لإظهار النتيجة للطالب:", placeholder="مثال: 1234 أو كود خاص")
 
         if st.form_submit_button("💾 حفظ ونشر امتحان عبقري للطالب"):
-            if not ab_title.strip() or not ab_link.strip():
-                st.error("يرجى كتابة عنوان الامتحان ورابط موقع عبقري.")
+            if not ab_title.strip() or (not ab_link.strip() and not ab_html.strip()):
+                st.error("يرجى كتابة عنوان الامتحان وإضافة رابط عبقري أو كود HTML للاختبار على الأقل.")
             else:
                 new_ab = {
                     "معرف_عبقري": f"ABQ_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                     "عنوان_الإمتحان": ab_title.strip(),
                     "المنهج/الدولة": ab_curr,
                     "المجموعة/الصف": ab_grade,
-                    "رابط_الإمتحان": ab_link.strip(),
+                    "رابط_الإمتحان": ab_link.strip() if ab_link else "",
+                    "كود_HTML": ab_html.strip() if ab_html else "",
                     "رابط_النتيجة": res_link.strip() if res_link else "",
                     "الرقم_السري_للنتيجة": secret_pass.strip(),
                     "تاريخ_النشر": str(date.today())
@@ -2684,7 +2707,12 @@ elif t_page == "abqary":
     if ab_df_state.empty:
         st.info("لا توجد امتحانات عبقري منشورة حالياً.")
     else:
-        st.dataframe(ab_df_state[["عنوان_الإمتحان", "المجموعة/الصف", "رابط_الإمتحان", "تاريخ_النشر"]], use_container_width=True)
+        ab_display = ab_df_state.copy()
+        ab_display["نوع الاختبار"] = ab_display.apply(
+            lambda r: "HTML تفاعلي + رابط" if str(r.get("كود_HTML", "") or "").strip() and str(r.get("رابط_الإمتحان", "") or "").strip() else ("HTML تفاعلي" if str(r.get("كود_HTML", "") or "").strip() else "رابط عبقري"),
+            axis=1
+        )
+        st.dataframe(ab_display[["عنوان_الإمتحان", "المجموعة/الصف", "نوع الاختبار", "تاريخ_النشر"]], use_container_width=True)
         with st.expander("🗑️ حذف امتحان عبقري"):
             del_ab_opts = {ai: f"[{ar['المجموعة/الصف']}] {ar['عنوان_الإمتحان']}" for ai, ar in ab_df_state.iterrows()}
             sel_del_ab = st.selectbox("اختر الامتحان المراد حذفه:", options=list(del_ab_opts.keys()), format_func=lambda x: del_ab_opts[x], key="sel_del_ab")
