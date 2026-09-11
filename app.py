@@ -248,6 +248,22 @@ def build_student_roster_html(names, title="كشف الطلاب المسجلين
     return make_print_html(title,''.join(rows) or "<tr><td colspan='6'>لا توجد بيانات</td></tr>","<th>اسم الطالب</th><th>رقم الطالب</th><th>اسم ولي الأمر</th><th>رقم ولي الأمر</th><th>المنهج</th><th>المرحلة</th>",f"إجمالي الطلاب: {len(names)}")
 
 
+def format_schedule_time_ampm(value):
+    """عرض وقت الحصة بصيغة 12 ساعة مع AM/PM بدون تغيير القيمة المخزنة."""
+    try:
+        text = str(value).strip()
+        if not text or text.lower() == "nan":
+            return text
+        dt = pd.to_datetime(text, format="%H:%M", errors="coerce")
+        if pd.isna(dt):
+            dt = pd.to_datetime(text, errors="coerce")
+        if pd.isna(dt):
+            return text
+        return dt.strftime("%I:%M %p").lstrip("0")
+    except Exception:
+        return str(value)
+
+
 def build_weekly_schedule_print_html(df, title="الجدول الأسبوعي لمواعيد الطلاب"):
     """إنشاء نسخة طباعة/PDF مطابقة للجدول الأسبوعي بالأيام أعمدة، مع لون مستقل لكل طالب."""
     days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"]
@@ -1775,7 +1791,7 @@ elif t_page == "weekly_schedule":
         rows = []
         times = sorted([str(x) for x in ws_df["الموعد"].dropna().unique()])
         for tm in times:
-            row = {"الساعة": tm}
+            row = {"الساعة": format_schedule_time_ampm(tm)}
             for d in days:
                 matches = ws_df[(ws_df["الموعد"].astype(str) == tm) & (ws_df["اليوم"].astype(str) == d) & (ws_df["حالة الموعد"].astype(str) != "متوقف")]
                 parts = []
