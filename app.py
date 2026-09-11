@@ -1,4 +1,4 @@
-import os
+
 import io
 import json
 import base64
@@ -3422,24 +3422,10 @@ elif t_page == "parent_report":
     else:
         selected_student = st.selectbox("اختر الطالب لإصدار وطباعة تقريره بصيغة PDF:", all_names)
 
-        _student_months = set()
-        _sr = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == str(selected_student).strip()] if not st.session_state.sessions_df.empty else pd.DataFrame()
-        if not _sr.empty and "التاريخ" in _sr.columns:
-            _student_months.update([m for m in _sr["التاريخ"].apply(_month_from_value) if m])
-        _sp = st.session_state.payment_records_df[st.session_state.payment_records_df["اسم الطالب"].astype(str).str.strip() == str(selected_student).strip()] if not st.session_state.payment_records_df.empty else pd.DataFrame()
-        if not _sp.empty:
-            if "الشهر" in _sp.columns:
-                _student_months.update([str(m).strip() for m in _sp["الشهر"].dropna() if str(m).strip()])
-            elif "التاريخ" in _sp.columns:
-                _student_months.update([m for m in _sp["التاريخ"].apply(_month_from_value) if m])
-        selected_report_month = st.selectbox("📆 شهر التقرير المالي:", sorted(_student_months, reverse=True) or [date.today().strftime("%Y-%m")], key="parent_report_month")
-
         if selected_student:
             st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
             st_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
             
-            month_due_rep, month_paid_rep, month_balance_rep = get_student_monthly_financials(selected_student, selected_report_month)
-            term_due_rep, term_paid_rep, term_balance_rep = get_student_financials(selected_student)
             u_r_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student]
             parent_name_rep = str(u_r_rep.iloc[0].get("اسم ولي الأمر", "")) if not u_r_rep.empty else ""
             parent_phone_rep = str(u_r_rep.iloc[0].get("رقم ولي الأمر", "")) if not u_r_rep.empty else ""
@@ -3548,7 +3534,7 @@ elif t_page == "parent_report":
                         {teacher_img_tag}
                         <div>
                             <h2 class="brand-name">م/ محمد غنيم 📐</h2>
-                            <p class="brand-sub">تقرير التقييم الدوري والحساب المالي الشامل لولي الأمر</p>
+                            <p class="brand-sub">تقرير التقييم الدوري لولي الأمر</p>
                             <p style="margin: 2px 0; color: #000000; font-size: 16px; font-weight: 900;"><b>المنهج والمرحلة:</b> {curr_val} — {group_val}</p>
                         </div>
                     </div>
@@ -3570,12 +3556,7 @@ elif t_page == "parent_report":
                         <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
                     </tr>
                 </table>
-                <div class="section-title">1. الحساب المالي لشهر {selected_report_month}:</div>
-                <table class="table-main">
-                    <tr><th>الشهر</th><th>مستحق الشهر</th><th>مدفوع الشهر</th><th>متبقي الشهر</th><th>إجمالي المستحق التراكمي</th><th>إجمالي المدفوع التراكمي</th><th>إجمالي المتبقي</th></tr>
-                    <tr><td>{selected_report_month}</td><td>{month_due_rep:,.0f} جنيه</td><td>{month_paid_rep:,.0f} جنيه</td><td>{max(month_balance_rep,0):,.0f} جنيه</td><td>{term_due_rep:,.0f} جنيه</td><td>{term_paid_rep:,.0f} جنيه</td><td>{max(term_balance_rep,0):,.0f} جنيه</td></tr>
-                </table>
-                <div class="section-title">2. جدول المواعيد الأسبوعية:</div>
+                <div class="section-title">1. جدول المواعيد الأسبوعية:</div>
                 <table class="table-main">
                     <tr><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>سعر الحصة</th></tr>
                     {weekly_report_rows if weekly_report_rows else "<tr><td colspan='6'>لا توجد مواعيد أسبوعية مسجلة.</td></tr>"}
@@ -3589,11 +3570,6 @@ elif t_page == "parent_report":
                 <table class="table-main">
                     <tr><th>التاريخ</th><th>حالة الحضور</th><th>سعر الحصة</th><th>مستوى الطالب بالحصة</th><th>ملاحظات التفاعل والاستيعاب</th></tr>
                     {session_html_rows}
-                </table>
-                <div class="section-title">5. سجل المدفوعات لشهر {selected_report_month}:</div>
-                <table class="table-main">
-                    <tr><th>التاريخ</th><th>المبلغ</th><th>طريقة الدفع</th><th>الحالة</th><th>ملاحظات</th></tr>
-                    {''.join([f"<tr><td>{r.get('التاريخ','')}</td><td>{float(r.get('المبلغ',0) or 0):,.0f} جنيه</td><td>{r.get('طريقة الدفع','')}</td><td>{r.get('حالة الدفع','')}</td><td>{r.get('ملاحظات','')}</td></tr>" for _, r in _sp.iterrows() if str(r.get('الشهر', _month_from_value(r.get('التاريخ','')))).strip() == selected_report_month]) or "<tr><td colspan='5'>لا توجد دفعات مسجلة في هذا الشهر.</td></tr>"}
                 </table>
                 <div class="footer-note">مع تحيات: <b>م/ محمد غنيم | منصة الرياضيات والإحصاء</b> — رقم التواصل المباشر: 01016361440 🌟</div>
             </body>
