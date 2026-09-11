@@ -1645,39 +1645,59 @@ elif t_page == "weekly_schedule":
         if wp: st.download_button("📄 طباعة الطلاب PDF",wp,file_name="كشف_طلاب_لوحة_المواعيد.pdf",mime="application/pdf",key="weekly_students_pdf")
         else: st.download_button("🖨️ طباعة الطلاب",wh.encode("utf-8"),file_name="كشف_طلاب_لوحة_المواعيد.html",mime="text/html",key="weekly_students_html")
     st.write("---")
-    # بيانات الموعد السابق: عند اختيار "إضافة موعد آخر" لنفس الطالب، يتم الاحتفاظ بكل بياناته
-    # ونحتاج فقط لتغيير اليوم والساعة (ويمكن تعديل أي بيان قبل الحفظ).
+    # بيانات الموعد السابق: عند اختيار "إضافة موعد آخر" لنفس الطالب، يتم الاحتفاظ ببياناته
+    # ونغيّر فقط اليوم والساعة، مع ربط المنهج والمرحلة تلقائياً بسجل الطالب الأساسي.
     prefill_student = st.session_state.pop("schedule_prefill_student", "")
     prefill_record = st.session_state.pop("schedule_prefill_record", None)
     prefill_student = str(prefill_student).strip()
 
     with st.expander("➕ إضافة موعد طالب جديد / إضافة موعد آخر", expanded=True):
+        # اختيار الطالب خارج الفورم مهم جداً: عند تغيير الطالب يعيد Streamlit التشغيل
+        # فتتحدث بيانات المنهج والمرحلة تلقائياً من كشف الطلاب المسجلين.
+        if known_students:
+            default_student_idx = known_students.index(prefill_student) if prefill_student in known_students else 0
+            ws_student = st.selectbox("اسم الطالب:", known_students, index=default_student_idx, key="weekly_student")
+        else:
+            ws_student = st.text_input("اسم الطالب:", value=prefill_student, key="weekly_student_text")
+
+        student_clean_now = str(ws_student).strip()
+        registered_match = st.session_state.users_df[
+            st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == student_clean_now
+        ] if student_clean_now else pd.DataFrame()
+
+        # الأولوية لبيانات الطالب المسجلة في Users، ثم بيانات آخر موعد له.
+        student_record = registered_match.iloc[0].to_dict() if not registered_match.empty else {}
+        student_existing = pd.DataFrame()
+        if student_clean_now and not ws_df.empty:
+            student_existing = ws_df[ws_df["اسم الطالب"].astype(str).str.strip() == student_clean_now]
+        last_schedule = student_existing.iloc[-1].to_dict() if not student_existing.empty else {}
+        base_record = dict(last_schedule)
+        base_record.update({k:v for k,v in student_record.items() if str(v).strip() not in ("", "nan", "None")})
+        if isinstance(prefill_record, dict) and prefill_student == student_clean_now:
+            # نأخذ اليوم والموعد من الموعد الذي ضغط منه "إضافة موعد آخر"،
+            # لكن المنهج والمرحلة يظلان مربوطين بسجل الطالب الأساسي.
+            base_record.update(prefill_record)
+            if student_record:
+                for locked_key in ["المنهج/الدولة", "المجموعة/الصف"]:
+                    if str(student_record.get(locked_key, "")).strip():
+                        base_record[locked_key] = student_record[locked_key]
+
+        curr = str(student_record.get("المنهج/الدولة", base_record.get("المنهج/الدولة", ""))).strip()
+        grade = str(student_record.get("المجموعة/الصف", base_record.get("المجموعة/الصف", ""))).strip()
+
+        if student_clean_now and (curr or grade):
+            st.success(f"🔗 تم ربط الطالب تلقائياً: **{student_clean_now}**")
+
         with st.form("weekly_schedule_add_form", clear_on_submit=True):
-            # تحديد الطالب تلقائياً إذا ضغطنا "إضافة موعد آخر" من موعد موجود
-            if known_students:
-                default_student_idx = known_students.index(prefill_student) if prefill_student in known_students else 0
-                ws_student = st.selectbox("اسم الطالب:", known_students, index=default_student_idx, key="weekly_student")
-            else:
-                ws_student = st.text_input("اسم الطالب:", value=prefill_student, key="weekly_student_text")
-
-            # نأخذ بيانات الطالب من آخر موعد مسجل له لتسهيل إضافة موعد جديد
-            student_existing = pd.DataFrame()
-            if str(ws_student).strip() and not ws_df.empty:
-                student_existing = ws_df[ws_df["اسم الطالب"].astype(str).str.strip() == str(ws_student).strip()]
-            base_record = prefill_record if isinstance(prefill_record, dict) else (student_existing.iloc[-1].to_dict() if not student_existing.empty else {})
-
             c1, c2 = st.columns(2)
             with c1:
                 ws_academy = st.text_input("اسم الأكاديمية:", value=str(base_record.get("اسم الأكاديمية", "أكاديمية البشمهندس")))
-                base_curr = str(base_record.get("المنهج/الدولة", list(CURRICULUM_DATA.keys())[0]))
-                curr_options = list(CURRICULUM_DATA.keys())
-                curr_index = curr_options.index(base_curr) if base_curr in curr_options else 0
-                ws_curr = st.selectbox("المنهج الدراسي / الدولة:", curr_options, index=curr_index, key="weekly_curr")
-                grade_options = CURRICULUM_DATA[ws_curr]
-                base_grade = str(base_record.get("المجموعة/الصف", grade_options[0] if grade_options else ""))
-                grade_index = grade_options.index(base_grade) if base_grade in grade_options else 0
-                ws_grade = st.selectbox("المرحلة / الصف:", grade_options, index=grade_index, key="weekly_grade")
-                ws_phone = st.text_input("رقم الطالب:", value=str(base_record.get("رقم الطالب", "")))
+                # المنهج والمرحلة للطالب المسجلين تظهر تلقائياً ولا يمكن تغييرها من الموعد.
+                ws_curr = curr if curr else str(base_record.get("المنهج/الدولة", list(CURRICULUM_DATA.keys())[0]))
+                ws_grade = grade if grade else str(base_record.get("المجموعة/الصف", ""))
+                st.text_input("المنهج الدراسي / الدولة (تلقائي):", value=ws_curr, disabled=True)
+                st.text_input("المرحلة / الصف (تلقائي):", value=ws_grade, disabled=True)
+                ws_phone = st.text_input("رقم الطالب:", value=str(base_record.get("رقم الهاتف", base_record.get("رقم الطالب", ""))))
             with c2:
                 ws_sup = st.text_input("رقم مشرف الأكاديمية:", value=str(base_record.get("رقم مشرف الأكاديمية", "")))
                 try:
@@ -1703,11 +1723,14 @@ elif t_page == "weekly_schedule":
                     st.error("يرجى اختيار أو كتابة اسم الطالب.")
                 else:
                     student_clean = str(ws_student).strip()
+                    # إذا كان الطالب مسجلاً، نستخدم منهج/مرحلة سجل الطالب دائماً.
+                    final_curr = str(student_record.get("المنهج/الدولة", ws_curr)).strip() or ws_curr
+                    final_grade = str(student_record.get("المجموعة/الصف", ws_grade)).strip() or ws_grade
                     new_ws = {
                         "اسم الطالب": student_clean,
                         "اسم الأكاديمية": ws_academy.strip(),
-                        "المنهج/الدولة": ws_curr,
-                        "المجموعة/الصف": ws_grade,
+                        "المنهج/الدولة": final_curr,
+                        "المجموعة/الصف": final_grade,
                         "رقم الطالب": ws_phone.strip(),
                         "رقم مشرف الأكاديمية": ws_sup.strip(),
                         "سعر الحصة": ws_price,
@@ -1716,16 +1739,15 @@ elif t_page == "weekly_schedule":
                         "اللون": color_map.get(student_clean, palette[len(color_map) % len(palette)]),
                         "حالة الموعد": "نشط"
                     }
-                    # ربط الموعد بسجل الطالب الرئيسي حتى يظهر تلقائياً في كشف المسجلين والبطاقات والسجلات والتقارير والواجبات
+                    # ربط الموعد بسجل الطالب الرئيسي حتى يظهر تلقائياً في كل السجلات.
                     existing_user = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == student_clean]
                     if existing_user.empty:
-                        auto_user = {"اسم الطالب":student_clean,"رقم الهاتف":ws_phone.strip(),"كلمة المرور":"123456","المنهج/الدولة":ws_curr,"المجموعة/الصف":ws_grade,"اسم ولي الأمر":"","رقم ولي الأمر":"","تاريخ التسجيل":str(date.today()),"الحالة_حظر":"نشط","حالة_الاشتراك_البنك":"غير مشترك"}
+                        auto_user = {"اسم الطالب":student_clean,"رقم الهاتف":ws_phone.strip(),"كلمة المرور":"123456","المنهج/الدولة":final_curr,"المجموعة/الصف":final_grade,"اسم ولي الأمر":"","رقم ولي الأمر":"","تاريخ التسجيل":str(date.today()),"الحالة_حظر":"نشط","حالة_الاشتراك_البنك":"غير مشترك"}
                         st.session_state.users_df = pd.concat([st.session_state.users_df, pd.DataFrame([auto_user])], ignore_index=True)
                     else:
                         ui = existing_user.index[0]
                         if not str(st.session_state.users_df.at[ui,"رقم الهاتف"]).strip() and ws_phone.strip(): st.session_state.users_df.at[ui,"رقم الهاتف"] = ws_phone.strip()
-                        st.session_state.users_df.at[ui,"المنهج/الدولة"] = ws_curr
-                        st.session_state.users_df.at[ui,"المجموعة/الصف"] = ws_grade
+                        # لا نغيّر منهج/مرحلة الطالب المسجل من شاشة المواعيد.
                     st.session_state.weekly_schedule_df = pd.concat([st.session_state.weekly_schedule_df, pd.DataFrame([new_ws])], ignore_index=True)
                     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
                     st.success(f"✓ تم إضافة موعد {student_clean} يوم {ws_day} الساعة {ws_time.strftime('%H:%M')}.")
