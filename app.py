@@ -1615,13 +1615,14 @@ elif t_page == "weekly_schedule":
     wm1,wm2,wm3=st.columns(3)
     with wm1:
         with st.expander("➕ إضافة طالب جديد", expanded=False):
+            # اختيار المنهج والمرحلة خارج الفورم حتى تتغير قائمة المراحل فوراً عند تغيير المنهج
+            ms_curr=st.selectbox("المنهج",list(CURRICULUM_DATA.keys()),key="wm_curr")
+            ms_grade=st.selectbox("المرحلة",CURRICULUM_DATA[ms_curr],key="wm_grade")
             with st.form("weekly_manual_student_form", clear_on_submit=True):
                 ms_name=st.text_input("اسم الطالب")
                 ms_phone=st.text_input("رقم الطالب")
                 ms_parent=st.text_input("اسم ولي الأمر")
                 ms_parent_phone=st.text_input("رقم ولي الأمر")
-                ms_curr=st.selectbox("المنهج",list(CURRICULUM_DATA.keys()),key="wm_curr")
-                ms_grade=st.selectbox("المرحلة",CURRICULUM_DATA[ms_curr],key="wm_grade")
                 ms_pass=st.text_input("كلمة المرور",value="123456")
                 if st.form_submit_button("💾 إضافة الطالب"):
                     target=ms_name.strip()
@@ -1823,9 +1824,12 @@ elif t_page == "online_schedule":
     zm1,zm2,zm3=st.columns(3)
     with zm1:
         with st.expander("➕ إضافة طالب",expanded=False):
+            # اختيار المنهج والمرحلة خارج الفورم حتى تتغير قائمة المراحل فوراً عند تغيير المنهج
+            zc=st.selectbox("المنهج",list(CURRICULUM_DATA.keys()),key="zm_curr")
+            zg=st.selectbox("المرحلة",CURRICULUM_DATA[zc],key="zm_grade")
             with st.form("zoom_manual_student_form",clear_on_submit=True):
                 zn=st.text_input("اسم الطالب"); zp=st.text_input("رقم الطالب"); zpn=st.text_input("اسم ولي الأمر"); zpp=st.text_input("رقم ولي الأمر")
-                zc=st.selectbox("المنهج",list(CURRICULUM_DATA.keys()),key="zm_curr"); zg=st.selectbox("المرحلة",CURRICULUM_DATA[zc],key="zm_grade"); zpass=st.text_input("كلمة المرور",value="123456")
+                zpass=st.text_input("كلمة المرور",value="123456")
                 if st.form_submit_button("💾 إضافة الطالب"):
                     target=zn.strip()
                     if not target: st.error("اكتب اسم الطالب.")
@@ -1845,13 +1849,14 @@ elif t_page == "online_schedule":
         if zpdata: st.download_button("📄 طباعة الطلاب PDF",zpdata,file_name="كشف_طلاب_Zoom.pdf",mime="application/pdf",key="zoom_roster_pdf")
         else: st.download_button("🖨️ طباعة الطلاب",zh.encode("utf-8"),file_name="كشف_طلاب_Zoom.html",mime="text/html",key="zoom_roster_html")
 
+    # المنهج والمرحلة خارج الفورم لأن Streamlit لا يعيد تشغيل widgets داخل form عند تغييرها
+    os_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="zoom_schedule_curr")
+    os_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[os_curr], key="zoom_schedule_grade")
     with st.form("add_online_sched_form", clear_on_submit=True):
         col_os1, col_os2 = st.columns(2)
         with col_os1:
             os_student = st.selectbox("اختر الطالب أو اكتبه:", all_registered_names) if all_registered_names else st.text_input("اسم الطالب:")
             os_academy = st.text_input("اسم الأكاديمية:", value="أكاديمية البشمهندس")
-            os_curr = st.selectbox("المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()))
-            os_grade = st.selectbox("المرحلة / الصف الدراسي:", CURRICULUM_DATA[os_curr])
             os_phone = st.text_input("رقم الهاتف المحمول للطالب:")
         with col_os2:
             os_sup_phone = st.text_input("رقم مشرف الأكاديمية:")
