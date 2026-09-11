@@ -1,4 +1,4 @@
-import os
+
 import io
 import json
 import base64
@@ -3169,6 +3169,30 @@ elif t_page == "add_hw":
                 st.session_state.pop("prefill_student", None)
 
     st.write("---")
+    st.markdown("### 🗑️ حذف رصد واجب / تقييم")
+    assessments_current = st.session_state.assessments_df.copy()
+    if assessments_current.empty:
+        st.info("لا توجد سجلات واجبات أو تقييمات مسجلة للحذف.")
+    else:
+        assessment_indices = list(assessments_current.index)
+        assessment_choices = []
+        for idx, row in assessments_current.iterrows():
+            assessment_choices.append(
+                f"{idx} — {row.get('اسم الطالب','')} — {row.get('النوع','')} — {row.get('عنوان التكليف','')} — {row.get('التاريخ','')}"
+            )
+        selected_assessment = st.selectbox(
+            "اختر الرصد الذي تريد مسحه:",
+            assessment_choices,
+            key="delete_assessment_select"
+        )
+        if st.button("🗑️ مسح الرصد المحدد", key="delete_assessment_button", type="secondary"):
+            selected_pos = assessment_choices.index(selected_assessment)
+            original_assessment_idx = assessment_indices[selected_pos]
+            st.session_state.assessments_df = st.session_state.assessments_df.drop(index=original_assessment_idx).reset_index(drop=True)
+            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+            st.success("✓ تم مسح رصد الواجب / التقييم المحدد بنجاح.")
+            st.rerun()
+
     st.dataframe(st.session_state.assessments_df, use_container_width=True)
 
 elif t_page == "edit_records":
