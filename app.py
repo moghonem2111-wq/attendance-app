@@ -150,7 +150,7 @@ COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنه�
 COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
 COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "اليوم", "الموعد", "اللون", "حالة الموعد"]
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
-COL_PAYMENT_RECORDS = ["التاريخ", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
+COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
@@ -506,6 +506,54 @@ def get_all_financial_totals():
     else:
         total_paid = 0.0
     return total_due, total_paid, total_due - total_paid
+
+
+def _month_from_value(value):
+    try:
+        return pd.to_datetime(value).strftime("%Y-%m")
+    except Exception:
+        return ""
+
+def get_student_monthly_financials(student_name, month_key):
+    target = str(student_name).strip()
+    s_df = st.session_state.get("sessions_df", pd.DataFrame()).copy()
+    p_df = st.session_state.get("payment_records_df", pd.DataFrame()).copy()
+    if not s_df.empty and "اسم الطالب" in s_df.columns:
+        rows = s_df[s_df["اسم الطالب"].astype(str).str.strip() == target].copy()
+        if "التاريخ" in rows.columns:
+            rows = rows[rows["التاريخ"].apply(_month_from_value) == month_key]
+        due = _money_sum(rows["سعر الحصة"]) if "سعر الحصة" in rows.columns else 0.0
+    else:
+        due = 0.0
+    if not p_df.empty and "اسم الطالب" in p_df.columns:
+        rows = p_df[p_df["اسم الطالب"].astype(str).str.strip() == target].copy()
+        if "الشهر" in rows.columns:
+            rows = rows[rows["الشهر"].astype(str).str.strip() == month_key]
+        elif "التاريخ" in rows.columns:
+            rows = rows[rows["التاريخ"].apply(_month_from_value) == month_key]
+        if "حالة الدفع" in rows.columns:
+            rows = rows[rows["حالة الدفع"].astype(str).str.strip().isin(["مؤكد", "مدفوع"])]
+        paid = _money_sum(rows["المبلغ"]) if "المبلغ" in rows.columns else 0.0
+    else:
+        paid = 0.0
+    return due, paid, due - paid
+
+def get_monthly_financial_totals(month_key):
+    s_df = st.session_state.get("sessions_df", pd.DataFrame()).copy()
+    p_df = st.session_state.get("payment_records_df", pd.DataFrame()).copy()
+    sm = s_df[s_df["التاريخ"].apply(_month_from_value) == month_key] if not s_df.empty and "التاريخ" in s_df.columns else pd.DataFrame()
+    due = _money_sum(sm["سعر الحصة"]) if not sm.empty and "سعر الحصة" in sm.columns else 0.0
+    if not p_df.empty:
+        if "الشهر" in p_df.columns:
+            pm = p_df[p_df["الشهر"].astype(str).str.strip() == month_key]
+        else:
+            pm = p_df[p_df["التاريخ"].apply(_month_from_value) == month_key] if "التاريخ" in p_df.columns else pd.DataFrame()
+        if "حالة الدفع" in pm.columns:
+            pm = pm[pm["حالة الدفع"].astype(str).str.strip().isin(["مؤكد", "مدفوع"])]
+        paid = _money_sum(pm["المبلغ"]) if "المبلغ" in pm.columns else 0.0
+    else:
+        paid = 0.0
+    return due, paid, due - paid
 
 
 if st.session_state.dark_mode:
@@ -1686,6 +1734,23 @@ elif t_page == "payments":
     pc2.metric("✅ إجمالي المدفوع", f"{total_paid_all:,.0f} جنيه")
     pc3.metric("💰 إجمالي الرصيد المتبقي", f"{max(total_balance_all, 0):,.0f} جنيه")
 
+    st.markdown("### 📆 ملخص الحساب حسب الشهر")
+    _months = set()
+    if not st.session_state.sessions_df.empty and "التاريخ" in st.session_state.sessions_df.columns:
+        _months.update([m for m in st.session_state.sessions_df["التاريخ"].apply(_month_from_value) if m])
+    if not st.session_state.payment_records_df.empty:
+        if "الشهر" in st.session_state.payment_records_df.columns:
+            _months.update([str(m).strip() for m in st.session_state.payment_records_df["الشهر"].dropna() if str(m).strip()])
+        elif "التاريخ" in st.session_state.payment_records_df.columns:
+            _months.update([m for m in st.session_state.payment_records_df["التاريخ"].apply(_month_from_value) if m])
+    _month_options = sorted(_months, reverse=True) or [date.today().strftime("%Y-%m")]
+    selected_fin_month = st.selectbox("اختر الشهر:", _month_options, key="financial_month_filter")
+    mdue, mpaid, mbal = get_monthly_financial_totals(selected_fin_month)
+    mc1, mc2, mc3 = st.columns(3)
+    mc1.metric("مستحق الشهر", f"{mdue:,.0f} جنيه")
+    mc2.metric("مدفوع الشهر", f"{mpaid:,.0f} جنيه")
+    mc3.metric("متبقي الشهر", f"{max(mbal,0):,.0f} جنيه")
+
     payment_students = sorted(list(set(
         [str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] +
         [str(x).strip() for x in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(x).strip()] +
@@ -1703,6 +1768,8 @@ elif t_page == "payments":
             st.markdown(f"<div style='background:{card_bg};border:2px solid #10b981;border-radius:14px;padding:14px;text-align:center'><b>المستحق: {due_now:,.0f} جنيه</b> &nbsp; | &nbsp; <b style='color:#059669'>المدفوع: {paid_now:,.0f} جنيه</b> &nbsp; | &nbsp; <b style='color:#dc2626'>المتبقي: {max(balance_now,0):,.0f} جنيه</b></div>", unsafe_allow_html=True)
         with pay_c2:
             pay_date = st.date_input("تاريخ الدفع:", value=date.today(), key="payment_date")
+            payment_month = pay_date.strftime("%Y-%m")
+            st.caption(f"📆 شهر الدفعة: {payment_month}")
             pay_method = st.selectbox("طريقة الدفع:", ["محفظة كاش", "InstaPay"], key="payment_method")
 
         max_pay = max(float(balance_now), 0.0)
@@ -1717,6 +1784,7 @@ elif t_page == "payments":
             else:
                 new_payment = {
                     "التاريخ": str(pay_date),
+                    "الشهر": pay_date.strftime("%Y-%m"),
                     "اسم الطالب": selected_pay_student,
                     "المبلغ": float(pay_amount),
                     "طريقة الدفع": pay_method,
@@ -1747,6 +1815,8 @@ elif t_page == "payments":
         st.info("لا توجد دفعات مؤكدة مسجلة حتى الآن.")
     else:
         pay_log = pay_log.sort_values(by="التاريخ", ascending=False, kind="stable")
+        if "الشهر" in pay_log.columns:
+            pay_log = pay_log[pay_log["الشهر"].astype(str).str.strip() == selected_fin_month]
         st.dataframe(pay_log, use_container_width=True)
         st.caption("حذف سجل الدفع يعكس العملية من الرصيد، ولا يحذف الطالب أو الحصص.")
         log_choices = [f"{i} — {r.get('اسم الطالب','')} — {float(r.get('المبلغ',0) or 0):,.0f} جنيه — {r.get('التاريخ','')} — {r.get('طريقة الدفع','')}" for i,r in pay_log.iterrows()]
@@ -3352,10 +3422,24 @@ elif t_page == "parent_report":
     else:
         selected_student = st.selectbox("اختر الطالب لإصدار وطباعة تقريره بصيغة PDF:", all_names)
 
+        _student_months = set()
+        _sr = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == str(selected_student).strip()] if not st.session_state.sessions_df.empty else pd.DataFrame()
+        if not _sr.empty and "التاريخ" in _sr.columns:
+            _student_months.update([m for m in _sr["التاريخ"].apply(_month_from_value) if m])
+        _sp = st.session_state.payment_records_df[st.session_state.payment_records_df["اسم الطالب"].astype(str).str.strip() == str(selected_student).strip()] if not st.session_state.payment_records_df.empty else pd.DataFrame()
+        if not _sp.empty:
+            if "الشهر" in _sp.columns:
+                _student_months.update([str(m).strip() for m in _sp["الشهر"].dropna() if str(m).strip()])
+            elif "التاريخ" in _sp.columns:
+                _student_months.update([m for m in _sp["التاريخ"].apply(_month_from_value) if m])
+        selected_report_month = st.selectbox("📆 شهر التقرير المالي:", sorted(_student_months, reverse=True) or [date.today().strftime("%Y-%m")], key="parent_report_month")
+
         if selected_student:
             st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
             st_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
             
+            month_due_rep, month_paid_rep, month_balance_rep = get_student_monthly_financials(selected_student, selected_report_month)
+            term_due_rep, term_paid_rep, term_balance_rep = get_student_financials(selected_student)
             u_r_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student]
             parent_name_rep = str(u_r_rep.iloc[0].get("اسم ولي الأمر", "")) if not u_r_rep.empty else ""
             parent_phone_rep = str(u_r_rep.iloc[0].get("رقم ولي الأمر", "")) if not u_r_rep.empty else ""
@@ -3486,7 +3570,12 @@ elif t_page == "parent_report":
                         <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
                     </tr>
                 </table>
-                <div class="section-title">1. جدول المواعيد الأسبوعية:</div>
+                <div class="section-title">1. الحساب المالي لشهر {selected_report_month}:</div>
+                <table class="table-main">
+                    <tr><th>الشهر</th><th>مستحق الشهر</th><th>مدفوع الشهر</th><th>متبقي الشهر</th><th>إجمالي المستحق التراكمي</th><th>إجمالي المدفوع التراكمي</th><th>إجمالي المتبقي</th></tr>
+                    <tr><td>{selected_report_month}</td><td>{month_due_rep:,.0f} جنيه</td><td>{month_paid_rep:,.0f} جنيه</td><td>{max(month_balance_rep,0):,.0f} جنيه</td><td>{term_due_rep:,.0f} جنيه</td><td>{term_paid_rep:,.0f} جنيه</td><td>{max(term_balance_rep,0):,.0f} جنيه</td></tr>
+                </table>
+                <div class="section-title">2. جدول المواعيد الأسبوعية:</div>
                 <table class="table-main">
                     <tr><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>سعر الحصة</th></tr>
                     {weekly_report_rows if weekly_report_rows else "<tr><td colspan='6'>لا توجد مواعيد أسبوعية مسجلة.</td></tr>"}
@@ -3500,6 +3589,11 @@ elif t_page == "parent_report":
                 <table class="table-main">
                     <tr><th>التاريخ</th><th>حالة الحضور</th><th>سعر الحصة</th><th>مستوى الطالب بالحصة</th><th>ملاحظات التفاعل والاستيعاب</th></tr>
                     {session_html_rows}
+                </table>
+                <div class="section-title">5. سجل المدفوعات لشهر {selected_report_month}:</div>
+                <table class="table-main">
+                    <tr><th>التاريخ</th><th>المبلغ</th><th>طريقة الدفع</th><th>الحالة</th><th>ملاحظات</th></tr>
+                    {''.join([f"<tr><td>{r.get('التاريخ','')}</td><td>{float(r.get('المبلغ',0) or 0):,.0f} جنيه</td><td>{r.get('طريقة الدفع','')}</td><td>{r.get('حالة الدفع','')}</td><td>{r.get('ملاحظات','')}</td></tr>" for _, r in _sp.iterrows() if str(r.get('الشهر', _month_from_value(r.get('التاريخ','')))).strip() == selected_report_month]) or "<tr><td colspan='5'>لا توجد دفعات مسجلة في هذا الشهر.</td></tr>"}
                 </table>
                 <div class="footer-note">مع تحيات: <b>م/ محمد غنيم | منصة الرياضيات والإحصاء</b> — رقم التواصل المباشر: 01016361440 🌟</div>
             </body>
