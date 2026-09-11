@@ -3480,6 +3480,45 @@ elif t_page == "parent_report":
             level_val = st_sessions.iloc[-1].get("مستوى الطالب", "جيد") if not st_sessions.empty else "جيد"
             pay_val = st_sessions.iloc[-1].get("نظام الدفع", "مؤجل") if not st_sessions.empty else "مؤجل"
 
+            # الحساب الشهري يظهر على الموقع فقط، ولا يتم إدخاله داخل ملف تقرير ولي الأمر/PDF
+            report_months = set()
+            if not st_sessions.empty and "التاريخ" in st_sessions.columns:
+                report_months.update([m for m in st_sessions["التاريخ"].apply(_month_from_value) if m])
+            student_payments_rep = st.session_state.get("payment_records_df", pd.DataFrame()).copy()
+            if not student_payments_rep.empty and "اسم الطالب" in student_payments_rep.columns:
+                student_payments_rep = student_payments_rep[student_payments_rep["اسم الطالب"].astype(str).str.strip() == selected_student.strip()]
+                if "الشهر" in student_payments_rep.columns:
+                    report_months.update([str(m).strip() for m in student_payments_rep["الشهر"].dropna() if str(m).strip()])
+                elif "التاريخ" in student_payments_rep.columns:
+                    report_months.update([m for m in student_payments_rep["التاريخ"].apply(_month_from_value) if m])
+
+            if report_months:
+                report_month_options = sorted(report_months, reverse=True)
+                selected_report_month = st.selectbox(
+                    "📆 اختر شهر التقرير المالي للطالب:",
+                    report_month_options,
+                    key="parent_report_month_selector"
+                )
+                month_due, month_paid, month_remaining = get_student_monthly_financials(selected_student, selected_report_month)
+                st.markdown(f"### 📆 الحساب المالي لشهر {selected_report_month}")
+                m1, m2, m3 = st.columns(3)
+                m1.metric("💳 المستحق خلال الشهر", f"{month_due:,.0f} جنيه")
+                m2.metric("✅ المدفوع خلال الشهر", f"{month_paid:,.0f} جنيه")
+                m3.metric("💰 المتبقي خلال الشهر", f"{max(month_remaining, 0):,.0f} جنيه")
+                if not student_payments_rep.empty:
+                    pmonth = student_payments_rep.copy()
+                    if "الشهر" in pmonth.columns:
+                        pmonth = pmonth[pmonth["الشهر"].astype(str).str.strip() == selected_report_month]
+                    elif "التاريخ" in pmonth.columns:
+                        pmonth = pmonth[pmonth["التاريخ"].apply(_month_from_value) == selected_report_month]
+                    if not pmonth.empty:
+                        st.markdown("**عمليات الدفع خلال الشهر المحدد:**")
+                        show_cols = [c for c in ["التاريخ", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"] if c in pmonth.columns]
+                        if show_cols:
+                            st.dataframe(pmonth[show_cols].reset_index(drop=True), use_container_width=True)
+            else:
+                st.info("لا توجد بيانات مالية شهرية مسجلة لهذا الطالب حتى الآن.")
+
             att_cnt = len(st_sessions[st_sessions["الحالة"] == "حاضر"])
             abs_cnt = len(st_sessions[st_sessions["الحالة"] == "غائب"])
             total_sessions_cnt = len(st_sessions)
