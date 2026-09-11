@@ -1,4 +1,4 @@
-
+import os
 import io
 import json
 import base64
@@ -74,7 +74,7 @@ CURRICULUM_DATA = {
 possible_images = ["teacher.jpg", "teacher.png", "teacher.jpeg", "photo_2026-08-02_00-34-53.jpg"]
 found_img_path = None
 for img_cand in possible_images:
-    if os.path.exists(img_cand):
+    if __import__("os").path.exists(img_cand):
         found_img_path = img_cand
         break
 
