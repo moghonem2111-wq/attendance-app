@@ -1,4 +1,5 @@
-
+import os
+import os as _os
 import io
 import json
 import base64
@@ -79,7 +80,7 @@ for img_cand in possible_images:
         break
 
 def get_image_base64(path):
-    if path and os.path.exists(path):
+    if path and _os.path.exists(path):
         try:
             with open(path, "rb") as img_file:
                 return base64.b64encode(img_file.read()).decode()
@@ -154,7 +155,7 @@ COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "�
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
-    if os.path.exists(FILE_NAME):
+    if _os.path.exists(FILE_NAME):
         try:
             with pd.ExcelFile(FILE_NAME) as xls:
                 if "TeacherProfile" in xls.sheet_names:
@@ -235,7 +236,7 @@ def html_to_pdf_bytes(html_text):
     if WeasyHTML is None:
         return None
     try:
-        return WeasyHTML(string=html_text, base_url=os.getcwd()).write_pdf()
+        return WeasyHTML(string=html_text, base_url=_os.getcwd()).write_pdf()
     except Exception:
         return None
 
@@ -311,7 +312,7 @@ def load_all_data():
     weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
     payment_records_df = pd.DataFrame(columns=COL_PAYMENT_RECORDS)
 
-    if os.path.exists(FILE_NAME):
+    if _os.path.exists(FILE_NAME):
         try:
             with pd.ExcelFile(FILE_NAME) as xls:
                 if "Users" in xls.sheet_names: users_df = pd.read_excel(xls, "Users")
@@ -412,7 +413,7 @@ if "weekly_schedule_df" not in st.session_state:
         st.session_state.weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
 if "payment_records_df" not in st.session_state:
     st.session_state.payment_records_df = pd.DataFrame(columns=COL_PAYMENT_RECORDS)
-    if os.path.exists(FILE_NAME):
+    if _os.path.exists(FILE_NAME):
         try:
             with pd.ExcelFile(FILE_NAME) as _xls_pay:
                 if "PaymentRecords" in _xls_pay.sheet_names:
