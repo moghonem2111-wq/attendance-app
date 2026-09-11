@@ -3294,3 +3294,4 @@ elif t_page == "parent_report":
                 data=parent_report_html.encode("utf-8"),
                 file_name=f"تقرير_ولي_الأمر_{selected_student}.html",
                 mime="application/octet-stream",
+            )
