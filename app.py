@@ -1819,10 +1819,14 @@ elif t_page == "payments":
             pay_log = pay_log[pay_log["الشهر"].astype(str).str.strip() == selected_fin_month]
         st.dataframe(pay_log, use_container_width=True)
         st.caption("حذف سجل الدفع يعكس العملية من الرصيد، ولا يحذف الطالب أو الحصص.")
+        # نحتفظ بالفهرس الأصلي منفصلاً عن النص المعروض، حتى لا يعتمد التراجع
+        # على تحويل النص إلى رقم إذا تغير شكل الفهرس أو تنسيق السجل.
+        payment_log_indices = list(pay_log.index)
         log_choices = [f"{i} — {r.get('اسم الطالب','')} — {float(r.get('المبلغ',0) or 0):,.0f} جنيه — {r.get('التاريخ','')} — {r.get('طريقة الدفع','')}" for i,r in pay_log.iterrows()]
         chosen_log = st.selectbox("اختر عملية لتراجعها:", log_choices, key="payment_delete_select")
         if st.button("↩️ تراجع عن عملية الدفع المحددة", key="reverse_payment"):
-            original_idx = int(chosen_log.split(" — ",1)[0])
+            selected_pos = log_choices.index(chosen_log)
+            original_idx = payment_log_indices[selected_pos]
             st.session_state.payment_records_df = st.session_state.payment_records_df.drop(index=original_idx).reset_index(drop=True)
             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
             st.success("✓ تم التراجع عن عملية الدفع وعاد المبلغ إلى الرصيد المستحق.")
