@@ -1822,11 +1822,20 @@ elif t_page == "payments":
         # نحتفظ بالفهرس الأصلي منفصلاً عن النص المعروض، حتى لا يعتمد التراجع
         # على تحويل النص إلى رقم إذا تغير شكل الفهرس أو تنسيق السجل.
         payment_log_indices = list(pay_log.index)
-        log_choices = [f"{i} — {r.get('اسم الطالب','')} — {float(r.get('المبلغ',0) or 0):,.0f} جنيه — {r.get('التاريخ','')} — {r.get('طريقة الدفع','')}" for i,r in pay_log.iterrows()]
-        chosen_log = st.selectbox("اختر عملية لتراجعها:", log_choices, key="payment_delete_select")
+        # نستخدم رقم الصف الحقيقي كقيمة للـ selectbox، ونستخدم format_func للعرض.
+        # بهذه الطريقة لا نعتمد على النص المعروض ولا يحدث خطأ إذا تغيّر ترتيب/شهر السجل.
+        payment_log_indices = list(pay_log.index)
+        def _payment_log_label(idx):
+            r = pay_log.loc[idx]
+            return f"{idx} — {r.get('اسم الطالب','')} — {float(r.get('المبلغ',0) or 0):,.0f} جنيه — {r.get('التاريخ','')} — {r.get('طريقة الدفع','')}"
+        chosen_idx = st.selectbox(
+            "اختر عملية لتراجعها:",
+            payment_log_indices,
+            format_func=_payment_log_label,
+            key="payment_delete_select_idx"
+        )
         if st.button("↩️ تراجع عن عملية الدفع المحددة", key="reverse_payment"):
-            selected_pos = log_choices.index(chosen_log)
-            original_idx = payment_log_indices[selected_pos]
+            original_idx = chosen_idx
             st.session_state.payment_records_df = st.session_state.payment_records_df.drop(index=original_idx).reset_index(drop=True)
             save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
             st.success("✓ تم التراجع عن عملية الدفع وعاد المبلغ إلى الرصيد المستحق.")
