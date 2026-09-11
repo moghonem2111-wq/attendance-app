@@ -150,6 +150,7 @@ COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنه�
 COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
 COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "اليوم", "الموعد", "اللون", "حالة الموعد"]
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
+COL_PAYMENT_RECORDS = ["التاريخ", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
@@ -308,6 +309,7 @@ def load_all_data():
     abqary_df = pd.DataFrame(columns=COL_ABQARY)
     online_schedule_df = pd.DataFrame(columns=COL_ONLINE_SCHEDULE)
     weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
+    payment_records_df = pd.DataFrame(columns=COL_PAYMENT_RECORDS)
 
     if os.path.exists(FILE_NAME):
         try:
@@ -327,6 +329,7 @@ def load_all_data():
                 if "AbqaryExams" in xls.sheet_names: abqary_df = pd.read_excel(xls, "AbqaryExams")
                 if "OnlineSchedule" in xls.sheet_names: online_schedule_df = pd.read_excel(xls, "OnlineSchedule")
                 if "WeeklySchedule" in xls.sheet_names: weekly_schedule_df = pd.read_excel(xls, "WeeklySchedule")
+                if "PaymentRecords" in xls.sheet_names: payment_records_df = pd.read_excel(xls, "PaymentRecords")
         except Exception:
             pass
 
@@ -343,6 +346,12 @@ def load_all_data():
             elif col == "حالة الموعد": weekly_schedule_df[col] = "نشط"
             else: weekly_schedule_df[col] = ""
 
+    for col in COL_PAYMENT_RECORDS:
+        if col not in payment_records_df.columns:
+            if col == "حالة الدفع": payment_records_df[col] = "مؤكد"
+            elif col == "المبلغ": payment_records_df[col] = 0.0
+            else: payment_records_df[col] = ""
+
     for col in COL_ONLINE_SCHEDULE:
         if col not in online_schedule_df.columns:
             if col == "رابط زوم": online_schedule_df[col] = "https://us05web.zoom.us/j/83526892910?pwd=2jWRgATgBRPbXttdnm0QpLwBApsZL4.1"
@@ -350,11 +359,13 @@ def load_all_data():
             elif col == "اسم الأكاديمية": online_schedule_df[col] = "أكاديمية البشمهندس"
             else: online_schedule_df[col] = ""
 
-    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df
+    return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df, payment_records_df
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None, payment_records_df=None):
     if weekly_schedule_df is None:
         weekly_schedule_df = st.session_state.get("weekly_schedule_df", pd.DataFrame(columns=COL_WEEKLY_SCHEDULE))
+    if payment_records_df is None:
+        payment_records_df = st.session_state.get("payment_records_df", pd.DataFrame(columns=COL_PAYMENT_RECORDS))
     with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
@@ -370,10 +381,11 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         abqary_df.to_excel(writer, sheet_name="AbqaryExams", index=False)
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
         weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
+        payment_records_df.to_excel(writer, sheet_name="PaymentRecords", index=False)
         st.session_state.get("teacher_profile_df", pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])).to_excel(writer, sheet_name="TeacherProfile", index=False)
 
 if "users_df" not in st.session_state:
-    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df = load_all_data()
+    u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df, pr_df = load_all_data()
     st.session_state.users_df = u_df
     st.session_state.sessions_df = s_df
     st.session_state.assessments_df = a_df
@@ -388,6 +400,7 @@ if "users_df" not in st.session_state:
     st.session_state.abqary_df = ab_df
     st.session_state.online_schedule_df = os_df
     st.session_state.weekly_schedule_df = ws_df
+    st.session_state.payment_records_df = pr_df
     st.session_state.teacher_profile_df = load_teacher_profile()
 
 # تأكد من وجود جدول المواعيد حتى لو كانت جلسة Streamlit قديمة قبل إضافة الميزة
@@ -397,6 +410,19 @@ if "weekly_schedule_df" not in st.session_state:
         st.session_state.weekly_schedule_df = ws_df
     except Exception:
         st.session_state.weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
+if "payment_records_df" not in st.session_state:
+    st.session_state.payment_records_df = pd.DataFrame(columns=COL_PAYMENT_RECORDS)
+    if os.path.exists(FILE_NAME):
+        try:
+            with pd.ExcelFile(FILE_NAME) as _xls_pay:
+                if "PaymentRecords" in _xls_pay.sheet_names:
+                    st.session_state.payment_records_df = pd.read_excel(_xls_pay, "PaymentRecords")
+        except Exception:
+            pass
+    for _pc in COL_PAYMENT_RECORDS:
+        if _pc not in st.session_state.payment_records_df.columns:
+            st.session_state.payment_records_df[_pc] = 0.0 if _pc == "المبلغ" else ("مؤكد" if _pc == "حالة الدفع" else "")
+
 if "teacher_profile_df" not in st.session_state:
     st.session_state.teacher_profile_df = load_teacher_profile()
 
@@ -436,7 +462,51 @@ def delete_student_completely(student_name_to_del):
     st.session_state.video_comments_df = st.session_state.video_comments_df[st.session_state.video_comments_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.online_schedule_df = st.session_state.online_schedule_df[st.session_state.online_schedule_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     st.session_state.weekly_schedule_df = st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
+    st.session_state.payment_records_df = st.session_state.payment_records_df[st.session_state.payment_records_df["اسم الطالب"].astype(str).str.strip() != target].reset_index(drop=True)
     save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+
+def _money_sum(series):
+    try:
+        return float(pd.to_numeric(series, errors="coerce").fillna(0).sum())
+    except Exception:
+        return 0.0
+
+
+def get_student_financials(student_name):
+    """حساب إجمالي الحصص والمدفوعات والرصيد المتبقي للطالب."""
+    target = str(student_name).strip()
+    s_df = st.session_state.get("sessions_df", pd.DataFrame())
+    p_df = st.session_state.get("payment_records_df", pd.DataFrame())
+    if s_df.empty or "اسم الطالب" not in s_df.columns:
+        due = 0.0
+    else:
+        rows = s_df[s_df["اسم الطالب"].astype(str).str.strip() == target]
+        due = _money_sum(rows["سعر الحصة"]) if "سعر الحصة" in rows.columns else 0.0
+    if p_df.empty or "اسم الطالب" not in p_df.columns:
+        paid = 0.0
+    else:
+        if "حالة الدفع" in p_df.columns:
+            rows = p_df[(p_df["اسم الطالب"].astype(str).str.strip() == target) & (p_df["حالة الدفع"].astype(str).str.strip().isin(["مؤكد", "مدفوع"]))]
+        else:
+            rows = p_df[p_df["اسم الطالب"].astype(str).str.strip() == target]
+        paid = _money_sum(rows["المبلغ"]) if "المبلغ" in rows.columns else 0.0
+    return due, paid, due - paid
+
+
+def get_all_financial_totals():
+    p_df = st.session_state.get("payment_records_df", pd.DataFrame())
+    s_df = st.session_state.get("sessions_df", pd.DataFrame())
+    total_due = _money_sum(s_df["سعر الحصة"]) if not s_df.empty and "سعر الحصة" in s_df.columns else 0.0
+    if not p_df.empty and "المبلغ" in p_df.columns:
+        if "حالة الدفع" in p_df.columns:
+            paid_rows = p_df[p_df["حالة الدفع"].astype(str).str.strip().isin(["مؤكد", "مدفوع"]) ]
+        else:
+            paid_rows = p_df
+        total_paid = _money_sum(paid_rows["المبلغ"])
+    else:
+        total_paid = 0.0
+    return total_due, total_paid, total_due - total_paid
+
 
 if st.session_state.dark_mode:
     bg_color = "#0f172a"
@@ -1454,6 +1524,9 @@ if st.sidebar.button("📊 السجلات الشاملة", use_container_width=T
 if st.sidebar.button("🖨️ تقرير ولي الأمر", use_container_width=True):
     st.session_state.teacher_page = "parent_report"
     st.rerun()
+if st.sidebar.button("💰 حسابات ومدفوعات الطلاب", use_container_width=True):
+    st.session_state.teacher_page = "payments"
+    st.rerun()
 
 st.sidebar.write("---")
 st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", language="text")
@@ -1501,6 +1574,13 @@ if t_page == "dashboard":
                 <h3 style="color: #0284c7; margin: 5px 0;">{len(dashboard_students)}</h3>
             </div>
         """, unsafe_allow_html=True)
+
+    total_due_all, total_paid_all, total_balance_all = get_all_financial_totals()
+    f1, f2, f3 = st.columns(3)
+    f1.metric("💳 إجمالي الحساب المستحق", f"{total_due_all:,.0f} جنيه")
+    f2.metric("✅ إجمالي المدفوع", f"{total_paid_all:,.0f} جنيه")
+    f3.metric("💰 الرصيد المتبقي", f"{max(total_balance_all, 0):,.0f} جنيه")
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     d1,d2,d3,d4=st.columns(4)
     d1.metric("👥 الطلاب",len(dashboard_students))
@@ -1588,6 +1668,103 @@ if t_page == "dashboard":
         if st.button("عرض التقارير", key="card_btn_rep"):
             st.session_state.teacher_page = "parent_report"
             st.rerun()
+
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-between;gap:15px;direction:rtl'><div><h3 style='margin:0;color:#059669'>💰 حسابات ومدفوعات الطلاب</h3><p style='margin:5px 0 0 0'>متابعة المستحق والمدفوع والرصيد المتبقي وتسجيل طريقة الدفع وتاريخها.</p></div><div style='font-size:22px;font-weight:900;color:#dc2626'>الرصيد المتبقي: {max(total_balance_all,0):,.0f} جنيه</div></div>", unsafe_allow_html=True)
+        if st.button("فتح الحسابات والمدفوعات", key="card_btn_payments"):
+            st.session_state.teacher_page = "payments"
+            st.rerun()
+elif t_page == "payments":
+    st.markdown("<div class='vertical-section-header'>💰 حسابات ومدفوعات الطلاب</div>", unsafe_allow_html=True)
+    st.caption("سجل المبالغ المستحقة من الحصص، وأكد المدفوعات عند استلامها. كل دفعة تحفظ بتاريخها وطريقة الدفع في سجل مستقل.")
+
+    total_due_all, total_paid_all, total_balance_all = get_all_financial_totals()
+    pc1, pc2, pc3 = st.columns(3)
+    pc1.metric("💳 إجمالي المستحق", f"{total_due_all:,.0f} جنيه")
+    pc2.metric("✅ إجمالي المدفوع", f"{total_paid_all:,.0f} جنيه")
+    pc3.metric("💰 إجمالي الرصيد المتبقي", f"{max(total_balance_all, 0):,.0f} جنيه")
+
+    payment_students = sorted(list(set(
+        [str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] +
+        [str(x).strip() for x in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(x).strip()] +
+        [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()]
+    )))
+
+    if not payment_students:
+        st.info("لا يوجد طلاب مسجلون أو حصص مرصودة حتى الآن.")
+    else:
+        st.markdown("### 👤 تسجيل دفعة جديدة")
+        pay_c1, pay_c2 = st.columns(2)
+        with pay_c1:
+            selected_pay_student = st.selectbox("اختر الطالب:", payment_students, key="payment_student_select")
+            due_now, paid_now, balance_now = get_student_financials(selected_pay_student)
+            st.markdown(f"<div style='background:{card_bg};border:2px solid #10b981;border-radius:14px;padding:14px;text-align:center'><b>المستحق: {due_now:,.0f} جنيه</b> &nbsp; | &nbsp; <b style='color:#059669'>المدفوع: {paid_now:,.0f} جنيه</b> &nbsp; | &nbsp; <b style='color:#dc2626'>المتبقي: {max(balance_now,0):,.0f} جنيه</b></div>", unsafe_allow_html=True)
+        with pay_c2:
+            pay_date = st.date_input("تاريخ الدفع:", value=date.today(), key="payment_date")
+            pay_method = st.selectbox("طريقة الدفع:", ["محفظة كاش", "InstaPay"], key="payment_method")
+
+        max_pay = max(float(balance_now), 0.0)
+        pay_amount = st.number_input("المبلغ المدفوع (جنيه):", min_value=0.0, max_value=max_pay if max_pay > 0 else 1000000.0, value=0.0, step=50.0, key="payment_amount")
+        pay_note = st.text_input("ملاحظات الدفع (اختياري):", key="payment_note")
+
+        if st.button("✅ تأكيد استلام الدفع", key="confirm_payment", use_container_width=True):
+            if pay_amount <= 0:
+                st.error("اكتب قيمة الدفع أولاً.")
+            elif balance_now <= 0:
+                st.warning("الطالب لا يوجد عليه رصيد مستحق حالياً.")
+            else:
+                new_payment = {
+                    "التاريخ": str(pay_date),
+                    "اسم الطالب": selected_pay_student,
+                    "المبلغ": float(pay_amount),
+                    "طريقة الدفع": pay_method,
+                    "حالة الدفع": "مؤكد",
+                    "ملاحظات": pay_note.strip(),
+                }
+                st.session_state.payment_records_df = pd.concat([st.session_state.payment_records_df, pd.DataFrame([new_payment])], ignore_index=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+                st.success(f"✓ تم تأكيد دفع {pay_amount:,.0f} جنيه للطالب {selected_pay_student} عن طريق {pay_method}.")
+                st.rerun()
+
+    st.write("---")
+    st.markdown("### 📊 رصيد كل طالب")
+    financial_rows = []
+    for nm in payment_students:
+        due, paid, balance = get_student_financials(nm)
+        urow = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == nm]
+        grade = str(urow.iloc[0].get("المجموعة/الصف", "")) if not urow.empty else ""
+        sess_count = int(len(st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"].astype(str).str.strip() == nm]))
+        financial_rows.append({"اسم الطالب": nm, "المرحلة": grade, "إجمالي الحصص": sess_count, "إجمالي المستحق": round(due,2), "إجمالي المدفوع": round(paid,2), "الرصيد المتبقي": round(max(balance,0),2), "الحالة": "مدفوع بالكامل" if balance <= 0 else "عليه رصيد"})
+    financial_df = pd.DataFrame(financial_rows)
+    if not financial_df.empty:
+        st.dataframe(financial_df, use_container_width=True)
+
+    st.markdown("### 📜 سجل المدفوعات")
+    pay_log = st.session_state.payment_records_df.copy()
+    if pay_log.empty:
+        st.info("لا توجد دفعات مؤكدة مسجلة حتى الآن.")
+    else:
+        pay_log = pay_log.sort_values(by="التاريخ", ascending=False, kind="stable")
+        st.dataframe(pay_log, use_container_width=True)
+        st.caption("حذف سجل الدفع يعكس العملية من الرصيد، ولا يحذف الطالب أو الحصص.")
+        log_choices = [f"{i} — {r.get('اسم الطالب','')} — {float(r.get('المبلغ',0) or 0):,.0f} جنيه — {r.get('التاريخ','')} — {r.get('طريقة الدفع','')}" for i,r in pay_log.iterrows()]
+        chosen_log = st.selectbox("اختر عملية لتراجعها:", log_choices, key="payment_delete_select")
+        if st.button("↩️ تراجع عن عملية الدفع المحددة", key="reverse_payment"):
+            original_idx = int(chosen_log.split(" — ",1)[0])
+            st.session_state.payment_records_df = st.session_state.payment_records_df.drop(index=original_idx).reset_index(drop=True)
+            save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+            st.success("✓ تم التراجع عن عملية الدفع وعاد المبلغ إلى الرصيد المستحق.")
+            st.rerun()
+
+    st.markdown("### 📥 تصدير الحسابات")
+    pay_export = io.BytesIO()
+    with pd.ExcelWriter(pay_export, engine="openpyxl") as writer:
+        financial_df.to_excel(writer, sheet_name="StudentBalances", index=False)
+        st.session_state.payment_records_df.to_excel(writer, sheet_name="PaymentRecords", index=False)
+    st.download_button("📥 تصدير كشف الحسابات والمدفوعات Excel", data=pay_export.getvalue(), file_name="حسابات_ومدفوعات_الطلاب.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="payment_export_excel")
+
 
 elif t_page == "weekly_schedule":
     st.markdown("<div class='vertical-section-header'>🗓️ لوحة مواعيد الطلاب الأسبوعية</div>", unsafe_allow_html=True)
@@ -3080,6 +3257,7 @@ elif t_page == "all_records":
             attended_sess = len(s_r[s_r["الحالة"] == "حاضر"])
             avg_price = s_r["سعر الحصة"].astype(float, errors="ignore").mean() if not s_r.empty else 0.0
             total_due = s_r["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not s_r.empty else 0.0
+            _, total_paid_student, balance_student = get_student_financials(st_name)
             
             exams_count = len(a_r[a_r["النوع"].astype(str).str.contains("اختبار|كويز", na=False)])
             hws_count = len(a_r[a_r["النوع"].astype(str).str.contains("واجب", na=False)])
@@ -3093,6 +3271,8 @@ elif t_page == "all_records":
                 "الحصص الحاضرة": attended_sess,
                 "متوسط سعر الحصة": f"{avg_price:,.1f}",
                 "إجمالي الحساب المستحق": f"{total_due:,.1f}",
+                "إجمالي المدفوع": f"{total_paid_student:,.1f}",
+                "الرصيد المتبقي": f"{max(balance_student,0):,.1f}",
                 "عدد الاختبارات": exams_count,
                 "عدد الواجبات": hws_count
             })
@@ -3112,7 +3292,7 @@ elif t_page == "all_records":
                     <th>المرحلة/الصف</th>
                     <th>إجمالي الحصص</th>
                     <th>الحصص الحاضرة</th>
-                    <th>إجمالي الحساب</th>
+                    <th>إجمالي الحساب</th><th>إجمالي المدفوع</th><th>الرصيد المتبقي</th>
                     <th>الاختبارات</th>
                     <th>الواجبات</th>
                 </tr>
@@ -3125,7 +3305,7 @@ elif t_page == "all_records":
                     <td>{item['المرحلة/الصف']}</td>
                     <td>{item['إجمالي الحصص']}</td>
                     <td>{item['الحصص الحاضرة']}</td>
-                    <td>{item['إجمالي الحساب المستحق']}</td>
+                    <td>{item['إجمالي الحساب المستحق']}</td><td>{item['إجمالي المدفوع']}</td><td>{item['الرصيد المتبقي']}</td>
                     <td>{item['عدد الاختبارات']}</td>
                     <td>{item['عدد الواجبات']}</td>
                 </tr>
