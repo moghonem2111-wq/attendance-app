@@ -801,7 +801,8 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
             _local_file.write(excel_bytes)
     except Exception:
         pass
-    _cloud_save_excel_bytes(excel_bytes)
+    _cloud_ok = _cloud_save_excel_bytes(excel_bytes)
+    return bool(_cloud_ok)
 
 if "users_df" not in st.session_state:
     u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df, pr_df = load_all_data()
@@ -1502,22 +1503,14 @@ if is_student_mode:
         st.sidebar.markdown(f"<div style='background:rgba(37,99,235,.20);border-radius:12px;padding:9px 10px;margin-bottom:8px;text-align:right;font-size:12px;color:#dbeafe!important;'>مرحباً، {_sb_student}</div>", unsafe_allow_html=True)
         if st.sidebar.button("⌂  الصفحة الرئيسية", use_container_width=True, key="student_sb_home"):
             st.session_state.student_sub_page="dashboard"; st.rerun()
-        if st.sidebar.button("▣  المقررات والفيديوهات", use_container_width=True, key="student_sb_courses"):
+        if st.sidebar.button("▣  المقررات الدراسية", use_container_width=True, key="student_sb_courses"):
             st.session_state.student_sub_page="videos"; st.rerun()
-        if st.sidebar.button("📝  الواجبات", use_container_width=True, key="student_sb_hw"):
+        if st.sidebar.button("▤  الواجبات", use_container_width=True, key="student_sb_hw"):
             st.session_state.student_sub_page="hw_grades"; st.rerun()
-        if st.sidebar.button("✍️  الاختبارات", use_container_width=True, key="student_sb_exams"):
-            st.session_state.student_sub_page="exams"; st.rerun()
-        if st.sidebar.button("🧠  اختبارات عبقري", use_container_width=True, key="student_sb_abqary"):
-            st.session_state.student_sub_page="abqary"; st.rerun()
-        if st.sidebar.button("▤  بنك الأسئلة", use_container_width=True, key="student_sb_bank"):
-            st.session_state.student_sub_page="bank"; st.rerun()
-        if st.sidebar.button("◫  الجدول الزمني / Zoom", use_container_width=True, key="student_sb_schedule"):
+        if st.sidebar.button("◫  الجدول الزمني", use_container_width=True, key="student_sb_schedule"):
             st.session_state.student_sub_page="dashboard"; st.rerun()
         if st.sidebar.button("▥  النتائج والتقارير", use_container_width=True, key="student_sb_results"):
             st.session_state.student_sub_page="exam_grades"; st.rerun()
-        if st.sidebar.button("💬  الدعم والدردشة", use_container_width=True, key="student_sb_chat"):
-            st.session_state.student_sub_page="chat"; st.rerun()
         if st.sidebar.button(("☀  الوضع الفاتح" if st.session_state.dark_mode else "🌙  الوضع الداكن"), use_container_width=True, key="student_sb_settings"):
             st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
         st.sidebar.write("---")
@@ -1748,11 +1741,6 @@ if is_student_mode:
 
     else:
         st_user = st.session_state.logged_student
-
-        # بيانات واجهة الطالب متاحة أيضاً للطالب المسجل؛ يمنع ذلك NameError
-        # عند استخدام صورة اشتراكات درسلي داخل الصفحة.
-        _student_interface_df = st.session_state.get("student_interface_df", pd.DataFrame())
-        si = _student_interface_df.iloc[0].to_dict() if not _student_interface_df.empty else {}
         
         # فلترة ذكية ومرنة لمرحلة الطالب بصرف النظر عن أي فروق بسيطة في الأحرف أو الأقواس
         user_grade_raw = str(st_user.get("المجموعة/الصف", "")).strip()
@@ -1919,26 +1907,21 @@ if is_student_mode:
             },
         ]
 
-        # إظهار باقة درسلي المطابقة لمرحلة الطالب فقط، بدون عرض باقات المراحل الأخرى.
-        def _norm_grade(v):
-            x = str(v or "").strip().lower()
-            x = x.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
-            x = x.replace("ى", "ي").replace("ة", "ه")
-            x = x.replace("ـ", "")
-            return " ".join(x.split())
-
-        grade_for_package = _norm_grade(user_grade_raw or user_grade_clean)
+        # إظهار الباقات فقط إذا كانت مرحلة الطالب من الباقات المحددة، مع إظهار الكل عند عدم وجود تطابق.
+        grade_for_package = str(user_grade_raw or user_grade_clean or "").strip().lower()
         grade_aliases = {
-            "باقة أولى إعدادي": ["الأول الإعدادي", "اول اعدادي", "أولى إعدادي", "اولى اعدادي", "1 اعدادي", "الأول اعدادي", "الصف الأول الإعدادي", "الصف الاول الاعدادي"],
-            "باقة ثانية إعدادي": ["الثاني الإعدادي", "ثاني اعدادي", "ثانية إعدادي", "ثانيه اعدادي", "2 اعدادي", "الثاني اعدادي", "الصف الثاني الإعدادي", "الصف الثاني الاعدادي"],
-            "باقة ثالثة إعدادي": ["الثالث الإعدادي", "ثالث اعدادي", "ثالثة إعدادي", "ثالثه اعدادي", "3 اعدادي", "الثالث اعدادي", "الصف الثالث الإعدادي", "الصف الثالث الاعدادي"],
-            "إحصاء ثالثة ثانوي": ["ثالثة ثانوي", "ثالث ثانوي", "الثالث الثانوي", "الصف الثالث الثانوي", "إحصاء", "احصاء", "ثالثة ثانوي احصاء"],
+            "باقة أولى إعدادي": ["الأول الإعدادي", "اول اعدادي", "أولى إعدادي", "اولى اعدادي", "1 اعدادي", "الأول اعدادي"],
+            "باقة ثانية إعدادي": ["الثاني الإعدادي", "ثاني اعدادي", "ثانية إعدادي", "ثانيه اعدادي", "2 اعدادي", "الثاني اعدادي"],
+            "باقة ثالثة إعدادي": ["الثالث الإعدادي", "ثالث اعدادي", "ثالثة إعدادي", "ثالثه اعدادي", "3 اعدادي", "الثالث اعدادي"],
+            "إحصاء ثالثة ثانوي": ["ثالثة ثانوي", "ثالث ثانوي", "الثالث الثانوي", "إحصاء", "احصاء"],
         }
         matched_packages = []
         for pkg in darssly_subscriptions:
-            aliases = [_norm_grade(x) for x in grade_aliases.get(pkg["title"], [])]
-            if any(a == grade_for_package or a in grade_for_package or grade_for_package in a for a in aliases if a):
+            aliases = [str(x).lower() for x in grade_aliases.get(pkg["title"], [])]
+            if any(a in grade_for_package for a in aliases) or any(grade_for_package in a for a in aliases if grade_for_package):
                 matched_packages.append(pkg)
+        if not matched_packages:
+            matched_packages = darssly_subscriptions
 
         st.markdown("<div class='vertical-section-header'>💳 اشتراكات درسلي</div>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -1950,9 +1933,7 @@ if is_student_mode:
         student_sub_b64 = str(si.get("صورة_الاشتراكات_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
         student_sub_uri = teacher_image_data_uri(student_sub_b64) if student_sub_b64 else STUDENT_FIXED_IMAGE_URI
 
-        if not matched_packages:
-            st.info(f"لا توجد باقة درسلي مرتبطة بالمرحلة المسجلة لحسابك حالياً: {user_grade_raw or 'غير محددة'}")
-        package_cols = st.columns(len(matched_packages)) if matched_packages else []
+        package_cols = st.columns(len(matched_packages))
         for p_idx, pkg in enumerate(matched_packages):
             with package_cols[p_idx]:
                 st.markdown(f"""
@@ -2258,77 +2239,7 @@ if is_student_mode:
 
         elif sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية</h3>", unsafe_allow_html=True)
-            exams_state = st.session_state.exams_df.copy()
-            if not exams_state.empty and "المجموعة/الصف" in exams_state.columns:
-                exams_for_student = exams_state[exams_state["المجموعة/الصف"].astype(str).map(_norm_grade).apply(
-                    lambda x: bool(grade_for_package) and (x == grade_for_package or grade_for_package in x or x in grade_for_package)
-                )]
-            else:
-                exams_for_student = exams_state
-
-            if exams_for_student.empty:
-                st.info("لا توجد اختبارات منشورة لمرحلتك الدراسية حالياً.")
-            else:
-                for ex_i, ex_row in exams_for_student.iterrows():
-                    ex_id = str(ex_row.get("معرف_الامتحان", ex_i))
-                    ex_title = str(ex_row.get("عنوان الامتحان", "اختبار"))
-                    ex_desc = str(ex_row.get("وصف الامتحان", "") or "")
-                    ex_pass = str(ex_row.get("كلمة المرور", "") or "").strip()
-                    ex_questions_raw = ex_row.get("الأسئلة_JSON", "[]")
-                    try:
-                        ex_questions = json.loads(ex_questions_raw) if str(ex_questions_raw).strip() else []
-                    except Exception:
-                        ex_questions = []
-
-                    with st.expander(f"📝 {ex_title} — {ex_row.get('المادة','')} — {ex_row.get('مدة الامتحان بالدقائق','')} دقيقة", expanded=False):
-                        if ex_desc and ex_desc.lower() != "nan":
-                            st.info(ex_desc)
-                        if ex_pass:
-                            entered_ex_pass = st.text_input("🔐 كلمة مرور الاختبار:", type="password", key=f"student_exam_pass_{ex_id}")
-                            if entered_ex_pass != ex_pass:
-                                st.warning("أدخل كلمة المرور الصحيحة لبدء الاختبار.")
-                                continue
-
-                        if not ex_questions:
-                            st.warning("هذا الاختبار منشور لكن لا توجد أسئلة صالحة بداخله حالياً.")
-                            continue
-
-                        st.markdown(f"**عدد الأسئلة:** {len(ex_questions)} | **المدة:** {ex_row.get('مدة الامتحان بالدقائق','')} دقيقة")
-                        selected_answers = {}
-                        for qn, qd in enumerate(ex_questions, start=1):
-                            q_text = str(qd.get("text", "") or "").strip()
-                            st.markdown(f"### السؤال {qn}")
-                            if qd.get("q_img"):
-                                try:
-                                    st.image(f"data:image/jpeg;base64,{qd.get('q_img')}", use_container_width=True)
-                                except Exception:
-                                    pass
-                            if q_text:
-                                st.write(q_text)
-                            q_type = str(qd.get("type", "موضوعي"))
-                            if "موضوعي" in q_type or "اختيار" in q_type:
-                                opts_data = [str(qd.get("opt1", "")), str(qd.get("opt2", "")), str(qd.get("opt3", "")), str(qd.get("opt4", ""))]
-                                letters = ["أ", "ب", "ج", "د"]
-                                labels = [f"{letters[j]} — {opts_data[j]}" if opts_data[j].strip() else letters[j] for j in range(4)]
-                                selected_answers[qn] = st.radio("اختر إجابتك:", labels, key=f"student_exam_ans_{ex_id}_{qn}")
-                            else:
-                                selected_answers[qn] = st.text_area("إجابتك:", key=f"student_exam_essay_{ex_id}_{qn}")
-
-                        if st.button("✅ تصحيح الاختبار", key=f"student_exam_submit_{ex_id}", use_container_width=True):
-                            score = 0.0
-                            max_score = 0.0
-                            for qn, qd in enumerate(ex_questions, start=1):
-                                pts = float(qd.get("points", 1) or 1)
-                                max_score += pts
-                                if "موضوعي" in str(qd.get("type", "")) or "اختيار" in str(qd.get("type", "")):
-                                    correct_num = int(qd.get("correct", 1) or 1)
-                                    correct_letter = ["أ", "ب", "ج", "د"][correct_num - 1] if 1 <= correct_num <= 4 else "أ"
-                                    chosen = str(selected_answers.get(qn, ""))
-                                    if chosen.startswith(correct_letter):
-                                        score += pts
-                            st.success(f"نتيجتك: {score:g} من {max_score:g} درجة")
-                            if max_score:
-                                st.progress(min(max(score / max_score, 0.0), 1.0))
+            st.info("لا توجد اختبارات تفاعلية نشطة حالياً.")
 
         elif sub_page == "attendance":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📝 تسجيل حضور حصة اليوم</h3>", unsafe_allow_html=True)
@@ -4321,13 +4232,8 @@ elif t_page == "all_records":
             )
 
 elif t_page == "parent_report":
-    if st.button("⬅️ العودة للرئيسية", key="parent_report_back"):
-        st.session_state.teacher_page = "dashboard"
-        st.rerun()
-
-    st.subheader("📑 تقرير متابعة الطالب لولي الأمر")
-    st.caption("التقرير يعرض متابعة الطالب بعد آخر تسجيل دفع فقط، بدون عرض أي مبالغ أو تفاصيل مالية لولي الأمر.")
-
+    if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
+    st.subheader("📑 إصدار وطباعة تقرير متابعة الطالب لولي الأمر (شامل الأسعار)")
     all_names = sorted(list(set(
         [s for s in st.session_state.sessions_df["اسم الطالب"].dropna().unique() if str(s).strip()]
         + [s for s in st.session_state.assessments_df["اسم الطالب"].dropna().unique() if str(s).strip()]
@@ -4339,179 +4245,296 @@ elif t_page == "parent_report":
     if not all_names:
         st.info("لا توجد بيانات كافية لإصدار التقرير بعد.")
     else:
-        selected_student = st.selectbox("اختر الطالب لإصدار تقرير ولي الأمر:", all_names, key="parent_report_student")
+        selected_student = st.selectbox("اختر الطالب لإصدار وطباعة تقريره بصيغة PDF:", all_names)
 
         if selected_student:
-            sessions_all = st.session_state.sessions_df.copy()
-            sessions_all = sessions_all[sessions_all["اسم الطالب"].astype(str).str.strip() == selected_student.strip()].copy()
-            if "التاريخ" in sessions_all.columns:
-                sessions_all["_report_date"] = pd.to_datetime(sessions_all["التاريخ"], errors="coerce")
+            st_sessions = st.session_state.sessions_df[st.session_state.sessions_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
+            st_assessments = st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"] == selected_student].copy().sort_values(by="التاريخ")
+            
+            u_r_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student]
+            parent_name_rep = str(u_r_rep.iloc[0].get("اسم ولي الأمر", "")) if not u_r_rep.empty else ""
+            parent_phone_rep = str(u_r_rep.iloc[0].get("رقم ولي الأمر", "")) if not u_r_rep.empty else ""
+
+            curr_val = "-"
+            group_val = "-"
+            if not u_r_rep.empty:
+                group_val = str(u_r_rep.iloc[0].get("المجموعة/الصف", "-"))
+                curr_val = str(u_r_rep.iloc[0].get("المنهج/الدولة", "-"))
+            elif not st_sessions.empty:
+                group_val = str(st_sessions.iloc[-1].get("المجموعة/الصف", "-"))
+                curr_val = str(st_sessions.iloc[-1].get("المنهج/الدولة", "-"))
+
+            level_val = st_sessions.iloc[-1].get("مستوى الطالب", "جيد") if not st_sessions.empty else "جيد"
+            pay_val = st_sessions.iloc[-1].get("نظام الدفع", "مؤجل") if not st_sessions.empty else "مؤجل"
+
+            # الحساب الشهري يظهر على الموقع فقط، ولا يتم إدخاله داخل ملف تقرير ولي الأمر/PDF
+            report_months = set()
+            if not st_sessions.empty and "التاريخ" in st_sessions.columns:
+                report_months.update([m for m in st_sessions["التاريخ"].apply(_month_from_value) if m])
+            student_payments_rep = st.session_state.get("payment_records_df", pd.DataFrame()).copy()
+            if not student_payments_rep.empty and "اسم الطالب" in student_payments_rep.columns:
+                student_payments_rep = student_payments_rep[student_payments_rep["اسم الطالب"].astype(str).str.strip() == selected_student.strip()]
+                if "الشهر" in student_payments_rep.columns:
+                    report_months.update([str(m).strip() for m in student_payments_rep["الشهر"].dropna() if str(m).strip()])
+                elif "التاريخ" in student_payments_rep.columns:
+                    report_months.update([m for m in student_payments_rep["التاريخ"].apply(_month_from_value) if m])
+
+            if report_months:
+                report_month_options = sorted(report_months, reverse=True)
+                selected_report_month = st.selectbox(
+                    "📆 اختر شهر التقرير المالي للطالب:",
+                    report_month_options,
+                    key="parent_report_month_selector"
+                )
+                month_due, month_paid, month_remaining = get_student_monthly_financials(selected_student, selected_report_month)
+                st.markdown(f"### 📆 الحساب المالي لشهر {selected_report_month}")
+                m1, m2, m3 = st.columns(3)
+                m1.metric("💳 المستحق خلال الشهر", f"{month_due:,.0f} جنيه")
+                m2.metric("✅ المدفوع خلال الشهر", f"{month_paid:,.0f} جنيه")
+                m3.metric("💰 المتبقي خلال الشهر", f"{max(month_remaining, 0):,.0f} جنيه")
+                if not student_payments_rep.empty:
+                    pmonth = student_payments_rep.copy()
+                    if "الشهر" in pmonth.columns:
+                        pmonth = pmonth[pmonth["الشهر"].astype(str).str.strip() == selected_report_month]
+                    elif "التاريخ" in pmonth.columns:
+                        pmonth = pmonth[pmonth["التاريخ"].apply(_month_from_value) == selected_report_month]
+                    if not pmonth.empty:
+                        st.markdown("**عمليات الدفع خلال الشهر المحدد:**")
+                        show_cols = [c for c in ["التاريخ", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"] if c in pmonth.columns]
+                        if show_cols:
+                            st.dataframe(pmonth[show_cols].reset_index(drop=True), use_container_width=True)
             else:
-                sessions_all["_report_date"] = pd.NaT
+                st.info("لا توجد بيانات مالية شهرية مسجلة لهذا الطالب حتى الآن.")
 
-            # تحديد آخر عملية دفع مؤكدة للطالب، ثم يبدأ التقرير من الحصص التي بعدها.
-            payments = st.session_state.get("payment_records_df", pd.DataFrame()).copy()
-            if not payments.empty and "اسم الطالب" in payments.columns:
-                payments = payments[payments["اسم الطالب"].astype(str).str.strip() == selected_student.strip()].copy()
-                if "حالة الدفع" in payments.columns:
-                    status_series = payments["حالة الدفع"].astype(str).str.strip()
-                    confirmed = payments[status_series.isin(["مدفوع", "تم الدفع", "مؤكد", "مكتمل", "Paid", "paid"])]
-                    if not confirmed.empty:
-                        payments = confirmed
-                if "التاريخ" in payments.columns:
-                    payments["_pay_date"] = pd.to_datetime(payments["التاريخ"], errors="coerce")
-                else:
-                    payments["_pay_date"] = pd.NaT
-            else:
-                payments = pd.DataFrame()
+            att_cnt = len(st_sessions[st_sessions["الحالة"] == "حاضر"])
+            abs_cnt = len(st_sessions[st_sessions["الحالة"] == "غائب"])
+            total_sessions_cnt = len(st_sessions)
+            att_percentage = (att_cnt / total_sessions_cnt * 100) if total_sessions_cnt > 0 else 0
+            total_cost = st_sessions["سعر الحصة"].astype(float, errors="ignore").sum(numeric_only=True) if not st_sessions.empty else 0.0
 
-            last_payment_date = pd.NaT
-            if not payments.empty and "_pay_date" in payments.columns:
-                valid_pay_dates = payments["_pay_date"].dropna()
-                if not valid_pay_dates.empty:
-                    last_payment_date = valid_pay_dates.max()
+            exams = st_assessments[st_assessments["النوع"].str.contains("اختبار", na=False)]
+            hws = st_assessments[st_assessments["النوع"].str.contains("واجب", na=False)]
+            total_exam_score = exams["الدرجة المحصلة"].astype(float).sum() if not exams.empty else 0
+            total_exam_max = exams["الدرجة العظمى"].astype(float).sum() if not exams.empty else 0
+            exam_percentage = (total_exam_score / total_exam_max * 100) if total_exam_max > 0 else 100.0
 
-            # التقرير الجديد مرتبط بآخر دفع: يعرض فقط ما حدث بعده.
-            if pd.notna(last_payment_date):
-                report_sessions = sessions_all[sessions_all["_report_date"] > last_payment_date].copy()
-                report_start_text = str(last_payment_date.date())
-                report_period_text = f"من بعد آخر تسجيل حساب بتاريخ {report_start_text}"
-            else:
-                # للطلاب الذين لا يوجد لهم سجل دفع سابق، لا نخفي البيانات القديمة.
-                report_sessions = sessions_all.copy()
-                report_period_text = "من بداية السجلات المتاحة"
-
-            report_sessions = report_sessions.sort_values("_report_date", na_position="last")
-
-            assessments_all = st.session_state.assessments_df.copy()
-            assessments_all = assessments_all[assessments_all["اسم الطالب"].astype(str).str.strip() == selected_student.strip()].copy()
-            if "التاريخ" in assessments_all.columns:
-                assessments_all["_report_date"] = pd.to_datetime(assessments_all["التاريخ"], errors="coerce")
-            else:
-                assessments_all["_report_date"] = pd.NaT
-            if pd.notna(last_payment_date):
-                report_assessments = assessments_all[assessments_all["_report_date"] > last_payment_date].copy()
-            else:
-                report_assessments = assessments_all.copy()
-            report_assessments = report_assessments.sort_values("_report_date", na_position="last")
-
-            u_rep = st.session_state.users_df[st.session_state.users_df["اسم الطالب"].astype(str).str.strip() == selected_student.strip()]
-            parent_name_rep = str(u_rep.iloc[0].get("اسم ولي الأمر", "")) if not u_rep.empty else ""
-            parent_phone_rep = str(u_rep.iloc[0].get("رقم ولي الأمر", "")) if not u_rep.empty else ""
-            curr_val = str(u_rep.iloc[0].get("المنهج/الدولة", "-")) if not u_rep.empty else "-"
-            group_val = str(u_rep.iloc[0].get("المجموعة/الصف", "-")) if not u_rep.empty else "-"
-
-            # المستوى الحالي = آخر مستوى مسجل في الفترة التي يغطيها التقرير.
-            if not report_sessions.empty:
-                last_level = str(report_sessions.iloc[-1].get("مستوى الطالب", "جيد") or "جيد")
-            elif not sessions_all.empty:
-                last_level = str(sessions_all.sort_values("_report_date", na_position="last").iloc[-1].get("مستوى الطالب", "جيد") or "جيد")
-            else:
-                last_level = "غير مسجل"
-
-            attendance_count = int((report_sessions.get("الحالة", pd.Series(dtype=str)).astype(str).str.strip() == "حاضر").sum()) if not report_sessions.empty else 0
-            absence_count = int((report_sessions.get("الحالة", pd.Series(dtype=str)).astype(str).str.strip() == "غائب").sum()) if not report_sessions.empty else 0
-            total_report_sessions = len(report_sessions)
-            attendance_percentage = (attendance_count / total_report_sessions * 100) if total_report_sessions else 0
-
-            # عرض البيانات للمعلم فقط على الموقع بدون أي أرقام دفع.
-            st.markdown(f"**فترة التقرير:** {report_period_text}")
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("عدد الحصص بعد آخر دفع", total_report_sessions)
-            c2.metric("الحضور", attendance_count)
-            c3.metric("الغياب", absence_count)
-            c4.metric("المستوى الحالي", last_level)
-
-            if report_sessions.empty:
-                st.info("لا توجد حصص مسجلة للطالب بعد آخر عملية دفع حتى الآن.")
-            else:
-                st.markdown("### 📝 متابعة الحصص بعد آخر دفع")
-                show_session_cols = [c for c in ["التاريخ", "الحالة", "مستوى الطالب", "ملاحظات التفاعل والاستيعاب", "المجموعة/الصف", "المنهج/الدولة"] if c in report_sessions.columns]
-                st.dataframe(report_sessions[show_session_cols].reset_index(drop=True), use_container_width=True)
-
-            if not report_assessments.empty:
-                st.markdown("### 📚 الواجبات والاختبارات بعد آخر دفع")
-                show_ass_cols = [c for c in ["التاريخ", "النوع", "عنوان التكليف", "الدرجة المحصلة", "الدرجة العظمى", "حالة التسليم", "ملاحظات وتوجيهات"] if c in report_assessments.columns]
-                st.dataframe(report_assessments[show_ass_cols].reset_index(drop=True), use_container_width=True)
-
-            session_html_rows = ""
-            for _, r in report_sessions.iterrows():
-                session_html_rows += f"""
-                <tr>
-                    <td>{r.get('التاريخ','')}</td>
-                    <td>{r.get('الحالة','')}</td>
-                    <td>{r.get('مستوى الطالب','غير مسجل')}</td>
-                    <td>{r.get('ملاحظات التفاعل والاستيعاب','')}</td>
-                </tr>
-                """
+            col_rep1, col_rep2, col_rep3, col_rep4 = st.columns(4)
+            col_rep1.metric("نسبة الحضور والالتزام", f"{att_percentage:.1f}%")
+            col_rep2.metric("عدد الواجبات المستلمة", len(hws))
+            col_rep3.metric("متوسط درجات الاختبارات", f"{exam_percentage:.1f}%")
+            col_rep4.metric("إجمالي المبلغ المستحق", f"{total_cost:,.1f}")
 
             ass_html_rows = ""
-            for _, r in report_assessments.iterrows():
-                ass_html_rows += f"""
-                <tr>
-                    <td>{r.get('التاريخ','')}</td>
-                    <td>{r.get('النوع','')}</td>
-                    <td>{r.get('عنوان التكليف','')}</td>
-                    <td>{r.get('الدرجة المحصلة','')} / {r.get('الدرجة العظمى','')}</td>
-                    <td>{r.get('حالة التسليم','')}</td>
-                    <td>{r.get('ملاحظات وتوجيهات','')}</td>
+            if not st_assessments.empty:
+                for _, r in st_assessments.iterrows():
+                    ass_html_rows += f"""
+                    <tr>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['التاريخ']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['النوع']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['عنوان التكليف']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['الدرجة المحصلة']} / {r['الدرجة العظمى']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['حالة التسليم']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #047857;">{r['ملاحظات وتوجيهات']}</td>
+                    </tr>
+                    """
+            else:
+                ass_html_rows = "<tr><td colspan='6' style='padding: 15px; font-weight: 900; border: 2px solid #000;'>لا توجد واجبات أو اختبارات مرصودة حتى الآن.</td></tr>"
+
+            session_html_rows = ""
+            if not st_sessions.empty:
+                for _, r in st_sessions.iterrows():
+                    st_color = "#0f766e" if r["الحالة"] == "حاضر" else ("#b91c1c" if r["الحالة"] == "غائب" else "#b45309")
+                    p_curr = float(r.get('سعر الحصة', 0)) if pd.notnull(r.get('سعر الحصة')) else 0.0
+                    session_html_rows += f"""
+                    <tr>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['التاريخ']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; color:{st_color}; font-weight: 900;">{r['الحالة']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #16a34a; font-size: 17px;">{p_curr:,.1f}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900; color: #0052cc;">{r['مستوى الطالب']}</td>
+                        <td style="padding: 10px; border: 2px solid #000; font-weight: 900;">{r['ملاحظات']}</td>
+                    </tr>
+                    """
+                session_html_rows += f"""
+                <tr style="background-color: #f1f5f9;">
+                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 17px;">الإجمالي الكلي المستحق للحصص:</td>
+                    <td style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 19px; color: #b91c1c;">{total_cost:,.1f}</td>
+                    <td colspan="2" style="padding: 12px; border: 2px solid #000; font-weight: 900; font-size: 16px;">نظام الدفع المعتمد: {pay_val}</td>
                 </tr>
                 """
+            else:
+                session_html_rows = "<tr><td colspan='5' style='padding: 15px; font-weight: 900; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
 
-            if not session_html_rows:
-                session_html_rows = "<tr><td colspan='4'>لا توجد حصص بعد آخر تسجيل حساب.</td></tr>"
-            if not ass_html_rows:
-                ass_html_rows = "<tr><td colspan='6'>لا توجد واجبات أو اختبارات بعد آخر تسجيل حساب.</td></tr>"
+            teacher_img_tag = f'<img src="{teacher_image_data_uri(img_b64)}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
 
-            parent_report_html = f"""<!doctype html>
+            student_weekly_rep = st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip() == selected_student.strip()].copy()
+            weekly_report_rows = ""
+            for _, wr in student_weekly_rep.iterrows():
+                weekly_report_rows += f"<tr><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('اليوم','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('الموعد','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('اسم الأكاديمية','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('المنهج/الدولة','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('المجموعة/الصف','')}</td><td style='padding:10px;border:2px solid #000;font-weight:900'>{wr.get('سعر الحصة',0)}</td></tr>"
+
+            parent_report_html = f"""<!DOCTYPE html>
             <html dir="rtl" lang="ar">
-            <head><meta charset="utf-8">
-            <style>
-                body {{ font-family: Arial, Tahoma, sans-serif; direction: rtl; color:#172033; padding:28px; }}
-                .header {{ background:#0b1f3a; color:white; padding:22px; border-radius:16px; margin-bottom:18px; }}
-                .header h1 {{ margin:0 0 8px; font-size:28px; }}
-                .info {{ background:#eef5ff; border:1px solid #cbdcf7; padding:14px; border-radius:12px; margin-bottom:18px; }}
-                .stats {{ width:100%; border-collapse:collapse; margin:16px 0; }}
-                .stats th,.stats td {{ border:1px solid #cbd5e1; padding:10px; text-align:center; }}
-                .stats th {{ background:#e7eef8; }}
-                .section-title {{ background:#0b1f3a; color:white; padding:10px 14px; border-radius:10px; margin-top:22px; font-weight:bold; }}
-                table.main {{ width:100%; border-collapse:collapse; margin-top:10px; }}
-                table.main th,table.main td {{ border:1px solid #cbd5e1; padding:9px; vertical-align:top; }}
-                table.main th {{ background:#f1f5f9; }}
-                .footer {{ margin-top:28px; padding-top:14px; border-top:2px solid #dbe3ee; text-align:center; }}
-            </style></head>
-            <body>
-                <div class="header">
-                    <h1>📑 تقرير متابعة الطالب</h1>
-                    <div><b>اسم الطالب:</b> {selected_student}</div>
-                    <div><b>ولي الأمر:</b> {parent_name_rep or 'غير مسجل'}</div>
-                    <div><b>رقم ولي الأمر:</b> {parent_phone_rep or 'غير مسجل'}</div>
-                    <div><b>المرحلة:</b> {group_val} &nbsp; | &nbsp; <b>المنهج:</b> {curr_val}</div>
-                    <div style="margin-top:8px;"><b>فترة المتابعة:</b> {report_period_text}</div>
-                    <div style="margin-top:6px;"><b>تاريخ إصدار التقرير:</b> {date.today()}</div>
+            <head>
+                <meta charset="utf-8">
+                <title>تقرير متابعة ولي الأمر - {selected_student}</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@800;900&display=swap');
+                    body {{ font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 30px; color: #000000 !important; background-color: #ffffff !important; font-weight: 900; }}
+                    .header-box {{ border-bottom: 3px solid #0052cc; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }}
+                    .brand-name {{ color: #0052cc; margin: 0; font-size: 32px; font-weight: 900; }}
+                    .brand-sub {{ color: #000000; margin: 4px 0; font-size: 16px; font-weight: 900; }}
+                    .parent-notice {{ background-color: #f0fdf4; border: 2px solid #16a34a; padding: 12px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 17px; font-weight: 900; color: #14532d; }}
+                    .stats-box {{ width: 100%; border-collapse: collapse; margin-bottom: 25px; }}
+                    .stats-box th, .stats-box td {{ border: 2px solid #000000; padding: 10px; text-align: center; font-size: 16px; font-weight: 900; }}
+                    .stats-box th {{ background: #f1f5f9; color: #000000; font-weight: 900; }}
+                    .section-title {{ margin-top: 25px; margin-bottom: 10px; color: #0052cc; font-size: 20px; font-weight: 900; border-bottom: 2px solid #0052cc; padding-bottom: 6px; display: inline-block; }}
+                    .table-main {{ width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; margin-bottom: 20px; }}
+                    .table-main th {{ background-color: #f8fafc; color: #000000; font-weight: 900; font-size: 16px; padding: 10px; border: 2px solid #000000; }}
+                    .footer-note {{ margin-top: 35px; text-align: center; color: #000000; font-size: 16px; font-weight: 900; border-top: 2px solid #000000; padding-top: 15px; }}
+                </style>
+            </head>
+            <body onload="window.print()">
+                <div class="header-box">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        {teacher_img_tag}
+                        <div>
+                            <h2 class="brand-name">م/ محمد غنيم 📐</h2>
+                            <p class="brand-sub">تقرير التقييم الدوري لولي الأمر</p>
+                            <p style="margin: 2px 0; color: #000000; font-size: 16px; font-weight: 900;"><b>المنهج والمرحلة:</b> {curr_val} — {group_val}</p>
+                        </div>
+                    </div>
+                    <div style="text-align: left;">
+                        <h2 style="color: #0052cc; margin: 0; font-size: 26px; font-weight: 900;">الطالب: {selected_student}</h2><p style="margin:3px 0;font-weight:900;">ولي الأمر: {parent_name_rep or "غير مسجل"} | {parent_phone_rep or "غير مسجل"}</p>
+                        <p style="margin: 5px 0 0 0; color: #000000; font-size: 15px; font-weight: 900;">تاريخ إصدار التقرير: {date.today()}</p>
+                    </div>
                 </div>
-                <table class="stats">
-                    <tr><th>عدد الحصص</th><th>الحضور</th><th>الغياب</th><th>نسبة الحضور</th><th>المستوى الحالي</th></tr>
-                    <tr><td>{total_report_sessions}</td><td>{attendance_count}</td><td>{absence_count}</td><td>{attendance_percentage:.1f}%</td><td>{last_level}</td></tr>
+                <table class="stats-box">
+                    <tr>
+                        <th>إجمالي الحصص</th><th>مرات الحضور</th><th>مرات الغياب</th><th>نسبة الالتزام بالحضور</th><th>إجمالي الحساب المستحق</th><th>المستوى العام</th>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 900;">{total_sessions_cnt}</td>
+                        <td style="color: #0f766e; font-weight: 900;">{att_cnt}</td>
+                        <td style="color: #b91c1c; font-weight: 900;">{abs_cnt}</td>
+                        <td style="font-weight: 900; color: #0052cc;">{att_percentage:.1f}%</td>
+                        <td style="font-weight: 900; font-size: 18px; color: #b91c1c;">{total_cost:,.1f}</td>
+                        <td style="color: #0052cc; font-weight: 900;">{level_val}</td>
+                    </tr>
                 </table>
-                <div class="section-title">1. سجل الحصص والمتابعة</div>
-                <table class="main">
-                    <tr><th>التاريخ</th><th>الحالة</th><th>مستوى الطالب</th><th>ملاحظات التفاعل والاستيعاب</th></tr>
-                    {session_html_rows}
+                <div class="section-title">1. جدول المواعيد الأسبوعية:</div>
+                <table class="table-main">
+                    <tr><th>اليوم</th><th>الموعد</th><th>الأكاديمية</th><th>المنهج</th><th>المرحلة</th><th>سعر الحصة</th></tr>
+                    {weekly_report_rows if weekly_report_rows else "<tr><td colspan='6'>لا توجد مواعيد أسبوعية مسجلة.</td></tr>"}
                 </table>
-                <div class="section-title">2. الواجبات والاختبارات</div>
-                <table class="main">
-                    <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف</th><th>الدرجة</th><th>حالة التسليم</th><th>ملاحظات وتوجيهات</th></tr>
+                <div class="section-title">2. تقرير الواجبات المنزلية والاختبارات الدورية:</div>
+                <table class="table-main">
+                    <tr><th>التاريخ</th><th>النوع</th><th>عنوان التكليف / الاختبار</th><th>الدرجة المحصلة</th><th>حالة التسليم والالتزام</th><th>ملاحظات وتوجيهات</th></tr>
                     {ass_html_rows}
                 </table>
-                <div class="footer">مع تحيات: <b>م/ محمد غنيم | البشمهندس x الرياضه</b> — 01016361440 🌟</div>
-            </body></html>"""
+                <div class="section-title">3. سجل الحضور وتفاصيل سعر كل حصة:</div>
+                <table class="table-main">
+                    <tr><th>التاريخ</th><th>حالة الحضور</th><th>سعر الحصة</th><th>مستوى الطالب بالحصة</th><th>ملاحظات التفاعل والاستيعاب</th></tr>
+                    {session_html_rows}
+                </table>
+                <div class="footer-note">مع تحيات: <b>م/ محمد غنيم | البشمهندس x الرياضه</b> — رقم التواصل المباشر: 01016361440 🌟</div>
+            </body>
+            </html>"""
 
             st.download_button(
-                label=f"🖨️ تحميل تقرير ولي الأمر لـ ({selected_student})",
+                label=f"🖨️ تحميل وطباعة تقرير ولي الأمر لـ ({selected_student}) بصيغة PDF",
                 data=parent_report_html.encode("utf-8"),
                 file_name=f"تقرير_ولي_الأمر_{selected_student}.html",
-                mime="text/html",
-                key="parent_report_download",
+                mime="application/octet-stream",
             )
 
+# ============================================================================== 
+# الحفظ التلقائي الدائم
+# ------------------------------------------------------------------------------
+# أي تغيير في بيانات المنصة يتم التقاطه في نهاية تشغيل الصفحة ورفعه إلى
+# Supabase تلقائياً. لا يحتاج المعلم للضغط على زر حفظ بعد كل تعديل.
+# يتم الحفظ فقط عند اكتشاف تغيير فعلي حتى لا نرسل نفس البيانات في كل rerun.
+# ============================================================================== 
+def _autosave_dataframe_signature(df):
+    try:
+        if df is None:
+            return "<none>"
+        work = df.copy()
+        # ثبّت ترتيب الأعمدة، وحوّل القيم إلى تمثيل ثابت قدر الإمكان.
+        work = work.copy()
+        work.columns = [str(c) for c in work.columns]
+        for col in work.columns:
+            try:
+                work[col] = work[col].map(lambda x: "" if pd.isna(x) else str(x))
+            except Exception:
+                pass
+        raw = pd.util.hash_pandas_object(work, index=True).values.tobytes()
+        return hashlib.sha256(("|".join(work.columns) + "|" + str(len(work)) + "|").encode("utf-8") + raw).hexdigest()
+    except Exception:
+        try:
+            return hashlib.sha256(repr(df.to_dict(orient="records")).encode("utf-8")).hexdigest()
+        except Exception:
+            return repr(df)
+
+
+def _autosave_signature():
+    keys = [
+        "users_df", "sessions_df", "assessments_df", "messages_df", "exams_df",
+        "essays_df", "bookings_df", "bank_requests_df", "question_bank_df",
+        "videos_df", "video_comments_df", "abqary_df", "online_schedule_df",
+        "weekly_schedule_df", "payment_records_df", "student_interface_df",
+        "teacher_profile_df",
+    ]
+    parts = []
+    for key in keys:
+        parts.append(key + ":" + _autosave_dataframe_signature(st.session_state.get(key)))
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def _autosave_all_changes():
+    # لا تبدأ الحفظ قبل اكتمال جداول البيانات الأساسية.
+    required = [
+        "users_df", "sessions_df", "assessments_df", "messages_df", "exams_df",
+        "essays_df", "bookings_df", "bank_requests_df", "question_bank_df",
+        "videos_df", "video_comments_df", "abqary_df", "online_schedule_df",
+    ]
+    if not all(k in st.session_state for k in required):
+        return
+
+    current_sig = _autosave_signature()
+    previous_sig = st.session_state.get("_last_autosave_signature")
+
+    # أول تشغيل: اعتبر البيانات الحالية نقطة البداية وارفعها مرة واحدة.
+    # بعد ذلك لن يتم الرفع إلا عند وجود تغيير حقيقي.
+    if previous_sig == current_sig:
+        return
+
+    try:
+        cloud_saved = save_all_data(
+            st.session_state.users_df,
+            st.session_state.sessions_df,
+            st.session_state.assessments_df,
+            st.session_state.messages_df,
+            st.session_state.exams_df,
+            st.session_state.essays_df,
+            st.session_state.bookings_df,
+            st.session_state.bank_requests_df,
+            st.session_state.question_bank_df,
+            st.session_state.videos_df,
+            st.session_state.video_comments_df,
+            st.session_state.abqary_df,
+            st.session_state.online_schedule_df,
+            st.session_state.get("weekly_schedule_df"),
+            st.session_state.get("payment_records_df"),
+        )
+        if cloud_saved:
+            st.session_state._last_autosave_signature = current_sig
+            st.session_state._autosave_last_status = "تم الحفظ التلقائي في Supabase"
+            st.session_state._autosave_last_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            # لا نغيّر البصمة حتى يعاد المحاولة تلقائياً في التشغيل التالي.
+            st.session_state._autosave_last_status = "تعذر الحفظ السحابي - ستتم إعادة المحاولة تلقائياً"
+    except Exception as _autosave_error:
+        st.session_state._autosave_last_status = f"تعذر الحفظ التلقائي: {_autosave_error}"
+
+
+# تشغيل الحفظ التلقائي في نهاية كل rerun.
+_autosave_all_changes()
