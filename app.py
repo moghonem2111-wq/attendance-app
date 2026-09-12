@@ -876,6 +876,78 @@ if "teacher_page" not in st.session_state:
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
 
+# حالات إظهار/إخفاء القوائم والإشعارات — مستقلة لكل واجهة.
+if "student_sidebar_open" not in st.session_state:
+    st.session_state.student_sidebar_open = True
+if "teacher_sidebar_open" not in st.session_state:
+    st.session_state.teacher_sidebar_open = True
+if "student_notifications_open" not in st.session_state:
+    st.session_state.student_notifications_open = False
+if "teacher_notifications_open" not in st.session_state:
+    st.session_state.teacher_notifications_open = False
+
+def _app_notifications(role="student", student_name=""):
+    """تجميع إشعارات حقيقية من بيانات المنصة الحالية بدون إنشاء مصدر بيانات منفصل."""
+    items = []
+    try:
+        msg_df = st.session_state.get("messages_df", pd.DataFrame())
+        if role == "student" and student_name and not msg_df.empty and "اسم الطالب" in msg_df.columns:
+            rows = msg_df[msg_df["اسم الطالب"].astype(str).str.strip() == str(student_name).strip()]
+            if "المرسل" in rows.columns:
+                rows = rows[rows["المرسل"].astype(str).str.strip().str.lower() != "الطالب"]
+            for _, r in rows.tail(5).iloc[::-1].iterrows():
+                txt = str(r.get("نص الرسالة", "رسالة جديدة")).strip() or "رسالة جديدة"
+                sender = str(r.get("المرسل", "المعلم")).strip() or "المعلم"
+                dt = str(r.get("التاريخ_والوقت", "")).strip()
+                items.append(("💬", f"رسالة من {sender}", txt, dt))
+
+            ws = st.session_state.get("weekly_schedule_df", pd.DataFrame())
+            if not ws.empty and "اسم الطالب" in ws.columns:
+                sr = ws[ws["اسم الطالب"].astype(str).str.strip() == str(student_name).strip()].tail(5).iloc[::-1]
+                for _, r in sr.iterrows():
+                    day = str(r.get("اليوم", "")).strip()
+                    tm = str(r.get("الموعد", "")).strip()
+                    items.append(("🗓️", "موعد حصة", f"لديك حصة {day} {tm}".strip(), ""))
+
+            hw = st.session_state.get("assessments_df", pd.DataFrame())
+            if not hw.empty and "اسم الطالب" in hw.columns:
+                hr = hw[hw["اسم الطالب"].astype(str).str.strip() == str(student_name).strip()].tail(3).iloc[::-1]
+                for _, r in hr.iterrows():
+                    title = str(r.get("الواجب", r.get("اسم الواجب", "واجب جديد"))).strip()
+                    if title and title.lower() != "nan":
+                        items.append(("📚", "واجب", title, str(r.get("التاريخ", "")).strip()))
+        else:
+            # إشعارات المعلم: رسائل الطلاب + طلبات الحجز + تنبيه مالي مختصر.
+            if not msg_df.empty and "المرسل" in msg_df.columns:
+                rows = msg_df[msg_df["المرسل"].astype(str).str.strip().str.lower().str.contains("طالب|student", regex=True, na=False)].tail(5).iloc[::-1]
+                for _, r in rows.iterrows():
+                    stn = str(r.get("اسم الطالب", "طالب")).strip() or "طالب"
+                    txt = str(r.get("نص الرسالة", "رسالة جديدة")).strip() or "رسالة جديدة"
+                    items.append(("💬", f"رسالة من {stn}", txt, str(r.get("التاريخ_والوقت", "")).strip()))
+            bk = st.session_state.get("bookings_df", pd.DataFrame())
+            if not bk.empty:
+                for _, r in bk.tail(5).iloc[::-1].iterrows():
+                    stn = str(r.get("اسم الطالب", "طالب")).strip() or "طالب"
+                    status = str(r.get("الحالة", r.get("حالة الطلب", "طلب جديد"))).strip()
+                    items.append(("📅", "طلب حجز", f"طلب حجز من {stn} — {status}", ""))
+            p_df = st.session_state.get("payment_records_df", pd.DataFrame())
+            if not p_df.empty:
+                items.append(("💰", "الحسابات", f"سجل المدفوعات يحتوي على {len(p_df)} عملية مسجلة", ""))
+    except Exception:
+        pass
+    return items[:10]
+
+def _render_notification_box(role="student", student_name=""):
+    items = _app_notifications(role, student_name)
+    if not items:
+        st.info("لا توجد إشعارات حالياً 🔔")
+        return
+    with st.container(border=True):
+        st.markdown("### 🔔 الإشعارات")
+        for icon, title, body, dt in items:
+            time_txt = f" — {dt}" if dt and dt.lower() != "nan" else ""
+            st.markdown(f"<div style='padding:10px 12px;margin:7px 0;border:1px solid #dbe5f0;border-radius:12px;background:rgba(37,99,235,.05);direction:rtl'><b>{icon} {title}</b><div style='margin-top:4px;line-height:1.7'>{body}</div><small style='opacity:.65'>{time_txt}</small></div>", unsafe_allow_html=True)
+
 query_params = st.query_params
 is_student_mode = query_params.get("role") == "student"
 
@@ -1336,10 +1408,23 @@ else:
     _theme_css = ""
 st.markdown(f"<style>{_theme_css}</style>", unsafe_allow_html=True)
 
+# إخفاء/إظهار القائمة الجانبية من زر ☰ الحقيقي، مع بقاء زر ☰ ظاهراً داخل الصفحة.
+if is_student_mode:
+    _sidebar_css = "" if st.session_state.student_sidebar_open else "[data-testid=\"stSidebar\"]{display:none!important;} [data-testid=\"stSidebarCollapsedControl\"]{display:none!important;} .main .block-container{max-width:1400px!important;}"
+else:
+    _sidebar_css = "" if st.session_state.teacher_sidebar_open else "[data-testid=\"stSidebar\"]{display:none!important;} [data-testid=\"stSidebarCollapsedControl\"]{display:none!important;} .main .block-container{max-width:1400px!important;}"
+st.markdown(f"<style>{_sidebar_css}</style>", unsafe_allow_html=True)
+
 # ============================================================================== 
 # 1. واجهة الطالب الشاملة
 # ==============================================================================
 if is_student_mode:
+    # ===== زر ☰ لإظهار/إخفاء قائمة الطالب =====
+    _st_menu_col, _st_spacer = st.columns([1, 11])
+    with _st_menu_col:
+        if st.button("☰", key="student_sidebar_toggle", help="إظهار أو إخفاء القائمة الجانبية"):
+            st.session_state.student_sidebar_open = not st.session_state.student_sidebar_open
+            st.rerun()
     # ===== شريط الطالب الحديث بنفس شكل لوحة المعلم =====
     _nav_uri = STUDENT_FIXED_IMAGE_URI
     _nav_avatar_tag = f'<img src="{_nav_uri}" class="modern-avatar">' if _nav_uri else ''
@@ -1383,15 +1468,24 @@ if is_student_mode:
     st.sidebar.markdown("<div style='margin-top:25px;text-align:center;font-size:11px;color:#94a3b8!important;'>جميع الحقوق محفوظة © 2026</div>", unsafe_allow_html=True)
 
     _student_name_for_header = str(st.session_state.logged_student.get("اسم الطالب", "طالبنا العزيز")) if st.session_state.logged_student else "طالبنا العزيز"
-    st.markdown(f"""
-        <div class="modern-topbar">
-            <div class="modern-brand">
-                {_nav_avatar_tag}
-                <div><div style="font-size:12px;color:#64748b!important;font-weight:800;">البشمهندس x الرياضه</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، {_student_name_for_header}</div></div>
+    _student_notifs = _app_notifications("student", _student_name_for_header if st.session_state.logged_student else "")
+    _student_notif_count = len(_student_notifs)
+    _top_a, _top_b = st.columns([10, 1])
+    with _top_a:
+        st.markdown(f"""
+            <div class="modern-topbar">
+                <div class="modern-brand">
+                    {_nav_avatar_tag}
+                    <div><div style="font-size:12px;color:#64748b!important;font-weight:800;">البشمهندس x الرياضه</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، {_student_name_for_header}</div></div>
+                </div>
             </div>
-            <div style="font-size:22px;color:#334155!important;">🔔</div>
-        </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+    with _top_b:
+        if st.button(f"🔔 {_student_notif_count}", key="student_notifications_btn", use_container_width=True, help="عرض الإشعارات"):
+            st.session_state.student_notifications_open = not st.session_state.student_notifications_open
+            st.rerun()
+    if st.session_state.student_notifications_open:
+        _render_notification_box("student", _student_name_for_header if st.session_state.logged_student else "")
 
     # --- أيقونات التواصل أعلى صفحة الطالب (إضافة جديدة بدون حذف الفوتر القديم) ---
     st.markdown(f"""
@@ -1502,7 +1596,7 @@ if is_student_mode:
             # أزرار الدخول والتسجيل هنا هي عناصر Streamlit حقيقية وقابلة للضغط.
             # تم حذف النصوص HTML القديمة حتى لا تظهر كأنها أزرار غير فعالة.
             st.markdown("<div class='landing-auth-title'>اختر ما يناسبك لبدء رحلتك التعليمية</div>", unsafe_allow_html=True)
-            c_home_b1,c_home_b2=st.columns(2)
+            c_home_b1,c_home_b2,c_home_b3=st.columns(3)
             with c_home_b1:
                 if st.button("تسجيل الدخول", key="landing_login_btn", use_container_width=True, type="primary"):
                     st.session_state.page_view="login"
@@ -1510,6 +1604,10 @@ if is_student_mode:
             with c_home_b2:
                 if st.button("إنشاء حساب جديد", key="landing_register_btn", use_container_width=True):
                     st.session_state.page_view="register"
+                    st.rerun()
+            with c_home_b3:
+                if st.button("👥 الدخول كضيف", key="landing_guest_btn", use_container_width=True):
+                    st.session_state.page_view="guest_reg"
                     st.rerun()
             st.markdown("### 📚 ماذا ستجد داخل المنصة؟")
             cc1,cc2,cc3,cc4=st.columns(4)
@@ -2128,6 +2226,13 @@ if is_student_mode:
 total_exams_count = len(st.session_state.exams_df)
 total_students_count = len(st.session_state.users_df)
 
+# ===== زر ☰ لإظهار/إخفاء قائمة المعلم =====
+_teach_menu_col, _teach_menu_spacer = st.columns([1, 11])
+with _teach_menu_col:
+    if st.button("☰", key="teacher_sidebar_toggle", help="إظهار أو إخفاء القائمة الجانبية"):
+        st.session_state.teacher_sidebar_open = not st.session_state.teacher_sidebar_open
+        st.rerun()
+
 _teacher_sidebar_uri=STUDENT_FIXED_IMAGE_URI
 st.sidebar.markdown(f"""
     <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
@@ -2277,16 +2382,26 @@ if t_page == "student_interface":
 
 elif t_page == "dashboard":
     dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
-    profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
-    profile_uri = teacher_image_data_uri(profile_b64) if profile_b64 and profile_b64 != "nan" else STUDENT_FIXED_IMAGE_URI
+    # الصورة الثابتة المدمجة هي الضمان الأساسي لظهور صورة المعلم دائماً أعلى لوحة التحكم.
+    profile_uri = STUDENT_FIXED_IMAGE_URI
     total_due_all,total_paid_all,total_balance_all=get_all_financial_totals()
-    st.markdown(f"""
-    <div class="dashboard-banner">
-      <div><div style="font-size:12px;background:#1677ff;padding:5px 11px;border-radius:999px;display:inline-block">لوحة تحكم المعلم</div>
-      <h2>مرحباً بك يا م/ محمد غنيم 👋</h2><p>إدارة الطلاب والحصص والواجبات والاختبارات والمواعيد والحسابات من مكان واحد.</p></div>
-      <img src="{profile_uri}" alt="م/ محمد غنيم">
-    </div>
-    """,unsafe_allow_html=True)
+    _teacher_notifs = _app_notifications("teacher")
+    _teacher_notif_count = len(_teacher_notifs)
+    _dash_head_a, _dash_head_b = st.columns([10, 1])
+    with _dash_head_a:
+        st.markdown(f"""
+        <div class="dashboard-banner">
+          <div><div style="font-size:12px;background:#1677ff;padding:5px 11px;border-radius:999px;display:inline-block">لوحة تحكم المعلم</div>
+          <h2>مرحباً بك يا م/ محمد غنيم 👋</h2><p>إدارة الطلاب والحصص والواجبات والاختبارات والمواعيد والحسابات من مكان واحد.</p></div>
+          <img src="{profile_uri}" alt="م/ محمد غنيم">
+        </div>
+        """,unsafe_allow_html=True)
+    with _dash_head_b:
+        if st.button(f"🔔 {_teacher_notif_count}", key="teacher_notifications_btn", use_container_width=True, help="عرض الإشعارات"):
+            st.session_state.teacher_notifications_open = not st.session_state.teacher_notifications_open
+            st.rerun()
+    if st.session_state.teacher_notifications_open:
+        _render_notification_box("teacher")
     st.markdown("<div style='height:14px'></div>",unsafe_allow_html=True)
     s1,s2,s3,s4=st.columns(4)
     for c,icon,num,label,cls in [(s1,'♙',len(dashboard_students),'إجمالي الطلاب','stat-purple'),(s2,'▣',len(st.session_state.weekly_schedule_df),'المواعيد الأسبوعية','stat-green'),(s3,'◉',len(st.session_state.online_schedule_df),'مواعيد Zoom','stat-blue'),(s4,'✎',len(st.session_state.sessions_df),'الحصص المرصودة','stat-yellow')]:
@@ -2307,6 +2422,7 @@ elif t_page == "dashboard":
     f3.metric("الرصيد المتبقي",f"{max(total_balance_all,0):,.0f} جنيه")
     with st.container(border=True):
         st.markdown("### 📷 صورة المعلم")
+        st.markdown(f"<div style='text-align:center;margin:6px 0 14px;'><img src='{STUDENT_FIXED_IMAGE_URI}' style='width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid #60a5fa;box-shadow:0 10px 25px rgba(0,0,0,.18);'></div>", unsafe_allow_html=True)
         st.caption("صورتك محفوظة وتظهر في الواجهة والتقارير. يمكنك تغييرها من هنا دون التأثير على باقي البيانات.")
         change_photo=st.checkbox("✏️ أريد تغيير الصورة",key="change_teacher_photo")
         if change_photo:
