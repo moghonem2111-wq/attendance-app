@@ -1906,7 +1906,7 @@ if t_page != "dashboard":
             st.session_state.teacher_page = "dashboard"
             st.rerun()
 
-elif t_page == "dashboard":
+if t_page == "dashboard":
     dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
     profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
     col_main_top, col_stat_sidebar = st.columns([3, 1])
