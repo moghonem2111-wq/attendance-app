@@ -177,6 +177,57 @@ def base64_to_pil(b64_str):
 
 img_b64 = get_image_base64(found_img_path)
 
+
+def teacher_image_data_uri(b64_str):
+    """تحويل صورة المعلم المحفوظة Base64 إلى Data URI صحيح مع قص المساحات البيضاء الزائدة."""
+    if not b64_str or str(b64_str).strip().lower() == "nan":
+        return ""
+    try:
+        raw = base64.b64decode(str(b64_str))
+        im = Image.open(io.BytesIO(raw)).convert("RGBA")
+
+        # قص الحواف البيضاء/الشفافة الزائدة حتى لا يظهر الوجه في نصف الدائرة فقط.
+        bbox = None
+        pix = im.load()
+        xs, ys = [], []
+        for y in range(im.height):
+            for x in range(im.width):
+                r, g, b, a = pix[x, y]
+                if a > 18 and not (r > 245 and g > 245 and b > 245):
+                    xs.append(x)
+                    ys.append(y)
+        if xs and ys:
+            left, top, right, bottom = min(xs), min(ys), max(xs) + 1, max(ys) + 1
+            pad = max(8, int(max(right-left, bottom-top) * 0.10))
+            left = max(0, left-pad); top = max(0, top-pad)
+            right = min(im.width, right+pad); bottom = min(im.height, bottom+pad)
+            bbox = (left, top, right, bottom)
+        if bbox:
+            im = im.crop(bbox)
+
+        # نجعل الصورة مربعة مع الحفاظ على الوجه في المنتصف.
+        side = max(im.width, im.height)
+        canvas = Image.new("RGBA", (side, side), (255, 255, 255, 0))
+        canvas.paste(im, ((side-im.width)//2, (side-im.height)//2), im)
+        buf = io.BytesIO()
+        canvas.save(buf, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
+    except Exception:
+        # fallback: تحديد نوع الصورة من التوقيع بدل افتراض JPEG
+        try:
+            raw = base64.b64decode(str(b64_str))
+            if raw.startswith(b"\x89PNG"):
+                mime = "image/png"
+            elif raw.startswith(b"\xff\xd8\xff"):
+                mime = "image/jpeg"
+            elif raw.startswith(b"RIFF") and raw[8:12] == b"WEBP":
+                mime = "image/webp"
+            else:
+                mime = "image/png"
+            return f"data:{mime};base64,{b64_str}"
+        except Exception:
+            return ""
+
 # بطاقات الاشتراكات الموحدة للصفحة الرئيسية وصفحة الطالب
 DARSSLY_COURSES = [
     {"icon": "📘", "title": "رياضيات أول إعدادي", "price": 200, "link": "https://darssly.com/courses/mathematics-for-preparatory-stage-mr-mohamed-ghonaim-3/plans", "tag": "أولى إعدادي"},
@@ -192,7 +243,7 @@ def render_darssly_cards(section_key="home"):
     cols = st.columns(2)
     for idx, course in enumerate(DARSSLY_COURSES):
         with cols[idx % 2]:
-            photo = (f"<img class='subscription-photo' src='data:image/jpeg;base64,{img_b64}'>" if img_b64 else f"<div class='subscription-icon'>{course['icon']}</div>")
+            photo = (f"<img class='subscription-photo' src='{teacher_image_data_uri(img_b64)}'>" if img_b64 else f"<div class='subscription-icon'>{course['icon']}</div>")
             st.markdown(f"""
                 <div class='subscription-card' dir='rtl'>
                     <div class='subscription-badge'>باقـة {course['tag']}</div>
@@ -870,7 +921,7 @@ if is_student_mode:
         </style>
     """, unsafe_allow_html=True)
 
-    nav_avatar_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
+    nav_avatar_tag = f'<img src="{teacher_image_data_uri(img_b64)}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover;">' if img_b64 else '<div style="width:45px;height:45px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;">👨‍🏫</div>'
     
     col_nav1, col_nav2 = st.columns([2, 1.5])
     with col_nav1:
@@ -996,7 +1047,7 @@ if is_student_mode:
                 if img_b64:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <img src="data:image/jpeg;base64,{img_b64}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <img src="{teacher_image_data_uri(img_b64)}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -1282,7 +1333,7 @@ if is_student_mode:
                 st.markdown(f"""
                 <div style="background:{card_bg}; border:1.5px solid {pkg['accent']}; border-radius:20px; padding:18px 16px 14px; min-height:365px; box-shadow:0 8px 24px rgba(15,23,42,.08); direction:rtl; text-align:right; margin-bottom:10px;">
                     <div style="display:inline-block; background:{pkg['accent']}18; color:{pkg['accent']}; border:1px solid {pkg['accent']}55; border-radius:20px; padding:5px 12px; font-size:13px; font-weight:900;">{pkg['badge']}</div>
-                    {f"<img src='data:image/jpeg;base64,{img_b64}' style='width:108px;height:108px;border-radius:50%;object-fit:cover;display:block;margin:14px auto 10px;border:5px solid {pkg['accent']};box-shadow:0 8px 20px rgba(15,23,42,.18);'>" if img_b64 else f"<div style='font-size:46px; text-align:center; margin:14px 0 8px;'>{pkg['icon']}</div>"}
+                    {f"<img src='{teacher_image_data_uri(img_b64)}' style='width:108px;height:108px;border-radius:50%;object-fit:cover;display:block;margin:14px auto 10px;border:5px solid {pkg['accent']};box-shadow:0 8px 20px rgba(15,23,42,.18);'>" if img_b64 else f"<div style='font-size:46px; text-align:center; margin:14px 0 8px;'>{pkg['icon']}</div>"}
                     <h3 style="color:{text_color}; text-align:center; font-size:20px; margin:4px 0 6px;">{pkg['title']}</h3>
                     <p style="color:{text_color}; opacity:.82; text-align:center; font-weight:800; font-size:14px; margin-bottom:16px;">{pkg['grade']}</p>
                     <div style="font-size:30px; font-weight:950; color:{pkg['accent']}; text-align:center; margin-bottom:12px;">{pkg['price']} جنيه <span style="font-size:13px; color:{text_color};">/ شهر</span></div>
@@ -3703,7 +3754,7 @@ elif t_page == "parent_report":
             else:
                 session_html_rows = "<tr><td colspan='5' style='padding: 15px; font-weight: 900; border: 2px solid #000;'>لا توجد حصص مسجلة بعد.</td></tr>"
 
-            teacher_img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
+            teacher_img_tag = f'<img src="{teacher_image_data_uri(img_b64)}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #0052cc; object-fit: cover;">' if img_b64 else ""
 
             student_weekly_rep = st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip() == selected_student.strip()].copy()
             weekly_report_rows = ""
