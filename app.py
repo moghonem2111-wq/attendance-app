@@ -237,13 +237,19 @@ DARSSLY_COURSES = [
 ]
 
 def render_darssly_cards(section_key="home"):
+    interface_df = st.session_state.get("student_interface_df", pd.DataFrame())
+    row = interface_df.iloc[0] if interface_df is not None and not interface_df.empty else {}
+    sub_title = str(row.get("عنوان_الاشتراكات", "📢 اشتراكات درسلي"))
+    sub_desc = str(row.get("وصف_الاشتراكات", "اختر المرحلة وشاهد نظام الشرح والمتابعة والسعر الشهري"))
+    sub_img = str(row.get("صورة_الاشتراكات_base64", "") or "").strip() or img_b64
+    sub_uri = teacher_image_data_uri(sub_img) if sub_img else ""
     st.markdown("<div class='darssly-box'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color:#fff;text-align:center;margin:0 0 5px;font-size:23px;font-weight:900;'>📢 اشتراكات درسلي</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#fff;text-align:center;margin:0 0 20px;font-size:15px;font-weight:800;'>اختر المرحلة وشاهد نظام الشرح والمتابعة والسعر الشهري</p>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#fff;text-align:center;margin:0 0 5px;font-size:23px;font-weight:900;'>{sub_title}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#fff;text-align:center;margin:0 0 20px;font-size:15px;font-weight:800;'>{sub_desc}</p>", unsafe_allow_html=True)
     cols = st.columns(2)
     for idx, course in enumerate(DARSSLY_COURSES):
         with cols[idx % 2]:
-            photo = (f"<img class='subscription-photo' src='{teacher_image_data_uri(img_b64)}'>" if img_b64 else f"<div class='subscription-icon'>{course['icon']}</div>")
+            photo = (f"<img class='subscription-photo' src='{sub_uri}'>" if sub_uri else f"<div class='subscription-icon'>{course['icon']}</div>")
             st.markdown(f"""
                 <div class='subscription-card' dir='rtl'>
                     <div class='subscription-badge'>باقـة {course['tag']}</div>
@@ -273,6 +279,7 @@ COL_ABQARY = ["معرف_عبقري", "عنوان_الإمتحان", "المنه�
 COL_ONLINE_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "تاريخ الحصة", "ساعة الحصة", "رابط زوم", "حالة فتح الحصة"]
 COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "المنهج/الدولة", "المجموعة/الصف", "رقم الطالب", "رقم مشرف الأكاديمية", "سعر الحصة", "اليوم", "الموعد", "اللون", "حالة الموعد"]
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
+COL_STUDENT_INTERFACE = ["عنوان_الواجهة", "الشارة", "الوصف", "صورة_الواجهة_base64", "عنوان_الاشتراكات", "وصف_الاشتراكات", "عنوان_الحجز", "نص_الحجز", "نص_الفوتر", "صورة_الاشتراكات_base64", "صورة_البانر_base64"]
 COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
 
 def load_teacher_profile():
@@ -293,6 +300,40 @@ def load_teacher_profile():
     elif not str(profile.iloc[0].get("الصورة_base64", "")).strip() and img_b64:
         profile.at[0,"الصورة_base64"] = img_b64
     return profile
+
+def load_student_interface():
+    defaults = {
+        "عنوان_الواجهة": "أهلاً بيكم منورين المنصة! 🚀",
+        "الشارة": "منصة شرح الرياضيات والإحصاء",
+        "الوصف": "مع م / محمد غنيم. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.",
+        "صورة_الواجهة_base64": "", "عنوان_الاشتراكات": "📢 اشتراكات درسلي",
+        "وصف_الاشتراكات": "اختر المرحلة وشاهد نظام الشرح والمتابعة والسعر الشهري",
+        "عنوان_الحجز": "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم",
+        "نص_الحجز": "احجز درس أونلاين مباشر وحدد المنهج والمرحلة ورقم الهاتف للتواصل معك.",
+        "نص_الفوتر": "جميع الحقوق محفوظة لدي م / محمد غنيم 2026",
+        "صورة_الاشتراكات_base64": "", "صورة_البانر_base64": ""
+    }
+    df = pd.DataFrame([defaults])
+    source = _get_excel_source()
+    if source is not None:
+        try:
+            with pd.ExcelFile(source) as xls:
+                if "StudentInterface" in xls.sheet_names:
+                    loaded = pd.read_excel(xls, "StudentInterface")
+                    if not loaded.empty:
+                        row = loaded.iloc[0].to_dict()
+                        for key, default in defaults.items():
+                            value = row.get(key, default)
+                            if pd.isna(value): value = default
+                            df.at[0, key] = value
+        except Exception:
+            pass
+    if not str(df.at[0, "صورة_الواجهة_base64"]).strip() and img_b64:
+        df.at[0, "صورة_الواجهة_base64"] = img_b64
+    if not str(df.at[0, "صورة_الاشتراكات_base64"]).strip() and img_b64:
+        df.at[0, "صورة_الاشتراكات_base64"] = img_b64
+    return df[COL_STUDENT_INTERFACE]
+
 
 def _get_print_profile():
     """بيانات المعلم المستخدمة في رأس ملفات الطباعة."""
@@ -516,6 +557,7 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
         weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
         payment_records_df.to_excel(writer, sheet_name="PaymentRecords", index=False)
+        st.session_state.get("student_interface_df", load_student_interface()).to_excel(writer, sheet_name="StudentInterface", index=False)
         st.session_state.get("teacher_profile_df", pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])).to_excel(writer, sheet_name="TeacherProfile", index=False)
     excel_bytes = excel_buffer.getvalue()
     # احفظ محلياً أيضاً عندما يكون ذلك ممكناً، ثم ارفع نفس الملف للتخزين الدائم.
@@ -583,6 +625,9 @@ try:
         img_b64 = _saved_teacher_photo
 except Exception:
     pass
+
+if "student_interface_df" not in st.session_state:
+    st.session_state.student_interface_df = load_student_interface()
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
@@ -1027,11 +1072,20 @@ if is_student_mode:
 
     elif not st.session_state.logged_student:
         if st.session_state.page_view == "home":
+            _ui_df = st.session_state.get("student_interface_df", pd.DataFrame())
+            si = _ui_df.iloc[0].to_dict() if not _ui_df.empty else {}
+            ui_title = str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀"))
+            ui_badge = str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء"))
+            ui_desc = str(si.get("الوصف", ""))
+            ui_main_b64 = str(si.get("صورة_الواجهة_base64", "") or "").strip() or img_b64
+            ui_main_uri = teacher_image_data_uri(ui_main_b64) if ui_main_b64 else ""
+            ui_booking_title = str(si.get("عنوان_الحجز", "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم"))
+            ui_booking_text = str(si.get("نص_الحجز", ""))
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown("<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>أهلاً بيكم منورين المنصة! 🚀</h1>", unsafe_allow_html=True)
-                st.markdown("<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>منصة شرح الرياضيات والإحصاء</div>", unsafe_allow_html=True)
-                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>مع <b>م / محمد غنيم</b>. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.</p>", unsafe_allow_html=True)
+                st.markdown(f"<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>{ui_title}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>{ui_badge}</div>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>{ui_desc}</p>", unsafe_allow_html=True)
                 
                 c_home_b1, c_home_b2 = st.columns(2)
                 with c_home_b1:
@@ -1044,10 +1098,10 @@ if is_student_mode:
                         st.rerun()
 
             with col_hero_img:
-                if img_b64:
+                if ui_main_uri:
                     st.markdown(f"""
                         <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <img src="{teacher_image_data_uri(img_b64)}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <img src="{ui_main_uri}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -1056,7 +1110,9 @@ if is_student_mode:
             render_darssly_cards("home")
 
             # --- حجز الدروس ---
-            st.markdown("<div class='vertical-section-header'>📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='vertical-section-header'>{ui_booking_title}</div>", unsafe_allow_html=True)
+            if ui_booking_text.strip():
+                st.markdown(f"<p style='text-align:center;font-weight:800;line-height:1.8;'>{ui_booking_text}</p>", unsafe_allow_html=True)
             with st.form("online_booking_form", clear_on_submit=True):
                 book_name = st.text_input("اسم الطالب بالكامل:")
                 book_curr = st.selectbox("اختر المنهج الدراسي / الدولة:", list(CURRICULUM_DATA.keys()), key="book_c")
@@ -1741,6 +1797,9 @@ if st.sidebar.button("🖨️ تقرير ولي الأمر", use_container_width
 if st.sidebar.button("💰 حسابات ومدفوعات الطلاب", use_container_width=True):
     st.session_state.teacher_page = "payments"
     st.rerun()
+if st.sidebar.button("🎨 واجهة الطالب", use_container_width=True):
+    st.session_state.teacher_page = "student_interface"
+    st.rerun()
 
 st.sidebar.write("---")
 st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", language="text")
@@ -1755,7 +1814,56 @@ if t_page != "dashboard":
             st.session_state.teacher_page = "dashboard"
             st.rerun()
 
-if t_page == "dashboard":
+if t_page == "student_interface":
+    st.subheader("🎨 تصميم واجهة الطالب")
+    st.caption("قسم مستقل لتعديل الصور والنصوص التي يراها الطالب في الصفحة الرئيسية، بدون المساس ببيانات الطلاب.")
+    sidf = st.session_state.student_interface_df
+    si = sidf.iloc[0].to_dict() if not sidf.empty else {}
+    with st.container(border=True):
+        st.markdown("### 📝 نصوص الواجهة")
+        si_title = st.text_input("عنوان الواجهة:", value=str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀")), key="si_title")
+        si_badge = st.text_input("الشارة تحت العنوان:", value=str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء")), key="si_badge")
+        si_desc = st.text_area("وصف الواجهة:", value=str(si.get("الوصف", "")), height=110, key="si_desc")
+        a, b = st.columns(2)
+        with a:
+            si_sub_title = st.text_input("عنوان قسم الاشتراكات:", value=str(si.get("عنوان_الاشتراكات", "📢 اشتراكات درسلي")), key="si_sub_title")
+            si_sub_desc = st.text_input("وصف قسم الاشتراكات:", value=str(si.get("وصف_الاشتراكات", "")), key="si_sub_desc")
+        with b:
+            si_booking_title = st.text_input("عنوان قسم الحجز:", value=str(si.get("عنوان_الحجز", "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم")), key="si_booking_title")
+            si_booking_text = st.text_input("نص قسم الحجز:", value=str(si.get("نص_الحجز", "")), key="si_booking_text")
+        si_footer = st.text_input("نص أسفل الواجهة:", value=str(si.get("نص_الفوتر", "")), key="si_footer")
+    with st.container(border=True):
+        st.markdown("### 🖼️ صور واجهة الطالب")
+        c1, c2 = st.columns(2)
+        current_main = str(si.get("صورة_الواجهة_base64", "") or "").strip()
+        current_sub = str(si.get("صورة_الاشتراكات_base64", "") or "").strip()
+        with c1:
+            st.markdown("**الصورة الرئيسية أعلى الصفحة**")
+            if current_main and current_main.lower() != "nan": st.image(base64_to_pil(current_main), width=220)
+            upload_main = st.file_uploader("رفع صورة الواجهة", type=["png","jpg","jpeg","webp"], key="si_upload_main")
+        with c2:
+            st.markdown("**صورة اشتراكات درسلي**")
+            if current_sub and current_sub.lower() != "nan": st.image(base64_to_pil(current_sub), width=180)
+            upload_sub = st.file_uploader("رفع صورة الاشتراكات", type=["png","jpg","jpeg","webp"], key="si_upload_sub")
+        main_b64 = base64.b64encode(upload_main.getvalue()).decode("utf-8") if upload_main is not None else (current_main or img_b64)
+        sub_b64 = base64.b64encode(upload_sub.getvalue()).decode("utf-8") if upload_sub is not None else (current_sub or img_b64)
+        st.markdown("### 👀 معاينة")
+        preview_uri = teacher_image_data_uri(main_b64) if main_b64 else ""
+        if preview_uri: st.markdown(f"<div style='text-align:center;'><img src='{preview_uri}' style='width:180px;height:180px;border-radius:50%;object-fit:cover;border:5px solid #059669;'></div>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align:center;color:#059669'>{si_title}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align:center'><span style='background:#059669;color:white;padding:6px 14px;border-radius:20px;font-weight:900'>{si_badge}</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center;font-weight:800'>{si_desc}</p>", unsafe_allow_html=True)
+    if st.button("💾 حفظ واجهة الطالب", key="save_student_interface", use_container_width=True):
+        st.session_state.student_interface_df = pd.DataFrame([{
+            "عنوان_الواجهة": si_title.strip(), "الشارة": si_badge.strip(), "الوصف": si_desc.strip(), "صورة_الواجهة_base64": main_b64,
+            "عنوان_الاشتراكات": si_sub_title.strip(), "وصف_الاشتراكات": si_sub_desc.strip(), "عنوان_الحجز": si_booking_title.strip(),
+            "نص_الحجز": si_booking_text.strip(), "نص_الفوتر": si_footer.strip(), "صورة_الاشتراكات_base64": sub_b64, "صورة_البانر_base64": str(si.get("صورة_البانر_base64", "") or "")
+        }], columns=COL_STUDENT_INTERFACE)
+        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+        st.success("✓ تم حفظ واجهة الطالب بنجاح")
+        st.rerun()
+
+elif t_page == "dashboard":
     dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
     profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
     col_main_top, col_stat_sidebar = st.columns([3, 1])
