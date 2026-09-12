@@ -1,4 +1,4 @@
-
+import os
 import os as _os
 import io
 import json
@@ -1288,6 +1288,10 @@ label{font-weight:800!important;color:#1e3a5f!important}
 .landing-welcome-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;direction:rtl}
 .landing-welcome-row h2{color:#fff!important;font-size:22px!important;margin:0!important;font-weight:900!important}
 .landing-welcome-photo{width:58px;height:58px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid rgba(255,255,255,.75);box-shadow:0 8px 20px rgba(0,0,0,.25);background:#fff;flex:0 0 58px}
+.landing-auth-title{text-align:center;color:#64748b;font-size:12px;font-weight:900;margin:-5px auto 10px}
+/* تحويل زري الدخول والتسجيل الحقيقيين لشكل تبويبات التصميم، بدون أي نصوص HTML وهمية */
+button[data-testid="baseButton-primary"]{border-radius:11px!important;font-weight:900!important;min-height:44px!important}
+.landing-auth-title + div [data-testid="stButton"] button{border-radius:11px!important;min-height:44px!important;font-weight:900!important;border:1px solid #bcd4f0!important;box-shadow:none!important}
 
 /* ===== الوضع الداكن الحقيقي — يطبق بعد كل CSS السابق حتى لا تغلبه الألوان الثابتة ===== */
 __DARK_CSS_PLACEHOLDER__
@@ -1311,6 +1315,8 @@ if st.session_state.dark_mode:
     .landing-login { background:#111827 !important; color:#f8fafc !important; border:1px solid #334155 !important; }
     .landing-login h2 { color:#f8fafc !important; } .landing-login p { color:#cbd5e1 !important; }
     .login-tab { background:#172554 !important; color:#93c5fd !important; border:1px solid #1e40af !important; }
+    .landing-auth-title { color:#cbd5e1 !important; }
+    .landing-auth-title + div [data-testid="stButton"] button { background:#172554 !important; color:#93c5fd !important; border-color:#1e40af !important; }
     .landing-photo, .landing-welcome-photo { border-color:#60a5fa !important; }
     .subscription-title { color:#f8fafc !important; } .subscription-features { color:#d1d5db !important; }
     .subscription-badge { background:#052e2b !important; color:#6ee7b7 !important; border-color:#065f46 !important; }
@@ -1484,7 +1490,7 @@ if is_student_mode:
                   <h2>مرحباً بك في منصة</h2>
                   <h2>البشمهندس x الرياضه</h2>
                   <p>اختر ما يناسبك لبدء رحلتك التعليمية</p>
-                  <div class="login-tabs"><div class="login-tab">تسجيل الدخول</div><div class="login-tab">إنشاء حساب جديد</div></div>
+                  <div class="login-tabs-placeholder"></div>
                 </div>
               </div>
             </div>
@@ -1493,8 +1499,9 @@ if is_student_mode:
               <p>{ui_desc}</p>
             </div>
             """, unsafe_allow_html=True)
-            # أزرار الدخول والتسجيل الحقيقية: بطاقة HTML بالأعلى للعرض فقط،
-            # وهذه الأزرار هي عناصر Streamlit القابلة للضغط وتفتح الصفحات فعلياً.
+            # أزرار الدخول والتسجيل هنا هي عناصر Streamlit حقيقية وقابلة للضغط.
+            # تم حذف النصوص HTML القديمة حتى لا تظهر كأنها أزرار غير فعالة.
+            st.markdown("<div class='landing-auth-title'>اختر ما يناسبك لبدء رحلتك التعليمية</div>", unsafe_allow_html=True)
             c_home_b1,c_home_b2=st.columns(2)
             with c_home_b1:
                 if st.button("تسجيل الدخول", key="landing_login_btn", use_container_width=True, type="primary"):
