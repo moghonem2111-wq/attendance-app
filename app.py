@@ -877,26 +877,10 @@ if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
 
 # حالات إظهار/إخفاء القوائم والإشعارات — مستقلة لكل واجهة.
-# على الهاتف نستخدم query param صغير كحالة إضافية حتى يظل زر ☰ موثوقاً
-# حتى مع إعادة رسم Streamlit للـ sidebar في وضع الشاشة الصغيرة.
 if "student_sidebar_open" not in st.session_state:
     st.session_state.student_sidebar_open = True
 if "teacher_sidebar_open" not in st.session_state:
     st.session_state.teacher_sidebar_open = True
-try:
-    _sidebar_q = str(st.query_params.get("sidebar", "")).strip().lower()
-    if _sidebar_q == "open":
-        if is_student_mode:
-            st.session_state.student_sidebar_open = True
-        else:
-            st.session_state.teacher_sidebar_open = True
-    elif _sidebar_q == "closed":
-        if is_student_mode:
-            st.session_state.student_sidebar_open = False
-        else:
-            st.session_state.teacher_sidebar_open = False
-except Exception:
-    pass
 if "student_notifications_open" not in st.session_state:
     st.session_state.student_notifications_open = False
 if "teacher_notifications_open" not in st.session_state:
@@ -1425,55 +1409,79 @@ else:
 st.markdown(f"<style>{_theme_css}</style>", unsafe_allow_html=True)
 
 # إخفاء/إظهار القائمة الجانبية من زر ☰ الحقيقي.
-# مهم للهاتف: لا نستخدم display:none وحده؛ نوقف التفاعل مع القائمة المخفية ونترك
-# مساحة زر ☰ كبيرة حتى يكون الضغط باللمس مضموناً.
-if is_student_mode:
-    _sidebar_open = bool(st.session_state.student_sidebar_open)
-else:
-    _sidebar_open = bool(st.session_state.teacher_sidebar_open)
-if _sidebar_open:
-    _sidebar_css = ""
-else:
-    _sidebar_css = """
-    [data-testid=\"stSidebar\"]{
-        transform:translateX(110%)!important;
-        width:0!important; min-width:0!important;
-        pointer-events:none!important;
-        visibility:hidden!important;
-    }
-    [data-testid=\"stSidebarCollapsedControl\"]{display:none!important;}
-    .main .block-container{max-width:1400px!important;}
-    @media (max-width: 768px){
-        .main .block-container{padding-left:12px!important;padding-right:12px!important;}
-    }
-    """
-st.markdown(f"<style>{_sidebar_css}</style>", unsafe_allow_html=True)
-
-# زر لمس كبير ومثبت في أعلى الصفحة — أكثر اعتمادية على شاشات الهاتف من زر داخل عمود ضيق.
-st.markdown("""
+# على الموبايل لا نستخدم display:none لأن Streamlit قد يترك عناصر collapsed control
+# أو نصوصاً صغيرة ظاهرة أسفل شريط البحث. بدلاً من ذلك نستخدم transform + z-index.
+_sidebar_is_open = st.session_state.student_sidebar_open if is_student_mode else st.session_state.teacher_sidebar_open
+_sidebar_mobile_css = f"""
 <style>
-@media (max-width: 768px){
-  .mobile-menu-touch-hint{
-    position:fixed;top:8px;left:8px;z-index:999998;
-    width:54px;height:54px;border-radius:14px;
-    background:transparent;pointer-events:none;
-  }
-  [data-testid=\"stButton\"] button{min-height:46px!important;touch-action:manipulation;}
-}
+@media (max-width: 768px) {{
+    [data-testid="stSidebar"] {{
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        left: auto !important;
+        width: min(86vw, 360px) !important;
+        min-width: min(86vw, 360px) !important;
+        max-width: min(86vw, 360px) !important;
+        height: 100dvh !important;
+        z-index: 999999 !important;
+        transform: translateX({'0' if _sidebar_is_open else '110%'}) !important;
+        transition: transform .22s ease-in-out !important;
+        box-shadow: -12px 0 30px rgba(0,0,0,.28) !important;
+        visibility: {'visible' if _sidebar_is_open else 'hidden'} !important;
+        opacity: {'1' if _sidebar_is_open else '0'} !important;
+        pointer-events: {'auto' if _sidebar_is_open else 'none'} !important;
+    }}
+    [data-testid="stSidebar"] > div:first-child {{
+        width: 100% !important;
+        max-width: 100% !important;
+    }}
+    [data-testid="stSidebarCollapsedControl"] {{
+        display: none !important;
+    }}
+    [data-testid="stSidebarNav"] {{
+        display: block !important;
+    }}
+    .main .block-container {{
+        max-width: 100% !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }}
+    button[data-testid="stBaseButton-secondary"][kind="secondary"] {{
+        touch-action: manipulation !important;
+    }}
+    div[data-testid="stButton"] button[key="student_sidebar_toggle"],
+    div[data-testid="stButton"] button[key="teacher_sidebar_toggle"] {{
+        min-width: 52px !important;
+        min-height: 48px !important;
+        font-size: 28px !important;
+        line-height: 1 !important;
+        border-radius: 14px !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }}
+}}
+@media (min-width: 769px) {{
+    [data-testid="stSidebar"] {{
+        transform: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }}
+}}
 </style>
-<div class=\"mobile-menu-touch-hint\"></div>
-""", unsafe_allow_html=True)
+"""
+st.markdown(_sidebar_mobile_css, unsafe_allow_html=True)
 
 # ============================================================================== 
 # 1. واجهة الطالب الشاملة
 # ==============================================================================
 if is_student_mode:
     # ===== زر ☰ لإظهار/إخفاء قائمة الطالب =====
-    _st_menu_col, _st_spacer = st.columns([2, 10])
+    _st_menu_col, _st_spacer = st.columns([1, 11])
     with _st_menu_col:
-        if st.button("☰", key="student_sidebar_toggle", help="إظهار أو إخفاء القائمة الجانبية", use_container_width=True):
+        if st.button("☰", key="student_sidebar_toggle", help="إظهار أو إخفاء القائمة الجانبية"):
             st.session_state.student_sidebar_open = not st.session_state.student_sidebar_open
-            st.query_params["sidebar"] = "open" if st.session_state.student_sidebar_open else "closed"
             st.rerun()
     # ===== شريط الطالب الحديث بنفس شكل لوحة المعلم =====
     _nav_uri = STUDENT_FIXED_IMAGE_URI
@@ -2277,11 +2285,10 @@ total_exams_count = len(st.session_state.exams_df)
 total_students_count = len(st.session_state.users_df)
 
 # ===== زر ☰ لإظهار/إخفاء قائمة المعلم =====
-_teach_menu_col, _teach_menu_spacer = st.columns([2, 10])
+_teach_menu_col, _teach_menu_spacer = st.columns([1, 11])
 with _teach_menu_col:
-    if st.button("☰", key="teacher_sidebar_toggle", help="إظهار أو إخفاء القائمة الجانبية", use_container_width=True):
+    if st.button("☰", key="teacher_sidebar_toggle", help="إظهار أو إخفاء القائمة الجانبية"):
         st.session_state.teacher_sidebar_open = not st.session_state.teacher_sidebar_open
-        st.query_params["sidebar"] = "open" if st.session_state.teacher_sidebar_open else "closed"
         st.rerun()
 
 _teacher_sidebar_uri=STUDENT_FIXED_IMAGE_URI
