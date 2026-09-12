@@ -1,4 +1,4 @@
-import os
+
 import os as _os
 import io
 import json
@@ -1033,6 +1033,34 @@ st.markdown(f"""
         margin-top: 25px; padding: 20px 0; border-top: 1px solid rgba(150, 150, 150, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;
     }}
     .rights-text {{ font-size: 16px; font-weight: 900; margin-top: 12px; text-align: center; color: {text_color}; }}
+
+    /* ===== الهوية الحديثة الموحدة للطالب والمعلم ===== */
+    [data-testid="stSidebar"] {{ background:linear-gradient(180deg,#0b1736 0%,#101f46 55%,#0b1736 100%) !important; }}
+    [data-testid="stSidebar"] * {{ color:#f8fafc !important; }}
+    [data-testid="stSidebar"] .stButton > button {{ background:transparent !important; border:1px solid transparent !important; box-shadow:none !important; color:#e5eefc !important; -webkit-text-fill-color:#e5eefc !important; border-radius:12px !important; text-align:right !important; justify-content:flex-start !important; min-height:44px !important; padding:9px 13px !important; margin:3px 0 !important; font-size:14px !important; }}
+    [data-testid="stSidebar"] .stButton > button:hover {{ background:rgba(37,99,235,.25) !important; border-color:rgba(96,165,250,.25) !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }}
+    [data-testid="stSidebar"] hr {{ border-color:rgba(255,255,255,.12) !important; }}
+    .modern-topbar {{ background:#fff; border:1px solid #e5eaf2; border-radius:18px; padding:12px 18px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 22px rgba(15,23,42,.06); direction:rtl; }}
+    .modern-brand {{ display:flex; align-items:center; gap:12px; }}
+    .modern-avatar {{ width:48px !important; height:48px !important; border-radius:50% !important; object-fit:cover !important; border:3px solid #2563eb !important; box-shadow:0 5px 14px rgba(37,99,235,.18); }}
+    .modern-hero {{ background:linear-gradient(135deg,#eaf4ff 0%,#f5f9ff 62%,#eef7ff 100%); border:1px solid #dbeafe; border-radius:24px; padding:28px 30px; min-height:170px; display:flex; align-items:center; justify-content:space-between; direction:rtl; box-shadow:0 10px 28px rgba(30,64,175,.07); margin-bottom:20px; }}
+    .modern-hero h1 {{ color:#0f2a5a !important; font-size:30px !important; margin:0 0 8px !important; font-weight:900 !important; }}
+    .modern-hero p {{ color:#51627d !important; font-size:15px !important; margin:0 !important; font-weight:700 !important; }}
+    .hero-art {{ width:180px; height:140px; display:flex; align-items:center; justify-content:center; font-size:82px; filter:drop-shadow(0 10px 10px rgba(15,23,42,.10)); }}
+    .modern-stats {{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:0 0 24px; direction:rtl; }}
+    .modern-stat {{ border-radius:18px; padding:17px 16px; min-height:105px; border:1px solid rgba(15,23,42,.05); box-shadow:0 6px 18px rgba(15,23,42,.05); }}
+    .modern-stat .icon {{ font-size:26px; margin-bottom:7px; }}
+    .modern-stat .num {{ font-size:27px; font-weight:900; line-height:1; color:#14213d !important; }}
+    .modern-stat .label {{ font-size:12px; font-weight:800; color:#55657d !important; margin-top:7px; }}
+    .stat-green {{ background:#ecfdf5; }} .stat-blue {{ background:#eff6ff; }} .stat-purple {{ background:#f5f3ff; }} .stat-yellow {{ background:#fffbeb; }}
+    .modern-section-title {{ display:flex; justify-content:space-between; align-items:center; direction:rtl; margin:8px 0 14px; }}
+    .modern-section-title h3 {{ margin:0 !important; color:#17233d !important; font-size:20px !important; }}
+    .modern-course-card {{ background:#fff; border:1px solid #e6ebf3; border-radius:18px; padding:18px; min-height:145px; box-shadow:0 7px 20px rgba(15,23,42,.05); direction:rtl; }}
+    .modern-course-card .course-icon {{ font-size:36px; }}
+    .modern-course-card h4 {{ margin:7px 0 4px; color:#1d3557 !important; font-size:17px; }}
+    .modern-course-card p {{ margin:0; color:#64748b !important; font-size:12px; font-weight:700; }}
+    @media (max-width:900px) {{ .modern-stats {{ grid-template-columns:repeat(2,1fr); }} .hero-art {{ width:120px; font-size:62px; }} .modern-hero h1 {{font-size:24px !important;}} }}
+    @media (max-width:600px) {{ .modern-stats {{ grid-template-columns:1fr 1fr; gap:9px; }} .modern-hero {{padding:20px;}} .hero-art {{display:none;}} }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -1040,59 +1068,58 @@ st.markdown(f"""
 # 1. واجهة الطالب الشاملة
 # ==============================================================================
 if is_student_mode:
-    st.markdown("""
-        <style>
-            [data-testid="stSidebar"], [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"] { display: none !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # صورة المعلم في شريط واجهة الطالب: نستخدم الصورة التي اختارها المعلم
-    # من 🎨 واجهة الطالب، وإذا لم توجد نرجع للصورة المدمجة داخل الكود.
-    # صورة المعلم الثابتة المدمجة داخل المنصة — تظهر فوراً بدون انتظار التخزين.
-    _nav_b64 = STUDENT_FIXED_IMAGE_B64
+    # ===== شريط الطالب الحديث بنفس شكل لوحة المعلم =====
     _nav_uri = STUDENT_FIXED_IMAGE_URI
-    nav_avatar_tag = f'<img src="{_nav_uri}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover; display:block;">'
-
-    col_nav1, col_nav2 = st.columns([2, 1.5])
-    with col_nav1:
-        st.markdown(f"""
-        <div class="darssly-navbar" dir="rtl" style="margin-bottom: 0px;">
-            <div class="navbar-brand">
-                {nav_avatar_tag}
-                <div class="navbar-title-group">
-                    <h3>م/ محمد غنيم</h3>
-                    <p>منصة شرح الرياضيات والإحصاء</p>
-                </div>
-            </div>
+    _nav_avatar_tag = f'<img src="{_nav_uri}" class="modern-avatar">' if _nav_uri else ''
+    st.sidebar.markdown(f"""
+        <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
+            {_nav_avatar_tag}
+            <div style="font-size:20px;font-weight:900;margin-top:8px;color:#fff!important;">منصة التعليم</div>
+            <div style="font-size:11px;color:#cbd5e1!important;">م/ محمد غنيم</div>
         </div>
-        """, unsafe_allow_html=True)
-    with col_nav2:
-        st.write("")
-        c_btn0, c_btn1, c_btn2, c_btn3, c_btn_guest = st.columns(5)
-        with c_btn0:
-            if st.button("🏠 الرئيسية"):
-                st.session_state.page_view = "home"
-                st.session_state.logged_student = None
-                st.query_params.clear()
-                st.query_params["role"] = "student"
-                st.rerun()
-        with c_btn1:
-            if st.button("👤 دخول"):
-                st.session_state.page_view = "login"
-                st.rerun()
-        with c_btn2:
-            if st.button("✨ حساب"):
-                st.session_state.page_view = "register"
-                st.rerun()
-        with c_btn_guest:
-            if st.button("👥 ضيف"):
-                st.session_state.page_view = "guest_reg"
-                st.rerun()
-        with c_btn3:
-            mode_label = "☀️ فاتح" if st.session_state.dark_mode else "🌙 داكن"
-            if st.button(mode_label):
-                st.session_state.dark_mode = not st.session_state.dark_mode
-                st.rerun()
+    """, unsafe_allow_html=True)
+    if st.session_state.logged_student:
+        _sb_student = str(st.session_state.logged_student.get("اسم الطالب", "الطالب"))
+        st.sidebar.markdown(f"<div style='background:rgba(37,99,235,.20);border-radius:12px;padding:9px 10px;margin-bottom:8px;text-align:right;font-size:12px;color:#dbeafe!important;'>مرحباً، {_sb_student}</div>", unsafe_allow_html=True)
+        if st.sidebar.button("🏠 الصفحة الرئيسية", use_container_width=True, key="student_sb_home"):
+            st.session_state.student_sub_page="dashboard"; st.rerun()
+        if st.sidebar.button("📚 المقررات الدراسية", use_container_width=True, key="student_sb_courses"):
+            st.session_state.student_sub_page="videos"; st.rerun()
+        if st.sidebar.button("📝 الواجبات", use_container_width=True, key="student_sb_hw"):
+            st.session_state.student_sub_page="hw_grades"; st.rerun()
+        if st.sidebar.button("🗓️ الجدول الزمني", use_container_width=True, key="student_sb_schedule"):
+            st.session_state.student_sub_page="dashboard"; st.rerun()
+        if st.sidebar.button("📊 النتائج والتقارير", use_container_width=True, key="student_sb_results"):
+            st.session_state.student_sub_page="exam_grades"; st.rerun()
+        if st.sidebar.button("⚙️ الإعدادات", use_container_width=True, key="student_sb_settings"):
+            st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
+        st.sidebar.write("---")
+        if st.sidebar.button("🚪 تسجيل الخروج", use_container_width=True, key="student_sb_logout"):
+            st.session_state.logged_student=None; st.session_state.page_view="home"; st.session_state.student_sub_page="dashboard"
+            st.query_params.clear(); st.query_params["role"]="student"; st.rerun()
+    else:
+        if st.sidebar.button("🏠 الصفحة الرئيسية", use_container_width=True, key="guest_sb_home"):
+            st.session_state.page_view="home"; st.rerun()
+        if st.sidebar.button("👤 تسجيل الدخول", use_container_width=True, key="guest_sb_login"):
+            st.session_state.page_view="login"; st.rerun()
+        if st.sidebar.button("✨ إنشاء حساب", use_container_width=True, key="guest_sb_register"):
+            st.session_state.page_view="register"; st.rerun()
+        if st.sidebar.button("👥 الدخول كضيف", use_container_width=True, key="guest_sb_guest"):
+            st.session_state.page_view="guest_reg"; st.rerun()
+        if st.sidebar.button("🌙 / ☀️ الوضع", use_container_width=True, key="guest_sb_theme"):
+            st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
+    st.sidebar.markdown("<div style='margin-top:25px;text-align:center;font-size:11px;color:#94a3b8!important;'>جميع الحقوق محفوظة © 2026</div>", unsafe_allow_html=True)
+
+    _student_name_for_header = str(st.session_state.logged_student.get("اسم الطالب", "طالبنا العزيز")) if st.session_state.logged_student else "طالبنا العزيز"
+    st.markdown(f"""
+        <div class="modern-topbar">
+            <div class="modern-brand">
+                {_nav_avatar_tag}
+                <div><div style="font-size:12px;color:#64748b!important;font-weight:800;">منصة شرح الرياضيات والإحصاء</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، {_student_name_for_header}</div></div>
+            </div>
+            <div style="font-size:22px;color:#334155!important;">🔔</div>
+        </div>
+    """, unsafe_allow_html=True)
 
     # --- أيقونات التواصل أعلى صفحة الطالب (إضافة جديدة بدون حذف الفوتر القديم) ---
     st.markdown(f"""
@@ -1157,46 +1184,46 @@ if is_student_mode:
 
     elif not st.session_state.logged_student:
         if st.session_state.page_view == "home":
-            # واجهة الطالب الأصلية مع صورة المعلم المدمجة داخل الكود.
-            ui_title = "أهلاً بيكم منورين المنصة! 🚀"
-            ui_badge = "منصة شرح الرياضيات والإحصاء"
-            ui_desc = ""
-            ui_main_b64 = STUDENT_FIXED_IMAGE_B64
-            ui_main_uri = STUDENT_FIXED_IMAGE_URI
-            ui_booking_title = "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم"
-            ui_booking_text = ""
-            col_hero_txt, col_hero_img = st.columns([1.3, 1])
-            with col_hero_txt:
-                # صورة المعلم بجانب عبارة الترحيب في واجهة الطالب، باستخدام نفس
-                # الصورة التي يرفعها المعلم من 🎨 واجهة الطالب.
-                welcome_avatar = f"<img src='{ui_main_uri}' style='width:82px;height:82px;border-radius:50%;object-fit:cover;border:4px solid #059669;box-shadow:0 6px 18px rgba(0,0,0,.14);flex:none;'>" if ui_main_uri else ""
-                st.markdown(f"""
-                    <div style="display:flex;align-items:center;gap:16px;direction:rtl;margin-bottom:12px;">
-                        {welcome_avatar}
-                        <h1 style="color:#059669;font-size:38px;font-weight:900;margin:0;line-height:1.35;">{ui_title}</h1>
+            _ui_df = st.session_state.get("student_interface_df", pd.DataFrame())
+            si = _ui_df.iloc[0].to_dict() if not _ui_df.empty else {}
+            ui_title = str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀"))
+            ui_badge = str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء"))
+            ui_desc = str(si.get("الوصف", ""))
+            ui_main_b64 = str(si.get("صورة_الواجهة_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
+            ui_main_uri = teacher_image_data_uri(ui_main_b64) if ui_main_b64 else STUDENT_FIXED_IMAGE_URI
+            ui_booking_title = str(si.get("عنوان_الحجز", "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم"))
+            ui_booking_text = str(si.get("نص_الحجز", ""))
+            # ===== الصفحة الرئيسية بالشكل الحديث =====
+            st.markdown(f"""
+                <div class="modern-hero">
+                    <div>
+                        <div style="display:inline-block;background:#2563eb;color:#fff!important;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:900;margin-bottom:10px;">{ui_badge}</div>
+                        <h1>{ui_title}</h1>
+                        <p>نتمنى لك رحلة تعلم ممتعة ومثمرة مع م/ محمد غنيم 📐</p>
                     </div>
-                """, unsafe_allow_html=True)
-                st.markdown(f"<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>{ui_badge}</div>", unsafe_allow_html=True)
-                st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>{ui_desc}</p>", unsafe_allow_html=True)
-                
-                c_home_b1, c_home_b2 = st.columns(2)
-                with c_home_b1:
-                    if st.button("🔐 تسجيل الدخول الآن"):
-                        st.session_state.page_view = "login"
-                        st.rerun()
-                with c_home_b2:
-                    if st.button("✨ إنشاء حساب جديد"):
-                        st.session_state.page_view = "register"
-                        st.rerun()
-
-            with col_hero_img:
-                if ui_main_uri:
-                    st.markdown(f"""
-                        <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-top: 10px;">
-                            <img src="{ui_main_uri}" style="width: 230px; height: 230px; border-radius: 50%; border: 5px solid #059669; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-                        </div>
-                    """, unsafe_allow_html=True)
-
+                    <div class="hero-art">📚🎓</div>
+                </div>
+            """, unsafe_allow_html=True)
+            st.markdown("""
+                <div class="modern-stats">
+                    <div class="modern-stat stat-green"><div class="icon">📚</div><div class="num">6</div><div class="label">الخدمات التعليمية</div></div>
+                    <div class="modern-stat stat-blue"><div class="icon">📝</div><div class="num">4</div><div class="label">باقات درسلي</div></div>
+                    <div class="modern-stat stat-purple"><div class="icon">🎥</div><div class="num">✓</div><div class="label">فيديوهات وشروحات</div></div>
+                    <div class="modern-stat stat-yellow"><div class="icon">💻</div><div class="num">24/7</div><div class="label">متابعة ودعم</div></div>
+                </div>
+                <div class="modern-section-title"><h3>ماذا ستجد داخل المنصة؟</h3><span style="color:#2563eb;font-size:13px;font-weight:900;">تعلم • تدرب • تابع</span></div>
+            """, unsafe_allow_html=True)
+            cc1,cc2,cc3=st.columns(3)
+            for cc,icon,title,desc in [(cc1,"🎥","المقررات والشروحات","فيديوهات تعليمية منظمة حسب المرحلة"),(cc2,"🧠","الاختبارات وبنك الأسئلة","اختبارات وتدريب ونتائج ومتابعة"),(cc3,"🗓️","الجدول والحصص","مواعيد Zoom والحصص والمتابعة")]:
+                with cc:
+                    st.markdown(f"<div class='modern-course-card'><div class='course-icon'>{icon}</div><h4>{title}</h4><p>{desc}</p></div>",unsafe_allow_html=True)
+            c_home_b1,c_home_b2=st.columns(2)
+            with c_home_b1:
+                if st.button("🔐 تسجيل الدخول الآن"):
+                    st.session_state.page_view="login"; st.rerun()
+            with c_home_b2:
+                if st.button("✨ إنشاء حساب جديد"):
+                    st.session_state.page_view="register"; st.rerun()
             st.write("---")
             # --- اشتراكات درسلي الجديدة (إضافة فقط، مع الإبقاء على القسم القديم) ---
             render_darssly_cards("home")
@@ -1339,6 +1366,29 @@ if is_student_mode:
                 st.query_params["role"] = "student"
                 st.rerun()
 
+        # ===== لوحة الطالب المسجل: نفس الهوية البصرية مع إبقاء كل الأقسام القديمة =====
+        st.markdown(f"""
+            <div class="modern-hero">
+                <div>
+                    <div style="display:inline-block;background:#2563eb;color:#fff!important;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:900;margin-bottom:10px;">منصة التعليم</div>
+                    <h1>أهلاً بك، {st_user['اسم الطالب']} 👋</h1>
+                    <p>{st_user.get('المنهج/الدولة','')} • {st_user.get('المجموعة/الصف','')} • نتمنى لك رحلة تعلم ممتعة ومثمرة</p>
+                </div>
+                <div class="hero-art">📚🎓</div>
+            </div>
+        """,unsafe_allow_html=True)
+        _student_key_for_stats=str(st_user.get("اسم الطالب", "")).strip().lower()
+        _my_hw=len(st.session_state.assessments_df[st.session_state.assessments_df["اسم الطالب"].astype(str).str.strip().str.lower()==_student_key_for_stats]) if "اسم الطالب" in st.session_state.assessments_df.columns else 0
+        _my_exams=len(st.session_state.exams_df)
+        _my_sched=len(st.session_state.online_schedule_df[st.session_state.online_schedule_df["اسم الطالب"].astype(str).str.strip().str.lower()==_student_key_for_stats]) if "اسم الطالب" in st.session_state.online_schedule_df.columns else 0
+        st.markdown(f"""
+            <div class="modern-stats">
+                <div class="modern-stat stat-green"><div class="icon">📝</div><div class="num">{_my_hw}</div><div class="label">الواجبات والمهام</div></div>
+                <div class="modern-stat stat-blue"><div class="icon">🧠</div><div class="num">{_my_exams}</div><div class="label">الاختبارات المتاحة</div></div>
+                <div class="modern-stat stat-purple"><div class="icon">💻</div><div class="num">{_my_sched}</div><div class="label">حصص Zoom</div></div>
+                <div class="modern-stat stat-yellow"><div class="icon">📅</div><div class="num">{len(st.session_state.weekly_schedule_df[st.session_state.weekly_schedule_df["اسم الطالب"].astype(str).str.strip().str.lower()==_student_key_for_stats]) if "اسم الطالب" in st.session_state.weekly_schedule_df.columns else 0}</div><div class="label">المواعيد الأسبوعية</div></div>
+            </div>
+        """,unsafe_allow_html=True)
         # --- جدول الأونلاين وزوم مع التايمر ---
         st.markdown("<div class='vertical-section-header'>💻 حصص الأونلاين وجدول زوم الخاص بي</div>", unsafe_allow_html=True)
         student_name_str = str(st_user.get("اسم الطالب", "")).strip()
@@ -1475,8 +1525,8 @@ if is_student_mode:
         </div>
         """, unsafe_allow_html=True)
 
-        student_sub_b64 = STUDENT_FIXED_IMAGE_B64
-        student_sub_uri = STUDENT_FIXED_IMAGE_URI
+        student_sub_b64 = str(si.get("صورة_الاشتراكات_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
+        student_sub_uri = teacher_image_data_uri(student_sub_b64) if student_sub_b64 else STUDENT_FIXED_IMAGE_URI
 
         package_cols = st.columns(len(matched_packages))
         for p_idx, pkg in enumerate(matched_packages):
@@ -1834,10 +1884,13 @@ if is_student_mode:
 total_exams_count = len(st.session_state.exams_df)
 total_students_count = len(st.session_state.users_df)
 
+_teacher_sidebar_uri=STUDENT_FIXED_IMAGE_URI
 st.sidebar.markdown(f"""
-    <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: #059669; font-weight: 900;">م/ محمد غنيم</h2>
-        <p style="margin: 4px 0; font-weight: 900; font-size: 14px;">لوحة تحكم المعلم الاحترافية</p>
+    <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
+        <img src="{_teacher_sidebar_uri}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #60a5fa;box-shadow:0 8px 20px rgba(0,0,0,.25);">
+        <div style="font-size:20px;font-weight:900;margin-top:8px;color:#fff!important;">منصة التعليم</div>
+        <div style="font-size:12px;color:#cbd5e1!important;font-weight:800;">م/ محمد غنيم</div>
+        <div style="font-size:11px;color:#94a3b8!important;margin-top:3px;">لوحة تحكم المعلم الاحترافية</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -1892,6 +1945,9 @@ if st.sidebar.button("🖨️ تقرير ولي الأمر", use_container_width
 if st.sidebar.button("💰 حسابات ومدفوعات الطلاب", use_container_width=True):
     st.session_state.teacher_page = "payments"
     st.rerun()
+if st.sidebar.button("🎨 واجهة الطالب", use_container_width=True):
+    st.session_state.teacher_page = "student_interface"
+    st.rerun()
 
 st.sidebar.write("---")
 st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", language="text")
@@ -1906,9 +1962,94 @@ if t_page != "dashboard":
             st.session_state.teacher_page = "dashboard"
             st.rerun()
 
-if t_page == "dashboard":
+if t_page == "student_interface":
+    st.subheader("🎨 تصميم واجهة الطالب")
+    st.caption("قسم مستقل للتحكم المباشر في واجهة الطالب. أي صورة ترفعها هنا تُحفظ في بيانات واجهة الطالب وتُستخدم مباشرة في صفحة الطالب، والصورة المدمجة مجرد نسخة احتياطية.")
+    sidf = st.session_state.student_interface_df
+    si = sidf.iloc[0].to_dict() if not sidf.empty else {}
+    with st.container(border=True):
+        st.markdown("### 📝 نصوص الواجهة")
+        si_title = st.text_input("عنوان الواجهة:", value=str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀")), key="si_title")
+        si_badge = st.text_input("الشارة تحت العنوان:", value=str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء")), key="si_badge")
+        si_desc = st.text_area("وصف الواجهة:", value=str(si.get("الوصف", "")), height=110, key="si_desc")
+        a, b = st.columns(2)
+        with a:
+            si_sub_title = st.text_input("عنوان قسم الاشتراكات:", value=str(si.get("عنوان_الاشتراكات", "📢 اشتراكات درسلي")), key="si_sub_title")
+            si_sub_desc = st.text_input("وصف قسم الاشتراكات:", value=str(si.get("وصف_الاشتراكات", "")), key="si_sub_desc")
+        with b:
+            si_booking_title = st.text_input("عنوان قسم الحجز:", value=str(si.get("عنوان_الحجز", "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم")), key="si_booking_title")
+            si_booking_text = st.text_input("نص قسم الحجز:", value=str(si.get("نص_الحجز", "")), key="si_booking_text")
+        si_footer = st.text_input("نص أسفل الواجهة:", value=str(si.get("نص_الفوتر", "")), key="si_footer")
+    with st.container(border=True):
+        st.markdown("### 🖼️ صور واجهة الطالب")
+        c1, c2 = st.columns(2)
+        current_main = str(si.get("صورة_الواجهة_base64", "") or "").strip()
+        if not current_main or current_main.lower() == "nan":
+            current_main = STUDENT_FIXED_IMAGE_B64
+        current_sub = str(si.get("صورة_الاشتراكات_base64", "") or "").strip()
+        if not current_sub or current_sub.lower() == "nan":
+            current_sub = STUDENT_FIXED_IMAGE_B64
+        with c1:
+            st.markdown("**الصورة الرئيسية أعلى الصفحة**")
+            current_main_uri = teacher_image_data_uri(current_main)
+            if current_main_uri:
+                st.markdown(
+                    f"<div style='text-align:center;'><img src='{current_main_uri}' style='width:220px;height:220px;border-radius:18px;object-fit:cover;border:2px solid #ddd;display:block;margin:auto;'></div>",
+                    unsafe_allow_html=True
+                )
+            upload_main = st.file_uploader("رفع صورة الواجهة", type=["png","jpg","jpeg","webp"], key="si_upload_main")
+        with c2:
+            st.markdown("**صورة اشتراكات درسلي**")
+            current_sub_uri = teacher_image_data_uri(current_sub)
+            if current_sub_uri:
+                st.markdown(
+                    f"<div style='text-align:center;'><img src='{current_sub_uri}' style='width:180px;height:180px;border-radius:50%;object-fit:cover;border:2px solid #ddd;display:block;margin:auto;'></div>",
+                    unsafe_allow_html=True
+                )
+            upload_sub = st.file_uploader("رفع صورة الاشتراكات", type=["png","jpg","jpeg","webp"], key="si_upload_sub")
+        main_b64 = optimize_uploaded_image_to_b64(upload_main) if upload_main is not None else (current_main or STUDENT_FIXED_IMAGE_B64)
+        sub_b64 = optimize_uploaded_image_to_b64(upload_sub) if upload_sub is not None else (current_sub or STUDENT_FIXED_IMAGE_B64)
+        st.markdown("### 👀 معاينة")
+        preview_uri = teacher_image_data_uri(main_b64) if main_b64 else ""
+        if preview_uri: st.markdown(f"<div style='text-align:center;'><img src='{preview_uri}' style='width:180px;height:180px;border-radius:50%;object-fit:cover;border:5px solid #059669;'></div>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align:center;color:#059669'>{si_title}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align:center'><span style='background:#059669;color:white;padding:6px 14px;border-radius:20px;font-weight:900'>{si_badge}</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center;font-weight:800'>{si_desc}</p>", unsafe_allow_html=True)
+    if st.button("💾 حفظ واجهة الطالب", key="save_student_interface", use_container_width=True):
+        st.session_state.student_interface_df = pd.DataFrame([{
+            "عنوان_الواجهة": si_title.strip(), "الشارة": si_badge.strip(), "الوصف": si_desc.strip(), "صورة_الواجهة_base64": main_b64,
+            "عنوان_الاشتراكات": si_sub_title.strip(), "وصف_الاشتراكات": si_sub_desc.strip(), "عنوان_الحجز": si_booking_title.strip(),
+            "نص_الحجز": si_booking_text.strip(), "نص_الفوتر": si_footer.strip(), "صورة_الاشتراكات_base64": sub_b64, "صورة_البانر_base64": str(si.get("صورة_البانر_base64", "") or "")
+        }], columns=COL_STUDENT_INTERFACE)
+        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
+        interface_cloud_ok = _cloud_save_student_interface(st.session_state.student_interface_df)
+        if _cloud_storage_enabled() and not interface_cloud_ok:
+            st.error("⚠️ تم حفظ الواجهة محلياً، لكن لم يتم حفظها في التخزين الدائم. راجع إعدادات Supabase وجدول student_interface_storage.")
+        elif not _cloud_storage_enabled():
+            st.warning("⚠️ التخزين الدائم غير مفعّل حالياً؛ الصورة ستظل محفوظة في هذه النسخة فقط حتى يتم إعداد Supabase.")
+        else:
+            st.success("✓ تم حفظ واجهة الطالب والصور في التخزين الدائم بنجاح")
+        st.rerun()
+
+elif t_page == "dashboard":
     dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
     profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
+    st.markdown(f"""
+        <div class="modern-topbar">
+            <div class="modern-brand"><div style="width:48px;height:48px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:24px;">👨‍🏫</div><div><div style="font-size:12px;color:#64748b!important;font-weight:800;">منصة التعليم</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، م/ محمد غنيم</div></div></div>
+            <div style="font-size:22px;color:#334155!important;">🔔</div>
+        </div>
+        <div class="modern-hero">
+            <div><div style="display:inline-block;background:#2563eb;color:#fff!important;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:900;margin-bottom:10px;">لوحة تحكم المعلم</div><h1>أهلاً بك يا م/ محمد غنيم 👋</h1><p>إدارة الطلاب والحصص والواجبات والاختبارات والمواعيد والتقارير من مكان واحد.</p></div>
+            <div class="hero-art">📐📚</div>
+        </div>
+        <div class="modern-stats">
+            <div class="modern-stat stat-green"><div class="icon">👥</div><div class="num">{len(dashboard_students)}</div><div class="label">إجمالي الطلاب</div></div>
+            <div class="modern-stat stat-blue"><div class="icon">🗓️</div><div class="num">{len(st.session_state.weekly_schedule_df)}</div><div class="label">المواعيد الأسبوعية</div></div>
+            <div class="modern-stat stat-purple"><div class="icon">💻</div><div class="num">{len(st.session_state.online_schedule_df)}</div><div class="label">مواعيد Zoom</div></div>
+            <div class="modern-stat stat-yellow"><div class="icon">📝</div><div class="num">{len(st.session_state.sessions_df)}</div><div class="label">الحصص المرصودة</div></div>
+        </div>
+    """,unsafe_allow_html=True)
     col_main_top, col_stat_sidebar = st.columns([3, 1])
     
     with col_main_top:
