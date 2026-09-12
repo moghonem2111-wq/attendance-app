@@ -1502,14 +1502,22 @@ if is_student_mode:
         st.sidebar.markdown(f"<div style='background:rgba(37,99,235,.20);border-radius:12px;padding:9px 10px;margin-bottom:8px;text-align:right;font-size:12px;color:#dbeafe!important;'>مرحباً، {_sb_student}</div>", unsafe_allow_html=True)
         if st.sidebar.button("⌂  الصفحة الرئيسية", use_container_width=True, key="student_sb_home"):
             st.session_state.student_sub_page="dashboard"; st.rerun()
-        if st.sidebar.button("▣  المقررات الدراسية", use_container_width=True, key="student_sb_courses"):
+        if st.sidebar.button("▣  المقررات والفيديوهات", use_container_width=True, key="student_sb_courses"):
             st.session_state.student_sub_page="videos"; st.rerun()
-        if st.sidebar.button("▤  الواجبات", use_container_width=True, key="student_sb_hw"):
+        if st.sidebar.button("📝  الواجبات", use_container_width=True, key="student_sb_hw"):
             st.session_state.student_sub_page="hw_grades"; st.rerun()
-        if st.sidebar.button("◫  الجدول الزمني", use_container_width=True, key="student_sb_schedule"):
+        if st.sidebar.button("✍️  الاختبارات", use_container_width=True, key="student_sb_exams"):
+            st.session_state.student_sub_page="exams"; st.rerun()
+        if st.sidebar.button("🧠  اختبارات عبقري", use_container_width=True, key="student_sb_abqary"):
+            st.session_state.student_sub_page="abqary"; st.rerun()
+        if st.sidebar.button("▤  بنك الأسئلة", use_container_width=True, key="student_sb_bank"):
+            st.session_state.student_sub_page="bank"; st.rerun()
+        if st.sidebar.button("◫  الجدول الزمني / Zoom", use_container_width=True, key="student_sb_schedule"):
             st.session_state.student_sub_page="dashboard"; st.rerun()
         if st.sidebar.button("▥  النتائج والتقارير", use_container_width=True, key="student_sb_results"):
             st.session_state.student_sub_page="exam_grades"; st.rerun()
+        if st.sidebar.button("💬  الدعم والدردشة", use_container_width=True, key="student_sb_chat"):
+            st.session_state.student_sub_page="chat"; st.rerun()
         if st.sidebar.button(("☀  الوضع الفاتح" if st.session_state.dark_mode else "🌙  الوضع الداكن"), use_container_width=True, key="student_sb_settings"):
             st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
         st.sidebar.write("---")
@@ -1740,6 +1748,11 @@ if is_student_mode:
 
     else:
         st_user = st.session_state.logged_student
+
+        # بيانات واجهة الطالب متاحة أيضاً للطالب المسجل؛ يمنع ذلك NameError
+        # عند استخدام صورة اشتراكات درسلي داخل الصفحة.
+        _student_interface_df = st.session_state.get("student_interface_df", pd.DataFrame())
+        si = _student_interface_df.iloc[0].to_dict() if not _student_interface_df.empty else {}
         
         # فلترة ذكية ومرنة لمرحلة الطالب بصرف النظر عن أي فروق بسيطة في الأحرف أو الأقواس
         user_grade_raw = str(st_user.get("المجموعة/الصف", "")).strip()
@@ -1906,21 +1919,26 @@ if is_student_mode:
             },
         ]
 
-        # إظهار الباقات فقط إذا كانت مرحلة الطالب من الباقات المحددة، مع إظهار الكل عند عدم وجود تطابق.
-        grade_for_package = str(user_grade_raw or user_grade_clean or "").strip().lower()
+        # إظهار باقة درسلي المطابقة لمرحلة الطالب فقط، بدون عرض باقات المراحل الأخرى.
+        def _norm_grade(v):
+            x = str(v or "").strip().lower()
+            x = x.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+            x = x.replace("ى", "ي").replace("ة", "ه")
+            x = x.replace("ـ", "")
+            return " ".join(x.split())
+
+        grade_for_package = _norm_grade(user_grade_raw or user_grade_clean)
         grade_aliases = {
-            "باقة أولى إعدادي": ["الأول الإعدادي", "اول اعدادي", "أولى إعدادي", "اولى اعدادي", "1 اعدادي", "الأول اعدادي"],
-            "باقة ثانية إعدادي": ["الثاني الإعدادي", "ثاني اعدادي", "ثانية إعدادي", "ثانيه اعدادي", "2 اعدادي", "الثاني اعدادي"],
-            "باقة ثالثة إعدادي": ["الثالث الإعدادي", "ثالث اعدادي", "ثالثة إعدادي", "ثالثه اعدادي", "3 اعدادي", "الثالث اعدادي"],
-            "إحصاء ثالثة ثانوي": ["ثالثة ثانوي", "ثالث ثانوي", "الثالث الثانوي", "إحصاء", "احصاء"],
+            "باقة أولى إعدادي": ["الأول الإعدادي", "اول اعدادي", "أولى إعدادي", "اولى اعدادي", "1 اعدادي", "الأول اعدادي", "الصف الأول الإعدادي", "الصف الاول الاعدادي"],
+            "باقة ثانية إعدادي": ["الثاني الإعدادي", "ثاني اعدادي", "ثانية إعدادي", "ثانيه اعدادي", "2 اعدادي", "الثاني اعدادي", "الصف الثاني الإعدادي", "الصف الثاني الاعدادي"],
+            "باقة ثالثة إعدادي": ["الثالث الإعدادي", "ثالث اعدادي", "ثالثة إعدادي", "ثالثه اعدادي", "3 اعدادي", "الثالث اعدادي", "الصف الثالث الإعدادي", "الصف الثالث الاعدادي"],
+            "إحصاء ثالثة ثانوي": ["ثالثة ثانوي", "ثالث ثانوي", "الثالث الثانوي", "الصف الثالث الثانوي", "إحصاء", "احصاء", "ثالثة ثانوي احصاء"],
         }
         matched_packages = []
         for pkg in darssly_subscriptions:
-            aliases = [str(x).lower() for x in grade_aliases.get(pkg["title"], [])]
-            if any(a in grade_for_package for a in aliases) or any(grade_for_package in a for a in aliases if grade_for_package):
+            aliases = [_norm_grade(x) for x in grade_aliases.get(pkg["title"], [])]
+            if any(a == grade_for_package or a in grade_for_package or grade_for_package in a for a in aliases if a):
                 matched_packages.append(pkg)
-        if not matched_packages:
-            matched_packages = darssly_subscriptions
 
         st.markdown("<div class='vertical-section-header'>💳 اشتراكات درسلي</div>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -1932,7 +1950,9 @@ if is_student_mode:
         student_sub_b64 = str(si.get("صورة_الاشتراكات_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
         student_sub_uri = teacher_image_data_uri(student_sub_b64) if student_sub_b64 else STUDENT_FIXED_IMAGE_URI
 
-        package_cols = st.columns(len(matched_packages))
+        if not matched_packages:
+            st.info(f"لا توجد باقة درسلي مرتبطة بالمرحلة المسجلة لحسابك حالياً: {user_grade_raw or 'غير محددة'}")
+        package_cols = st.columns(len(matched_packages)) if matched_packages else []
         for p_idx, pkg in enumerate(matched_packages):
             with package_cols[p_idx]:
                 st.markdown(f"""
@@ -2238,7 +2258,77 @@ if is_student_mode:
 
         elif sub_page == "exams":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✍️ الاختبارات الإلكترونية التفاعلية</h3>", unsafe_allow_html=True)
-            st.info("لا توجد اختبارات تفاعلية نشطة حالياً.")
+            exams_state = st.session_state.exams_df.copy()
+            if not exams_state.empty and "المجموعة/الصف" in exams_state.columns:
+                exams_for_student = exams_state[exams_state["المجموعة/الصف"].astype(str).map(_norm_grade).apply(
+                    lambda x: bool(grade_for_package) and (x == grade_for_package or grade_for_package in x or x in grade_for_package)
+                )]
+            else:
+                exams_for_student = exams_state
+
+            if exams_for_student.empty:
+                st.info("لا توجد اختبارات منشورة لمرحلتك الدراسية حالياً.")
+            else:
+                for ex_i, ex_row in exams_for_student.iterrows():
+                    ex_id = str(ex_row.get("معرف_الامتحان", ex_i))
+                    ex_title = str(ex_row.get("عنوان الامتحان", "اختبار"))
+                    ex_desc = str(ex_row.get("وصف الامتحان", "") or "")
+                    ex_pass = str(ex_row.get("كلمة المرور", "") or "").strip()
+                    ex_questions_raw = ex_row.get("الأسئلة_JSON", "[]")
+                    try:
+                        ex_questions = json.loads(ex_questions_raw) if str(ex_questions_raw).strip() else []
+                    except Exception:
+                        ex_questions = []
+
+                    with st.expander(f"📝 {ex_title} — {ex_row.get('المادة','')} — {ex_row.get('مدة الامتحان بالدقائق','')} دقيقة", expanded=False):
+                        if ex_desc and ex_desc.lower() != "nan":
+                            st.info(ex_desc)
+                        if ex_pass:
+                            entered_ex_pass = st.text_input("🔐 كلمة مرور الاختبار:", type="password", key=f"student_exam_pass_{ex_id}")
+                            if entered_ex_pass != ex_pass:
+                                st.warning("أدخل كلمة المرور الصحيحة لبدء الاختبار.")
+                                continue
+
+                        if not ex_questions:
+                            st.warning("هذا الاختبار منشور لكن لا توجد أسئلة صالحة بداخله حالياً.")
+                            continue
+
+                        st.markdown(f"**عدد الأسئلة:** {len(ex_questions)} | **المدة:** {ex_row.get('مدة الامتحان بالدقائق','')} دقيقة")
+                        selected_answers = {}
+                        for qn, qd in enumerate(ex_questions, start=1):
+                            q_text = str(qd.get("text", "") or "").strip()
+                            st.markdown(f"### السؤال {qn}")
+                            if qd.get("q_img"):
+                                try:
+                                    st.image(f"data:image/jpeg;base64,{qd.get('q_img')}", use_container_width=True)
+                                except Exception:
+                                    pass
+                            if q_text:
+                                st.write(q_text)
+                            q_type = str(qd.get("type", "موضوعي"))
+                            if "موضوعي" in q_type or "اختيار" in q_type:
+                                opts_data = [str(qd.get("opt1", "")), str(qd.get("opt2", "")), str(qd.get("opt3", "")), str(qd.get("opt4", ""))]
+                                letters = ["أ", "ب", "ج", "د"]
+                                labels = [f"{letters[j]} — {opts_data[j]}" if opts_data[j].strip() else letters[j] for j in range(4)]
+                                selected_answers[qn] = st.radio("اختر إجابتك:", labels, key=f"student_exam_ans_{ex_id}_{qn}")
+                            else:
+                                selected_answers[qn] = st.text_area("إجابتك:", key=f"student_exam_essay_{ex_id}_{qn}")
+
+                        if st.button("✅ تصحيح الاختبار", key=f"student_exam_submit_{ex_id}", use_container_width=True):
+                            score = 0.0
+                            max_score = 0.0
+                            for qn, qd in enumerate(ex_questions, start=1):
+                                pts = float(qd.get("points", 1) or 1)
+                                max_score += pts
+                                if "موضوعي" in str(qd.get("type", "")) or "اختيار" in str(qd.get("type", "")):
+                                    correct_num = int(qd.get("correct", 1) or 1)
+                                    correct_letter = ["أ", "ب", "ج", "د"][correct_num - 1] if 1 <= correct_num <= 4 else "أ"
+                                    chosen = str(selected_answers.get(qn, ""))
+                                    if chosen.startswith(correct_letter):
+                                        score += pts
+                            st.success(f"نتيجتك: {score:g} من {max_score:g} درجة")
+                            if max_score:
+                                st.progress(min(max(score / max_score, 0.0), 1.0))
 
         elif sub_page == "attendance":
             st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📝 تسجيل حضور حصة اليوم</h3>", unsafe_allow_html=True)
