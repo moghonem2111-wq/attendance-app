@@ -1919,14 +1919,28 @@ if t_page == "student_interface":
         st.markdown("### 🖼️ صور واجهة الطالب")
         c1, c2 = st.columns(2)
         current_main = str(si.get("صورة_الواجهة_base64", "") or "").strip()
+        if not current_main or current_main.lower() == "nan":
+            current_main = STUDENT_FIXED_IMAGE_B64
         current_sub = str(si.get("صورة_الاشتراكات_base64", "") or "").strip()
+        if not current_sub or current_sub.lower() == "nan":
+            current_sub = STUDENT_FIXED_IMAGE_B64
         with c1:
             st.markdown("**الصورة الرئيسية أعلى الصفحة**")
-            if current_main and current_main.lower() != "nan": st.image(base64_to_pil(current_main), width=220)
+            current_main_uri = teacher_image_data_uri(current_main)
+            if current_main_uri:
+                st.markdown(
+                    f"<div style='text-align:center;'><img src='{current_main_uri}' style='width:220px;height:220px;border-radius:18px;object-fit:cover;border:2px solid #ddd;display:block;margin:auto;'></div>",
+                    unsafe_allow_html=True
+                )
             upload_main = st.file_uploader("رفع صورة الواجهة", type=["png","jpg","jpeg","webp"], key="si_upload_main")
         with c2:
             st.markdown("**صورة اشتراكات درسلي**")
-            if current_sub and current_sub.lower() != "nan": st.image(base64_to_pil(current_sub), width=180)
+            current_sub_uri = teacher_image_data_uri(current_sub)
+            if current_sub_uri:
+                st.markdown(
+                    f"<div style='text-align:center;'><img src='{current_sub_uri}' style='width:180px;height:180px;border-radius:50%;object-fit:cover;border:2px solid #ddd;display:block;margin:auto;'></div>",
+                    unsafe_allow_html=True
+                )
             upload_sub = st.file_uploader("رفع صورة الاشتراكات", type=["png","jpg","jpeg","webp"], key="si_upload_sub")
         main_b64 = optimize_uploaded_image_to_b64(upload_main) if upload_main is not None else (current_main or STUDENT_FIXED_IMAGE_B64)
         sub_b64 = optimize_uploaded_image_to_b64(upload_sub) if upload_sub is not None else (current_sub or STUDENT_FIXED_IMAGE_B64)
