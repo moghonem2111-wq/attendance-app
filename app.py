@@ -1048,10 +1048,9 @@ if is_student_mode:
 
     # صورة المعلم في شريط واجهة الطالب: نستخدم الصورة التي اختارها المعلم
     # من 🎨 واجهة الطالب، وإذا لم توجد نرجع للصورة المدمجة داخل الكود.
-    _nav_ui_df = st.session_state.get("student_interface_df", pd.DataFrame())
-    _nav_si = _nav_ui_df.iloc[0].to_dict() if not _nav_ui_df.empty else {}
-    _nav_b64 = str(_nav_si.get("صورة_الواجهة_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
-    _nav_uri = teacher_image_data_uri(_nav_b64) if _nav_b64 else STUDENT_FIXED_IMAGE_URI
+    # صورة المعلم الثابتة المدمجة داخل المنصة — تظهر فوراً بدون انتظار التخزين.
+    _nav_b64 = STUDENT_FIXED_IMAGE_B64
+    _nav_uri = STUDENT_FIXED_IMAGE_URI
     nav_avatar_tag = f'<img src="{_nav_uri}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #10b981; object-fit: cover; display:block;">'
 
     col_nav1, col_nav2 = st.columns([2, 1.5])
@@ -1158,15 +1157,14 @@ if is_student_mode:
 
     elif not st.session_state.logged_student:
         if st.session_state.page_view == "home":
-            _ui_df = st.session_state.get("student_interface_df", pd.DataFrame())
-            si = _ui_df.iloc[0].to_dict() if not _ui_df.empty else {}
-            ui_title = str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀"))
-            ui_badge = str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء"))
-            ui_desc = str(si.get("الوصف", ""))
-            ui_main_b64 = str(si.get("صورة_الواجهة_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
-            ui_main_uri = teacher_image_data_uri(ui_main_b64) if ui_main_b64 else STUDENT_FIXED_IMAGE_URI
-            ui_booking_title = str(si.get("عنوان_الحجز", "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم"))
-            ui_booking_text = str(si.get("نص_الحجز", ""))
+            # واجهة الطالب الأصلية مع صورة المعلم المدمجة داخل الكود.
+            ui_title = "أهلاً بيكم منورين المنصة! 🚀"
+            ui_badge = "منصة شرح الرياضيات والإحصاء"
+            ui_desc = ""
+            ui_main_b64 = STUDENT_FIXED_IMAGE_B64
+            ui_main_uri = STUDENT_FIXED_IMAGE_URI
+            ui_booking_title = "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم"
+            ui_booking_text = ""
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
                 # صورة المعلم بجانب عبارة الترحيب في واجهة الطالب، باستخدام نفس
@@ -1477,8 +1475,8 @@ if is_student_mode:
         </div>
         """, unsafe_allow_html=True)
 
-        student_sub_b64 = str(si.get("صورة_الاشتراكات_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
-        student_sub_uri = teacher_image_data_uri(student_sub_b64) if student_sub_b64 else STUDENT_FIXED_IMAGE_URI
+        student_sub_b64 = STUDENT_FIXED_IMAGE_B64
+        student_sub_uri = STUDENT_FIXED_IMAGE_URI
 
         package_cols = st.columns(len(matched_packages))
         for p_idx, pkg in enumerate(matched_packages):
@@ -1894,9 +1892,6 @@ if st.sidebar.button("🖨️ تقرير ولي الأمر", use_container_width
 if st.sidebar.button("💰 حسابات ومدفوعات الطلاب", use_container_width=True):
     st.session_state.teacher_page = "payments"
     st.rerun()
-if st.sidebar.button("🎨 واجهة الطالب", use_container_width=True):
-    st.session_state.teacher_page = "student_interface"
-    st.rerun()
 
 st.sidebar.write("---")
 st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", language="text")
@@ -1910,61 +1905,6 @@ if t_page != "dashboard":
         if st.button("⬅️ رجوع", key="global_teacher_back", use_container_width=True):
             st.session_state.teacher_page = "dashboard"
             st.rerun()
-
-if t_page == "student_interface":
-    st.subheader("🎨 تصميم واجهة الطالب")
-    st.caption("قسم مستقل للتحكم المباشر في واجهة الطالب. أي صورة ترفعها هنا تُحفظ في بيانات واجهة الطالب وتُستخدم مباشرة في صفحة الطالب، والصورة المدمجة مجرد نسخة احتياطية.")
-    sidf = st.session_state.student_interface_df
-    si = sidf.iloc[0].to_dict() if not sidf.empty else {}
-    with st.container(border=True):
-        st.markdown("### 📝 نصوص الواجهة")
-        si_title = st.text_input("عنوان الواجهة:", value=str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀")), key="si_title")
-        si_badge = st.text_input("الشارة تحت العنوان:", value=str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء")), key="si_badge")
-        si_desc = st.text_area("وصف الواجهة:", value=str(si.get("الوصف", "")), height=110, key="si_desc")
-        a, b = st.columns(2)
-        with a:
-            si_sub_title = st.text_input("عنوان قسم الاشتراكات:", value=str(si.get("عنوان_الاشتراكات", "📢 اشتراكات درسلي")), key="si_sub_title")
-            si_sub_desc = st.text_input("وصف قسم الاشتراكات:", value=str(si.get("وصف_الاشتراكات", "")), key="si_sub_desc")
-        with b:
-            si_booking_title = st.text_input("عنوان قسم الحجز:", value=str(si.get("عنوان_الحجز", "📅 حجز دروس أونلاين مباشرة مع م / محمد غنيم")), key="si_booking_title")
-            si_booking_text = st.text_input("نص قسم الحجز:", value=str(si.get("نص_الحجز", "")), key="si_booking_text")
-        si_footer = st.text_input("نص أسفل الواجهة:", value=str(si.get("نص_الفوتر", "")), key="si_footer")
-    with st.container(border=True):
-        st.markdown("### 🖼️ صور واجهة الطالب")
-        c1, c2 = st.columns(2)
-        current_main = str(si.get("صورة_الواجهة_base64", "") or "").strip()
-        current_sub = str(si.get("صورة_الاشتراكات_base64", "") or "").strip()
-        with c1:
-            st.markdown("**الصورة الرئيسية أعلى الصفحة**")
-            if current_main and current_main.lower() != "nan": st.image(base64_to_pil(current_main), width=220)
-            upload_main = st.file_uploader("رفع صورة الواجهة", type=["png","jpg","jpeg","webp"], key="si_upload_main")
-        with c2:
-            st.markdown("**صورة اشتراكات درسلي**")
-            if current_sub and current_sub.lower() != "nan": st.image(base64_to_pil(current_sub), width=180)
-            upload_sub = st.file_uploader("رفع صورة الاشتراكات", type=["png","jpg","jpeg","webp"], key="si_upload_sub")
-        main_b64 = optimize_uploaded_image_to_b64(upload_main) if upload_main is not None else (current_main or STUDENT_FIXED_IMAGE_B64)
-        sub_b64 = optimize_uploaded_image_to_b64(upload_sub) if upload_sub is not None else (current_sub or STUDENT_FIXED_IMAGE_B64)
-        st.markdown("### 👀 معاينة")
-        preview_uri = teacher_image_data_uri(main_b64) if main_b64 else ""
-        if preview_uri: st.markdown(f"<div style='text-align:center;'><img src='{preview_uri}' style='width:180px;height:180px;border-radius:50%;object-fit:cover;border:5px solid #059669;'></div>", unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align:center;color:#059669'>{si_title}</h2>", unsafe_allow_html=True)
-        st.markdown(f"<div style='text-align:center'><span style='background:#059669;color:white;padding:6px 14px;border-radius:20px;font-weight:900'>{si_badge}</span></div>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align:center;font-weight:800'>{si_desc}</p>", unsafe_allow_html=True)
-    if st.button("💾 حفظ واجهة الطالب", key="save_student_interface", use_container_width=True):
-        st.session_state.student_interface_df = pd.DataFrame([{
-            "عنوان_الواجهة": si_title.strip(), "الشارة": si_badge.strip(), "الوصف": si_desc.strip(), "صورة_الواجهة_base64": main_b64,
-            "عنوان_الاشتراكات": si_sub_title.strip(), "وصف_الاشتراكات": si_sub_desc.strip(), "عنوان_الحجز": si_booking_title.strip(),
-            "نص_الحجز": si_booking_text.strip(), "نص_الفوتر": si_footer.strip(), "صورة_الاشتراكات_base64": sub_b64, "صورة_البانر_base64": str(si.get("صورة_البانر_base64", "") or "")
-        }], columns=COL_STUDENT_INTERFACE)
-        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-        interface_cloud_ok = _cloud_save_student_interface(st.session_state.student_interface_df)
-        if _cloud_storage_enabled() and not interface_cloud_ok:
-            st.error("⚠️ تم حفظ الواجهة محلياً، لكن لم يتم حفظها في التخزين الدائم. راجع إعدادات Supabase وجدول student_interface_storage.")
-        elif not _cloud_storage_enabled():
-            st.warning("⚠️ التخزين الدائم غير مفعّل حالياً؛ الصورة ستظل محفوظة في هذه النسخة فقط حتى يتم إعداد Supabase.")
-        else:
-            st.success("✓ تم حفظ واجهة الطالب والصور في التخزين الدائم بنجاح")
-        st.rerun()
 
 elif t_page == "dashboard":
     dashboard_students = sorted(list(set([str(x).strip() for x in st.session_state.users_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.weekly_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()] + [str(x).strip() for x in st.session_state.online_schedule_df["اسم الطالب"].dropna().unique() if str(x).strip()])))
