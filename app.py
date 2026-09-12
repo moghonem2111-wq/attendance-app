@@ -1486,6 +1486,10 @@ if is_student_mode:
     # ===== شريط الطالب الحديث بنفس شكل لوحة المعلم =====
     _nav_uri = STUDENT_FIXED_IMAGE_URI
     _nav_avatar_tag = f'<img src="{_nav_uri}" class="modern-avatar">' if _nav_uri else ''
+    # زر إغلاق/رجوع واضح داخل القائمة على الموبايل حتى يمكن العودة للشاشة الرئيسية بسهولة.
+    if st.sidebar.button("✕  إغلاق القائمة والرجوع", use_container_width=True, key="student_sidebar_close_inside"):
+        st.session_state.student_sidebar_open = False
+        st.rerun()
     st.sidebar.markdown(f"""
         <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
             {_nav_avatar_tag}
@@ -2292,6 +2296,10 @@ with _teach_menu_col:
         st.rerun()
 
 _teacher_sidebar_uri=STUDENT_FIXED_IMAGE_URI
+# زر إغلاق/رجوع واضح داخل قائمة المعلم على الموبايل.
+if st.sidebar.button("✕  إغلاق القائمة والرجوع", use_container_width=True, key="teacher_sidebar_close_inside"):
+    st.session_state.teacher_sidebar_open = False
+    st.rerun()
 st.sidebar.markdown(f"""
     <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
         <img src="{_teacher_sidebar_uri}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #60a5fa;box-shadow:0 8px 20px rgba(0,0,0,.25);">
