@@ -1,4 +1,4 @@
-import os
+
 import os as _os
 import io
 import json
@@ -1285,8 +1285,50 @@ label{font-weight:800!important;color:#1e3a5f!important}
 .quick-card{background:#fff;border:1px solid #e0eaf5;border-radius:18px;padding:18px;min-height:135px;box-shadow:0 8px 22px rgba(20,58,100,.06)}
 .quick-card h4{color:#0b3b78!important;margin:0 0 6px}.quick-card p{color:#64748b!important;font-size:12px}
 @media(max-width:950px){.landing-hero{flex-direction:column;gap:25px;padding:28px}.landing-login{width:100%;margin:0}.landing-photo{width:210px;height:240px}.landing-copy{text-align:center}.landing-copy h1{font-size:30px}.landing-features{justify-content:center}.main .block-container{padding-left:1rem!important;padding-right:1rem!important}}
+.landing-welcome-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;direction:rtl}
+.landing-welcome-row h2{color:#fff!important;font-size:22px!important;margin:0!important;font-weight:900!important}
+.landing-welcome-photo{width:58px;height:58px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid rgba(255,255,255,.75);box-shadow:0 8px 20px rgba(0,0,0,.25);background:#fff;flex:0 0 58px}
+
+/* ===== الوضع الداكن الحقيقي — يطبق بعد كل CSS السابق حتى لا تغلبه الألوان الثابتة ===== */
+__DARK_CSS_PLACEHOLDER__
 </style>
 """, unsafe_allow_html=True)
+
+if st.session_state.dark_mode:
+    _theme_css = """
+    .stApp, html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] { background:#0b1220 !important; color:#e5e7eb !important; }
+    .main .block-container { background:transparent !important; }
+    .modern-topbar, .about-panel, .quick-card, .modern-course-card, .course-card, .subscription-card, [data-testid="stMetric"] { background:#111827 !important; border-color:#273449 !important; color:#e5e7eb !important; box-shadow:0 8px 24px rgba(0,0,0,.25) !important; }
+    .modern-topbar *, .about-panel *, .quick-card *, .modern-course-card *, .course-card *, .subscription-card *, [data-testid="stMetric"] * { color:#e5e7eb !important; }
+    .modern-topbar div[style*="color:#0f172a"], .modern-topbar div[style*="color: #0f172a"] { color:#f8fafc !important; }
+    .modern-hero { background:linear-gradient(135deg,#0f2a52,#123f78,#145bb3) !important; border-color:#1e3a5f !important; }
+    .modern-stat { background:#111827 !important; border-color:#273449 !important; }
+    .modern-stat .num, .modern-stat .label, .modern-section-title h3, .modern-course-card h4, .course-title { color:#f8fafc !important; }
+    .stat-green { background:#102b24 !important; } .stat-blue { background:#10243d !important; } .stat-purple { background:#221b3d !important; } .stat-yellow { background:#332a12 !important; }
+    .landing-wrap { background:#0f172a !important; border-color:#24324a !important; }
+    .about-panel { background:linear-gradient(180deg,#111827,#0f172a) !important; }
+    .about-panel h3 { color:#93c5fd !important; } .about-panel p { color:#cbd5e1 !important; }
+    .landing-login { background:#111827 !important; color:#f8fafc !important; border:1px solid #334155 !important; }
+    .landing-login h2 { color:#f8fafc !important; } .landing-login p { color:#cbd5e1 !important; }
+    .login-tab { background:#172554 !important; color:#93c5fd !important; border:1px solid #1e40af !important; }
+    .landing-photo, .landing-welcome-photo { border-color:#60a5fa !important; }
+    .subscription-title { color:#f8fafc !important; } .subscription-features { color:#d1d5db !important; }
+    .subscription-badge { background:#052e2b !important; color:#6ee7b7 !important; border-color:#065f46 !important; }
+    input, textarea, div[data-baseweb="select"] > div, div[data-baseweb="input"] > div { background:#111827 !important; color:#f8fafc !important; border-color:#374151 !important; -webkit-text-fill-color:#f8fafc !important; }
+    input::placeholder, textarea::placeholder { color:#94a3b8 !important; }
+    label, .stMarkdown, .stText, p, span { color:#e5e7eb !important; }
+    [data-testid="stMetricValue"] { color:#93c5fd !important; } [data-testid="stMetricLabel"] { color:#cbd5e1 !important; }
+    .stSelectbox label, .stTextInput label, .stNumberInput label, .stDateInput label, .stTextArea label { color:#e5e7eb !important; }
+    div[data-baseweb="popover"], div[role="dialog"], div[data-baseweb="calendar"] { background:#111827 !important; color:#f8fafc !important; border-color:#374151 !important; }
+    div[data-baseweb="popover"] *, div[role="dialog"] *, div[data-baseweb="calendar"] * { color:#f8fafc !important; }
+    .stTabs [data-baseweb="tab-list"] { background:#0f172a !important; } .stTabs [data-baseweb="tab"] { color:#cbd5e1 !important; }
+    .stDataFrame, [data-testid="stDataFrame"] { background:#111827 !important; }
+    .stExpander { background:#111827 !important; border-color:#334155 !important; }
+    .stExpander summary, .stExpander summary span { color:#f8fafc !important; }
+    """
+else:
+    _theme_css = ""
+st.markdown(f"<style>{_theme_css}</style>", unsafe_allow_html=True)
 
 # ============================================================================== 
 # 1. واجهة الطالب الشاملة
@@ -1315,7 +1357,7 @@ if is_student_mode:
             st.session_state.student_sub_page="dashboard"; st.rerun()
         if st.sidebar.button("▥  النتائج والتقارير", use_container_width=True, key="student_sb_results"):
             st.session_state.student_sub_page="exam_grades"; st.rerun()
-        if st.sidebar.button("⚙  الإعدادات", use_container_width=True, key="student_sb_settings"):
+        if st.sidebar.button(("☀  الوضع الفاتح" if st.session_state.dark_mode else "🌙  الوضع الداكن"), use_container_width=True, key="student_sb_settings"):
             st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
         st.sidebar.write("---")
         if st.sidebar.button("↪  تسجيل الخروج", use_container_width=True, key="student_sb_logout"):
@@ -1330,7 +1372,7 @@ if is_student_mode:
             st.session_state.page_view="register"; st.rerun()
         if st.sidebar.button("👥 الدخول كضيف", use_container_width=True, key="guest_sb_guest"):
             st.session_state.page_view="guest_reg"; st.rerun()
-        if st.sidebar.button("🌙 / ☀️ الوضع", use_container_width=True, key="guest_sb_theme"):
+        if st.sidebar.button(("☀  الوضع الفاتح" if st.session_state.dark_mode else "🌙  الوضع الداكن"), use_container_width=True, key="guest_sb_theme"):
             st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
     st.sidebar.markdown("<div style='margin-top:25px;text-align:center;font-size:11px;color:#94a3b8!important;'>جميع الحقوق محفوظة © 2026</div>", unsafe_allow_html=True)
 
@@ -1414,7 +1456,7 @@ if is_student_mode:
             ui_badge = str(si.get("الشارة", "البشمهندس x الرياضه"))
             ui_desc = str(si.get("الوصف", "منصة تعليمية متكاملة متخصصة في الرياضيات والإحصاء، تجمع الشرح والتدريب والاختبارات والمتابعة في مكان واحد."))
             ui_main_b64 = str(si.get("صورة_الواجهة_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
-            ui_main_uri = teacher_image_data_uri(ui_main_b64) if ui_main_b64 else STUDENT_FIXED_IMAGE_URI
+            ui_main_uri = STUDENT_FIXED_IMAGE_URI if STUDENT_FIXED_IMAGE_B64 else (teacher_image_data_uri(ui_main_b64) if ui_main_b64 else "")
             ui_booking_title = str(si.get("عنوان_الحجز", "📅 احجز حصتك أونلاين مع م/ محمد غنيم"))
             ui_booking_text = str(si.get("نص_الحجز", "احجز موعدك وتابع حصصك ومواعيد Zoom من داخل المنصة."))
 
@@ -1425,7 +1467,10 @@ if is_student_mode:
                 <div class="landing-copy">
                   <div class="brand-pill">{ui_badge}</div>
                   <h1>منصة <span>البشمهندس x الرياضه</span></h1>
-                  <h2 style="color:#fff!important;font-size:22px;margin:0 0 8px">{ui_title}</h2>
+                  <div class="landing-welcome-row">
+                    <img class="landing-welcome-photo" src="{STUDENT_FIXED_IMAGE_URI}" alt="م/ محمد غنيم">
+                    <h2>{ui_title}</h2>
+                  </div>
                   <p>رحلتك نحو التفوق في الرياضيات تبدأ من هنا — شرح مبسط، تدريب مستمر، اختبارات ومتابعة تساعدك توصل لهدفك.</p>
                   <div class="landing-features">
                     <div class="landing-feature"><div class="i">▶</div><div>شرح مبسط وتفاعلي</div></div>
@@ -1448,13 +1493,17 @@ if is_student_mode:
               <p>{ui_desc}</p>
             </div>
             """, unsafe_allow_html=True)
+            # أزرار الدخول والتسجيل الحقيقية: بطاقة HTML بالأعلى للعرض فقط،
+            # وهذه الأزرار هي عناصر Streamlit القابلة للضغط وتفتح الصفحات فعلياً.
             c_home_b1,c_home_b2=st.columns(2)
             with c_home_b1:
-                if st.button("🔐 تسجيل الدخول الآن", key="landing_login_btn", use_container_width=True):
-                    st.session_state.page_view="login"; st.rerun()
+                if st.button("تسجيل الدخول", key="landing_login_btn", use_container_width=True, type="primary"):
+                    st.session_state.page_view="login"
+                    st.rerun()
             with c_home_b2:
-                if st.button("✨ إنشاء حساب جديد", key="landing_register_btn", use_container_width=True):
-                    st.session_state.page_view="register"; st.rerun()
+                if st.button("إنشاء حساب جديد", key="landing_register_btn", use_container_width=True):
+                    st.session_state.page_view="register"
+                    st.rerun()
             st.markdown("### 📚 ماذا ستجد داخل المنصة؟")
             cc1,cc2,cc3,cc4=st.columns(4)
             for cc,icon,title,desc in [(cc1,"▣","المقررات والشروحات","فيديوهات منظمة حسب المرحلة"),(cc2,"✦","الاختبارات","اختبارات ونتائج وتقييم"),(cc3,"◫","الجدول والحصص","Zoom والحصص والمتابعة"),(cc4,"◈","درسلي","باقات تعليمية ومتابعة")]:
