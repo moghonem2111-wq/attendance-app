@@ -1169,7 +1169,15 @@ if is_student_mode:
             ui_booking_text = str(si.get("نص_الحجز", ""))
             col_hero_txt, col_hero_img = st.columns([1.3, 1])
             with col_hero_txt:
-                st.markdown(f"<h1 style='color: #059669; font-size: 38px; font-weight: 900; margin-bottom: 10px;'>{ui_title}</h1>", unsafe_allow_html=True)
+                # صورة المعلم بجانب عبارة الترحيب في واجهة الطالب، باستخدام نفس
+                # الصورة التي يرفعها المعلم من 🎨 واجهة الطالب.
+                welcome_avatar = f"<img src='{ui_main_uri}' style='width:82px;height:82px;border-radius:50%;object-fit:cover;border:4px solid #059669;box-shadow:0 6px 18px rgba(0,0,0,.14);flex:none;'>" if ui_main_uri else ""
+                st.markdown(f"""
+                    <div style="display:flex;align-items:center;gap:16px;direction:rtl;margin-bottom:12px;">
+                        {welcome_avatar}
+                        <h1 style="color:#059669;font-size:38px;font-weight:900;margin:0;line-height:1.35;">{ui_title}</h1>
+                    </div>
+                """, unsafe_allow_html=True)
                 st.markdown(f"<div style='background: #059669; color: #ffffff; padding: 6px 16px; border-radius: 20px; display: inline-block; font-size: 15px; font-weight: 900; margin-bottom: 15px;'>{ui_badge}</div>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 17px; font-weight: 800; line-height: 1.8; color: {text_color};'>{ui_desc}</p>", unsafe_allow_html=True)
                 
