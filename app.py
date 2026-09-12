@@ -44,6 +44,7 @@ try:
 except Exception:
     pass
 SUPABASE_TABLE = "platform_storage"
+SUPABASE_INTERFACE_TABLE = "student_interface_storage"
 SUPABASE_RECORD_ID = "main"
 
 def _cloud_storage_enabled():
@@ -90,6 +91,54 @@ def _cloud_save_excel_bytes(excel_bytes):
         # لا نوقف المنصة بالكامل إذا حدث عطل مؤقت في التخزين السحابي.
         try:
             st.session_state["cloud_storage_last_error"] = str(exc)
+        except Exception:
+            pass
+        return False
+
+
+def _cloud_load_student_interface():
+    """قراءة إعدادات واجهة الطالب وحدها من التخزين الدائم، بدون الاعتماد على ملف Excel الكبير."""
+    if not _cloud_storage_enabled():
+        return None
+    try:
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_INTERFACE_TABLE}?id=eq.{SUPABASE_RECORD_ID}&select=payload"
+        req = urllib.request.Request(url, headers=_supabase_headers(), method="GET")
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        if data and data[0].get("payload"):
+            return json.loads(data[0]["payload"])
+    except Exception as exc:
+        try:
+            st.session_state["cloud_interface_load_error"] = str(exc)
+        except Exception:
+            pass
+    return None
+
+def _cloud_save_student_interface(interface_df):
+    """حفظ واجهة الطالب (النصوص والصور) في سجل مستقل صغير."""
+    if not _cloud_storage_enabled():
+        return False
+    try:
+        row = interface_df.iloc[0].to_dict() if interface_df is not None and not interface_df.empty else {}
+        clean = {}
+        for key, value in row.items():
+            if pd.isna(value):
+                value = ""
+            clean[str(key)] = str(value)
+        payload = json.dumps(clean, ensure_ascii=False)
+        body = json.dumps({"id": SUPABASE_RECORD_ID, "payload": payload}, ensure_ascii=False).encode("utf-8")
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_INTERFACE_TABLE}"
+        headers = _supabase_headers()
+        headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()
+        st.session_state["cloud_interface_last_saved"] = True
+        return True
+    except Exception as exc:
+        try:
+            st.session_state["cloud_interface_last_error"] = str(exc)
+            st.session_state["cloud_interface_last_saved"] = False
         except Exception:
             pass
         return False
@@ -314,6 +363,19 @@ def load_student_interface():
         "صورة_الاشتراكات_base64": "", "صورة_البانر_base64": ""
     }
     df = pd.DataFrame([defaults])
+    # واجهة الطالب لها تخزين سحابي مستقل حتى لو كان ملف Excel كبيراً أو لم يتم تحميله.
+    cloud_interface = _cloud_load_student_interface()
+    if isinstance(cloud_interface, dict) and cloud_interface:
+        for key, default in defaults.items():
+            value = cloud_interface.get(key, default)
+            if value is None or str(value).lower() == "nan":
+                value = default
+            df.at[0, key] = value
+        if not str(df.at[0, "صورة_الواجهة_base64"]).strip() and img_b64:
+            df.at[0, "صورة_الواجهة_base64"] = img_b64
+        if not str(df.at[0, "صورة_الاشتراكات_base64"]).strip() and img_b64:
+            df.at[0, "صورة_الاشتراكات_base64"] = img_b64
+        return df[COL_STUDENT_INTERFACE]
     source = _get_excel_source()
     if source is not None:
         try:
@@ -1860,7 +1922,13 @@ if t_page == "student_interface":
             "نص_الحجز": si_booking_text.strip(), "نص_الفوتر": si_footer.strip(), "صورة_الاشتراكات_base64": sub_b64, "صورة_البانر_base64": str(si.get("صورة_البانر_base64", "") or "")
         }], columns=COL_STUDENT_INTERFACE)
         save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df)
-        st.success("✓ تم حفظ واجهة الطالب بنجاح")
+        interface_cloud_ok = _cloud_save_student_interface(st.session_state.student_interface_df)
+        if _cloud_storage_enabled() and not interface_cloud_ok:
+            st.error("⚠️ تم حفظ الواجهة محلياً، لكن لم يتم حفظها في التخزين الدائم. راجع إعدادات Supabase وجدول student_interface_storage.")
+        elif not _cloud_storage_enabled():
+            st.warning("⚠️ التخزين الدائم غير مفعّل حالياً؛ الصورة ستظل محفوظة في هذه النسخة فقط حتى يتم إعداد Supabase.")
+        else:
+            st.success("✓ تم حفظ واجهة الطالب والصور في التخزين الدائم بنجاح")
         st.rerun()
 
 elif t_page == "dashboard":
