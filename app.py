@@ -3,6 +3,8 @@ import os as _os
 import io
 import json
 import base64
+import urllib.request
+import urllib.error
 from datetime import date, datetime, time
 import pandas as pd
 from PIL import Image
@@ -31,6 +33,75 @@ except ImportError:
 FILE_NAME = "سجل_الغياب_والحصص.xlsx"
 IMG_NAME = "teacher.jpg"
 TEACHER_PHONE = "01016361440"
+
+# تخزين دائم اختياري على Supabase لمنع ضياع بيانات المنصة عند إعادة تشغيل Streamlit Cloud.
+# إذا لم يتم ضبط الأسرار، يستمر التطبيق في العمل بالطريقة المحلية القديمة.
+SUPABASE_URL = ""
+SUPABASE_KEY = ""
+try:
+    SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    SUPABASE_KEY = str(st.secrets.get("SUPABASE_KEY", "")).strip()
+except Exception:
+    pass
+SUPABASE_TABLE = "platform_storage"
+SUPABASE_RECORD_ID = "main"
+
+def _cloud_storage_enabled():
+    return bool(SUPABASE_URL and SUPABASE_KEY)
+
+def _supabase_headers():
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
+
+def _cloud_load_excel_bytes():
+    """قراءة نسخة Excel الكاملة من التخزين الدائم، إن كانت موجودة."""
+    if not _cloud_storage_enabled():
+        return None
+    try:
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_TABLE}?id=eq.{SUPABASE_RECORD_ID}&select=payload"
+        req = urllib.request.Request(url, headers=_supabase_headers(), method="GET")
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        if data and data[0].get("payload"):
+            return base64.b64decode(data[0]["payload"])
+    except Exception:
+        pass
+    return None
+
+def _cloud_save_excel_bytes(excel_bytes):
+    """حفظ نسخة Excel الكاملة في سجل واحد دائم على Supabase."""
+    if not _cloud_storage_enabled():
+        return False
+    try:
+        payload = base64.b64encode(excel_bytes).decode("ascii")
+        body = json.dumps({"id": SUPABASE_RECORD_ID, "payload": payload}).encode("utf-8")
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_TABLE}"
+        headers = _supabase_headers()
+        headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()
+        return True
+    except Exception as exc:
+        # لا نوقف المنصة بالكامل إذا حدث عطل مؤقت في التخزين السحابي.
+        try:
+            st.session_state["cloud_storage_last_error"] = str(exc)
+        except Exception:
+            pass
+        return False
+
+def _get_excel_source():
+    """يفضل التخزين الدائم، ثم يرجع للملف المحلي القديم كخطة احتياطية."""
+    cloud_bytes = _cloud_load_excel_bytes()
+    if cloud_bytes:
+        return io.BytesIO(cloud_bytes)
+    if _os.path.exists(FILE_NAME):
+        return FILE_NAME
+    return None
 
 CURRICULUM_DATA = {
     "المنهج المصري 🇪🇬": [
@@ -155,9 +226,10 @@ COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "�
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
-    if _os.path.exists(FILE_NAME):
+    excel_source = _get_excel_source()
+    if excel_source is not None:
         try:
-            with pd.ExcelFile(FILE_NAME) as xls:
+            with pd.ExcelFile(excel_source) as xls:
                 if "TeacherProfile" in xls.sheet_names:
                     profile = pd.read_excel(xls, "TeacherProfile")
         except Exception:
@@ -312,9 +384,10 @@ def load_all_data():
     weekly_schedule_df = pd.DataFrame(columns=COL_WEEKLY_SCHEDULE)
     payment_records_df = pd.DataFrame(columns=COL_PAYMENT_RECORDS)
 
-    if _os.path.exists(FILE_NAME):
+    excel_source = _get_excel_source()
+    if excel_source is not None:
         try:
-            with pd.ExcelFile(FILE_NAME) as xls:
+            with pd.ExcelFile(excel_source) as xls:
                 if "Users" in xls.sheet_names: users_df = pd.read_excel(xls, "Users")
                 if "Sessions" in xls.sheet_names: sessions_df = pd.read_excel(xls, "Sessions")
                 elif "Sheet1" in xls.sheet_names: sessions_df = pd.read_excel(xls, "Sheet1")
@@ -375,7 +448,8 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         weekly_schedule_df = st.session_state.get("weekly_schedule_df", pd.DataFrame(columns=COL_WEEKLY_SCHEDULE))
     if payment_records_df is None:
         payment_records_df = st.session_state.get("payment_records_df", pd.DataFrame(columns=COL_PAYMENT_RECORDS))
-    with pd.ExcelWriter(FILE_NAME, engine="openpyxl") as writer:
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
         sessions_df.to_excel(writer, sheet_name="Sessions", index=False)
         assessments_df.to_excel(writer, sheet_name="Assessments", index=False)
@@ -392,6 +466,14 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
         payment_records_df.to_excel(writer, sheet_name="PaymentRecords", index=False)
         st.session_state.get("teacher_profile_df", pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])).to_excel(writer, sheet_name="TeacherProfile", index=False)
+    excel_bytes = excel_buffer.getvalue()
+    # احفظ محلياً أيضاً عندما يكون ذلك ممكناً، ثم ارفع نفس الملف للتخزين الدائم.
+    try:
+        with open(FILE_NAME, "wb") as _local_file:
+            _local_file.write(excel_bytes)
+    except Exception:
+        pass
+    _cloud_save_excel_bytes(excel_bytes)
 
 if "users_df" not in st.session_state:
     u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df, pr_df = load_all_data()
