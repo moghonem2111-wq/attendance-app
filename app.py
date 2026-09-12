@@ -15,7 +15,7 @@ except Exception:
     WeasyHTML = None
 
 st.set_page_config(
-    page_title="م/ محمد غنيم | منصة شرح الرياضيات والإحصاء",
+    page_title="البشمهندس x الرياضه | منصة تعليمية للرياضيات والإحصاء",
     page_icon="📐",
     layout="wide",
 )
@@ -371,7 +371,7 @@ def load_teacher_profile():
 def load_student_interface():
     defaults = {
         "عنوان_الواجهة": "أهلاً بيكم منورين المنصة! 🚀",
-        "الشارة": "منصة شرح الرياضيات والإحصاء",
+        "الشارة": "البشمهندس x الرياضه",
         "الوصف": "مع م / محمد غنيم. خبرة متميزة في تدريس الرياضيات والإحصاء للثانوية العامة والمرحلة الإعدادية. آلاف الطلاب حققوا التفوق والدرجات النهائية.",
         "صورة_الواجهة_base64": STUDENT_FIXED_IMAGE_B64, "عنوان_الاشتراكات": "📢 اشتراكات درسلي",
         "وصف_الاشتراكات": "اختر المرحلة وشاهد نظام الشرح والمتابعة والسعر الشهري",
@@ -465,10 +465,165 @@ th:last-child,td:last-child{{border-left:0}}
 .time{{font-weight:900;background:#f8fafc;font-size:11px;white-space:nowrap}}
 .footer{{margin-top:14px;padding-top:8px;border-top:1px solid #cbd5e1;text-align:center;font-size:9.5px;color:#475569}}
 @media print{{body{{padding:0}}}}
+
+
+    /* ===== هوية البشمهندس x الرياضه — تصميم موحد للطالب والمعلم ===== */
+    :root {{
+        --brand-navy:#06295f;
+        --brand-navy-2:#0a3f86;
+        --brand-blue:#1677ff;
+        --brand-blue-2:#2d8cff;
+        --brand-sky:#eaf4ff;
+        --brand-text:#102a52;
+        --brand-muted:#64748b;
+        --brand-card:#ffffff;
+        --brand-border:#dbe7f5;
+        --brand-shadow:0 12px 32px rgba(6,41,95,.09);
+    }}
+    html, body, [data-testid="stAppViewContainer"] {{
+        background:linear-gradient(180deg,#f7fbff 0%,#ffffff 55%,#f7fbff 100%) !important;
+    }}
+    .block-container {{ padding-top:1.2rem !important; padding-bottom:2rem !important; max-width:1450px !important; }}
+    [data-testid="stSidebar"] {{
+        background:linear-gradient(180deg,#052457 0%,#073d7d 48%,#052457 100%) !important;
+        border-left:1px solid rgba(255,255,255,.06) !important;
+    }}
+    [data-testid="stSidebar"] * {{ font-family:Tahoma,Arial,sans-serif !important; }}
+    [data-testid="stSidebar"] .stButton > button {{
+        background:transparent !important;
+        border:1px solid transparent !important;
+        color:#eaf4ff !important;
+        -webkit-text-fill-color:#eaf4ff !important;
+        border-radius:13px !important;
+        min-height:45px !important;
+        margin:3px 0 !important;
+        padding:9px 13px !important;
+        font-size:13px !important;
+        font-weight:800 !important;
+        box-shadow:none !important;
+        transition:all .18s ease !important;
+    }}
+    [data-testid="stSidebar"] .stButton > button:hover {{
+        background:linear-gradient(90deg,rgba(22,119,255,.38),rgba(45,140,255,.16)) !important;
+        border-color:rgba(125,190,255,.35) !important;
+        transform:translateX(-2px);
+    }}
+    [data-testid="stSidebar"] .stButton > button:focus,
+    [data-testid="stSidebar"] .stButton > button:active {{
+        background:linear-gradient(90deg,#1677ff,#2d8cff) !important;
+        color:#fff !important;
+        -webkit-text-fill-color:#fff !important;
+    }}
+    [data-testid="stSidebar"] hr {{ border-color:rgba(255,255,255,.12) !important; }}
+    [data-testid="stSidebar"] code {{ background:rgba(255,255,255,.08) !important; color:#dbeafe !important; border:1px solid rgba(255,255,255,.1) !important; }}
+
+    .modern-topbar {{
+        background:rgba(255,255,255,.96) !important;
+        border:1px solid var(--brand-border) !important;
+        border-radius:18px !important;
+        box-shadow:var(--brand-shadow) !important;
+    }}
+    .modern-avatar {{ border-color:var(--brand-blue) !important; }}
+    .modern-hero {{
+        background:linear-gradient(135deg,#052457 0%,#0a438c 58%,#1677ff 100%) !important;
+        border:0 !important;
+        color:#fff !important;
+        min-height:190px !important;
+        border-radius:25px !important;
+        box-shadow:0 16px 40px rgba(6,41,95,.18) !important;
+        position:relative !important;
+        overflow:hidden !important;
+    }}
+    .modern-hero:after {{
+        content:""; position:absolute; width:280px; height:280px; left:-80px; bottom:-170px;
+        border-radius:50%; background:rgba(255,255,255,.07); pointer-events:none;
+    }}
+    .modern-hero h1 {{ color:#fff !important; font-size:31px !important; }}
+    .modern-hero p {{ color:#dbeafe !important; }}
+    .modern-hero [style*="background:#2563eb"] {{ background:rgba(255,255,255,.16) !important; border:1px solid rgba(255,255,255,.18); }}
+    .hero-art {{ filter:drop-shadow(0 10px 14px rgba(0,0,0,.18)) !important; }}
+    .modern-stats {{ gap:16px !important; }}
+    .modern-stat {{ background:#fff !important; border:1px solid var(--brand-border) !important; box-shadow:0 9px 25px rgba(6,41,95,.07) !important; }}
+    .modern-stat .icon {{ color:var(--brand-blue) !important; filter:none !important; }}
+    .stat-green {{ background:linear-gradient(135deg,#f0f8ff,#ffffff) !important; }}
+    .stat-blue {{ background:linear-gradient(135deg,#edf6ff,#ffffff) !important; }}
+    .stat-purple {{ background:linear-gradient(135deg,#f2f6ff,#ffffff) !important; }}
+    .stat-yellow {{ background:linear-gradient(135deg,#f5f9ff,#ffffff) !important; }}
+    .modern-course-card {{
+        border:1px solid var(--brand-border) !important;
+        box-shadow:0 9px 25px rgba(6,41,95,.06) !important;
+    }}
+    .modern-course-card .course-icon {{ color:var(--brand-blue) !important; }}
+    .modern-section-title h3 {{ color:var(--brand-text) !important; }}
+
+    /* البطاقات والنماذج: نفس شكل شاشة الدخول والتسجيل في التصميم المرجعي */
+    [data-testid="stForm"] {{
+        background:rgba(255,255,255,.98) !important;
+        border:1px solid var(--brand-border) !important;
+        border-radius:22px !important;
+        padding:22px !important;
+        box-shadow:var(--brand-shadow) !important;
+    }}
+    [data-testid="stForm"] label {{ color:#29466f !important; font-weight:800 !important; }}
+    [data-testid="stForm"] input, [data-testid="stForm"] textarea, [data-testid="stForm"] select {{
+        border-radius:12px !important;
+        border:1px solid #cfe0f2 !important;
+    }}
+    .stButton > button, [data-testid="stFormSubmitButton"] > button {{
+        border-radius:12px !important;
+        border:1px solid #cfe0f2 !important;
+        font-weight:900 !important;
+        min-height:42px !important;
+        transition:all .18s ease !important;
+    }}
+    .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {{
+        border-color:#1677ff !important;
+        box-shadow:0 7px 18px rgba(22,119,255,.16) !important;
+        transform:translateY(-1px);
+    }}
+    [data-testid="stFormSubmitButton"] > button[kind="primary"], .stButton button[kind="primary"] {{
+        background:linear-gradient(135deg,#126be6,#2d8cff) !important;
+        color:#fff !important;
+        -webkit-text-fill-color:#fff !important;
+        border-color:#126be6 !important;
+    }}
+    .auth-intro-card {{
+        background:linear-gradient(145deg,#052457,#0b4b98) !important;
+        color:#fff !important;
+        border-radius:24px !important;
+        padding:30px !important;
+        min-height:100% !important;
+        box-shadow:0 15px 40px rgba(6,41,95,.18) !important;
+        direction:rtl;
+    }}
+    .auth-intro-card h2,.auth-intro-card h3,.auth-intro-card p {{ color:#fff !important; }}
+    .brand-about-card {{
+        background:#fff; border:1px solid var(--brand-border); border-radius:22px; padding:22px;
+        box-shadow:var(--brand-shadow); direction:rtl; margin:8px 0 20px;
+    }}
+    .brand-about-card h3 {{ color:var(--brand-text) !important; margin:0 0 8px; }}
+    .brand-about-card p {{ color:#5c6f89 !important; line-height:1.9; margin:0; font-weight:700; }}
+    .brand-pill {{ display:inline-block; padding:6px 12px; border-radius:999px; background:#eaf4ff; color:#126be6 !important; border:1px solid #cfe3ff; font-size:12px; font-weight:900; margin:3px; }}
+    .brand-primary-link {{ color:#1677ff !important; font-weight:900; }}
+
+    /* توحيد ألوان الأيقونات داخل المحتوى */
+    .vertical-section-header {{ border-right:4px solid #1677ff !important; color:#12345f !important; background:linear-gradient(90deg,#edf6ff,transparent) !important; }}
+    .subscription-card {{ border-color:#d8e6f5 !important; box-shadow:0 10px 28px rgba(6,41,95,.08) !important; }}
+    .subscription-card:hover {{ border-color:#1677ff !important; box-shadow:0 14px 34px rgba(22,119,255,.15) !important; }}
+    .subscription-photo {{ border-color:#1677ff !important; box-shadow:0 7px 18px rgba(22,119,255,.18) !important; }}
+    .subscription-icon {{ background:#eaf4ff !important; border-color:#1677ff !important; }}
+    .subscription-badge {{ background:#eaf4ff !important; color:#126be6 !important; border-color:#cfe3ff !important; }}
+    .call-btn {{ background:linear-gradient(135deg,#126be6,#2d8cff) !important; }}
+
+    @media (max-width:900px) {{
+        .modern-hero {{ min-height:165px !important; }}
+        .modern-hero h1 {{ font-size:24px !important; }}
+    }}
+
 </style>
 </head>
 <body>
-<div class='header'>{photo_html}<div class='brand'><h2>{teacher_name}</h2><div>منصة شرح الرياضيات والإحصاء</div><div class='phone'>📞 {teacher_phone}</div></div></div>
+<div class='header'>{photo_html}<div class='brand'><h2>{teacher_name}</h2><div>البشمهندس x الرياضه</div><div class='phone'>📞 {teacher_phone}</div></div></div>
 <div class='doc-title'>{title}</div>
 <p class='subtitle'>{subtitle}</p>
 <table><thead><tr>{headers_html}</tr></thead><tbody>{rows_html}</tbody></table>
@@ -1074,31 +1229,31 @@ if is_student_mode:
     st.sidebar.markdown(f"""
         <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
             {_nav_avatar_tag}
-            <div style="font-size:20px;font-weight:900;margin-top:8px;color:#fff!important;">منصة التعليم</div>
+            <div style="font-size:20px;font-weight:900;margin-top:8px;color:#fff!important;">البشمهندس x الرياضه</div>
             <div style="font-size:11px;color:#cbd5e1!important;">م/ محمد غنيم</div>
         </div>
     """, unsafe_allow_html=True)
     if st.session_state.logged_student:
         _sb_student = str(st.session_state.logged_student.get("اسم الطالب", "الطالب"))
         st.sidebar.markdown(f"<div style='background:rgba(37,99,235,.20);border-radius:12px;padding:9px 10px;margin-bottom:8px;text-align:right;font-size:12px;color:#dbeafe!important;'>مرحباً، {_sb_student}</div>", unsafe_allow_html=True)
-        if st.sidebar.button("🏠 الصفحة الرئيسية", use_container_width=True, key="student_sb_home"):
+        if st.sidebar.button("⌂  الصفحة الرئيسية", use_container_width=True, key="student_sb_home"):
             st.session_state.student_sub_page="dashboard"; st.rerun()
-        if st.sidebar.button("📚 المقررات الدراسية", use_container_width=True, key="student_sb_courses"):
+        if st.sidebar.button("▣  المقررات الدراسية", use_container_width=True, key="student_sb_courses"):
             st.session_state.student_sub_page="videos"; st.rerun()
-        if st.sidebar.button("📝 الواجبات", use_container_width=True, key="student_sb_hw"):
+        if st.sidebar.button("▤  الواجبات", use_container_width=True, key="student_sb_hw"):
             st.session_state.student_sub_page="hw_grades"; st.rerun()
-        if st.sidebar.button("🗓️ الجدول الزمني", use_container_width=True, key="student_sb_schedule"):
+        if st.sidebar.button("◫  الجدول الزمني", use_container_width=True, key="student_sb_schedule"):
             st.session_state.student_sub_page="dashboard"; st.rerun()
-        if st.sidebar.button("📊 النتائج والتقارير", use_container_width=True, key="student_sb_results"):
+        if st.sidebar.button("▥  النتائج والتقارير", use_container_width=True, key="student_sb_results"):
             st.session_state.student_sub_page="exam_grades"; st.rerun()
-        if st.sidebar.button("⚙️ الإعدادات", use_container_width=True, key="student_sb_settings"):
+        if st.sidebar.button("⚙  الإعدادات", use_container_width=True, key="student_sb_settings"):
             st.session_state.dark_mode=not st.session_state.dark_mode; st.rerun()
         st.sidebar.write("---")
-        if st.sidebar.button("🚪 تسجيل الخروج", use_container_width=True, key="student_sb_logout"):
+        if st.sidebar.button("↪  تسجيل الخروج", use_container_width=True, key="student_sb_logout"):
             st.session_state.logged_student=None; st.session_state.page_view="home"; st.session_state.student_sub_page="dashboard"
             st.query_params.clear(); st.query_params["role"]="student"; st.rerun()
     else:
-        if st.sidebar.button("🏠 الصفحة الرئيسية", use_container_width=True, key="guest_sb_home"):
+        if st.sidebar.button("⌂  الصفحة الرئيسية", use_container_width=True, key="guest_sb_home"):
             st.session_state.page_view="home"; st.rerun()
         if st.sidebar.button("👤 تسجيل الدخول", use_container_width=True, key="guest_sb_login"):
             st.session_state.page_view="login"; st.rerun()
@@ -1115,7 +1270,7 @@ if is_student_mode:
         <div class="modern-topbar">
             <div class="modern-brand">
                 {_nav_avatar_tag}
-                <div><div style="font-size:12px;color:#64748b!important;font-weight:800;">منصة شرح الرياضيات والإحصاء</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، {_student_name_for_header}</div></div>
+                <div><div style="font-size:12px;color:#64748b!important;font-weight:800;">البشمهندس x الرياضه</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، {_student_name_for_header}</div></div>
             </div>
             <div style="font-size:22px;color:#334155!important;">🔔</div>
         </div>
@@ -1187,7 +1342,7 @@ if is_student_mode:
             _ui_df = st.session_state.get("student_interface_df", pd.DataFrame())
             si = _ui_df.iloc[0].to_dict() if not _ui_df.empty else {}
             ui_title = str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀"))
-            ui_badge = str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء"))
+            ui_badge = str(si.get("الشارة", "البشمهندس x الرياضه"))
             ui_desc = str(si.get("الوصف", ""))
             ui_main_b64 = str(si.get("صورة_الواجهة_base64", "") or "").strip() or STUDENT_FIXED_IMAGE_B64
             ui_main_uri = teacher_image_data_uri(ui_main_b64) if ui_main_b64 else STUDENT_FIXED_IMAGE_URI
@@ -1199,7 +1354,7 @@ if is_student_mode:
                     <div>
                         <div style="display:inline-block;background:#2563eb;color:#fff!important;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:900;margin-bottom:10px;">{ui_badge}</div>
                         <h1>{ui_title}</h1>
-                        <p>نتمنى لك رحلة تعلم ممتعة ومثمرة مع م/ محمد غنيم 📐</p>
+                        <p>رحلتك نحو التفوق في الرياضيات تبدأ من هنا مع م/ محمد غنيم 📐</p>
                     </div>
                     <div class="hero-art">📚🎓</div>
                 </div>
@@ -1239,7 +1394,7 @@ if is_student_mode:
                 book_phone = st.text_input("رقم هاتف الطالب:")
                 book_parent_phone = st.text_input("رقم تليفون ولي الأمر:")
                 
-                if st.form_submit_button("🚀 إرسال طلب حجز الدرس أونلاين"):
+                if st.form_submit_button("إرسال طلب الحجز"):
                     if not book_name.strip() or not book_phone.strip():
                         st.error("يرجى كتابة اسم الطالب ورقم الهاتف على الأقل.")
                     else:
@@ -1257,13 +1412,13 @@ if is_student_mode:
                         st.success("✓ تم إرسال طلب الحجز بنجاح!")
 
         elif st.session_state.page_view == "login":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل دخول الطالب (برقم الهاتف):</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>🔐 تسجيل الدخول إلى البشمهندس x الرياضه</h3>", unsafe_allow_html=True)
             with st.form("student_login_form"):
                 login_phone = st.text_input("رقم الهاتف المحمول المسجل:")
                 login_pass = st.text_input("الرقم السري الخاص بك:", type="password")
                 c_l1, c_l2 = st.columns(2)
                 with c_l1:
-                    submit_login = st.form_submit_button("دخول إلى حسابي")
+                    submit_login = st.form_submit_button("تسجيل الدخول")
                 with c_l2:
                     if st.form_submit_button("العودة للرئيسية"):
                         st.session_state.page_view = "home"
@@ -1288,7 +1443,7 @@ if is_student_mode:
                         st.error("رقم الهاتف أو الرقم السري غير صحيح.")
 
         elif st.session_state.page_view == "register":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✨ إنشاء حساب طالب جديد:</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>✨ إنشاء حساب جديد في البشمهندس x الرياضه</h3>", unsafe_allow_html=True)
             with st.form("student_register_form"):
                 reg_name = st.text_input("اسمك بالكامل:")
                 reg_phone = st.text_input("رقم الهاتف المحمول (لتسجيل الدخول به لاحقاً):*")
@@ -1297,7 +1452,7 @@ if is_student_mode:
                 reg_pass = st.text_input("اختر رقماً سرياً خاصاً بك:", type="password")
                 c_r1, c_r2 = st.columns(2)
                 with c_r1:
-                    submit_reg = st.form_submit_button("تأكيد إنشاء الحساب")
+                    submit_reg = st.form_submit_button("إنشاء الحساب")
                 with c_r2:
                     if st.form_submit_button("العودة للرئيسية"):
                         st.session_state.page_view = "home"
@@ -1370,7 +1525,7 @@ if is_student_mode:
         st.markdown(f"""
             <div class="modern-hero">
                 <div>
-                    <div style="display:inline-block;background:#2563eb;color:#fff!important;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:900;margin-bottom:10px;">منصة التعليم</div>
+                    <div style="display:inline-block;background:#2563eb;color:#fff!important;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:900;margin-bottom:10px;">البشمهندس x الرياضه</div>
                     <h1>أهلاً بك، {st_user['اسم الطالب']} 👋</h1>
                     <p>{st_user.get('المنهج/الدولة','')} • {st_user.get('المجموعة/الصف','')} • نتمنى لك رحلة تعلم ممتعة ومثمرة</p>
                 </div>
@@ -1555,7 +1710,7 @@ if is_student_mode:
         if st.button("🎥 الفيديوهات والشروحات التعليمية", use_container_width=True):
             st.session_state.student_sub_page = "videos"
             st.rerun()
-        if st.button("📚 بنك الأسئلة الشامل (الاشتراك والدفع)", use_container_width=True):
+        if st.button("▤  بنك الأسئلة الشامل (الاشتراك والدفع)", use_container_width=True):
             st.session_state.student_sub_page = "bank"
             st.rerun()
         if st.button("🧠 اختبارات ونتائج موقع عبقري 💡", use_container_width=True):
@@ -1740,7 +1895,7 @@ if is_student_mode:
 
         # --- بنك الأسئلة والاشتراك والدفع عبر انستا باي ---
         elif sub_page == "bank":
-            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>📚 بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='color: {text_color}; font-size: 22px;'>▤  بنك الأسئلة الشامل (مرحلتك الدراسية)</h3>", unsafe_allow_html=True)
             
             curr_user_row = st.session_state.users_df[st.session_state.users_df["رقم الهاتف"].astype(str).str.strip() == str(st_user.get("رقم الهاتف", "")).strip()]
             sub_status = curr_user_row.iloc[0].get("حالة_الاشتراك_البنك", "غير مشترك") if not curr_user_row.empty else "غير مشترك"
@@ -1888,64 +2043,64 @@ _teacher_sidebar_uri=STUDENT_FIXED_IMAGE_URI
 st.sidebar.markdown(f"""
     <div style="text-align:center;padding:10px 4px 18px;direction:rtl;">
         <img src="{_teacher_sidebar_uri}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #60a5fa;box-shadow:0 8px 20px rgba(0,0,0,.25);">
-        <div style="font-size:20px;font-weight:900;margin-top:8px;color:#fff!important;">منصة التعليم</div>
+        <div style="font-size:20px;font-weight:900;margin-top:8px;color:#fff!important;">البشمهندس x الرياضه</div>
         <div style="font-size:12px;color:#cbd5e1!important;font-weight:800;">م/ محمد غنيم</div>
         <div style="font-size:11px;color:#94a3b8!important;margin-top:3px;">لوحة تحكم المعلم الاحترافية</div>
     </div>
 """, unsafe_allow_html=True)
 
-if st.sidebar.button("📊 نظرة عامة (الرئيسية)", use_container_width=True):
+if st.sidebar.button("⌂  نظرة عامة (الرئيسية)", use_container_width=True):
     st.session_state.teacher_page = "dashboard"
     st.rerun()
-if st.sidebar.button("💻 جدول حصص الأونلاين (Zoom)", use_container_width=True):
+if st.sidebar.button("◉  جدول حصص الأونلاين (Zoom)", use_container_width=True):
     st.session_state.teacher_page = "online_schedule"
     st.rerun()
-if st.sidebar.button("🗓️ لوحة مواعيد الطلاب", use_container_width=True):
+if st.sidebar.button("◫  لوحة مواعيد الطلاب", use_container_width=True):
     st.session_state.teacher_page = "weekly_schedule"
     st.rerun()
-if st.sidebar.button("⚙️ صانع الامتحانات", use_container_width=True):
+if st.sidebar.button("▣  صانع الامتحانات", use_container_width=True):
     st.session_state.teacher_page = "exam_maker"
     st.rerun()
-if st.sidebar.button("📚 بنك الأسئلة", use_container_width=True):
+if st.sidebar.button("▤  بنك الأسئلة", use_container_width=True):
     st.session_state.teacher_page = "question_bank"
     st.rerun()
-if st.sidebar.button("🎥 إدارة الفيديوهات", use_container_width=True):
+if st.sidebar.button("▶  إدارة الفيديوهات", use_container_width=True):
     st.session_state.teacher_page = "videos"
     st.rerun()
-if st.sidebar.button("💡 امتحانات عبقري", use_container_width=True):
+if st.sidebar.button("✦  امتحانات عبقري", use_container_width=True):
     st.session_state.teacher_page = "abqary"
     st.rerun()
-if st.sidebar.button("📈 درجات الاختبارات", use_container_width=True):
+if st.sidebar.button("▥  درجات الاختبارات", use_container_width=True):
     st.session_state.teacher_page = "grades"
     st.rerun()
-if st.sidebar.button("📝 تصحيح المقالي", use_container_width=True):
+if st.sidebar.button("✎  تصحيح المقالي", use_container_width=True):
     st.session_state.teacher_page = "essays"
     st.rerun()
-if st.sidebar.button("💬 الرسائل والدردشة", use_container_width=True):
+if st.sidebar.button("◌  الرسائل والدردشة", use_container_width=True):
     st.session_state.teacher_page = "chat"
     st.rerun()
-if st.sidebar.button("👥 بطاقات الطلاب", use_container_width=True):
+if st.sidebar.button("♙  بطاقات الطلاب", use_container_width=True):
     st.session_state.teacher_page = "students"
     st.rerun()
-if st.sidebar.button("📝 رصد حصة جديدة", use_container_width=True):
+if st.sidebar.button("▤  رصد حصة جديدة", use_container_width=True):
     st.session_state.teacher_page = "add_session"
     st.rerun()
-if st.sidebar.button("📚 رصد واجب يدوي", use_container_width=True):
+if st.sidebar.button("▣  رصد واجب يدوي", use_container_width=True):
     st.session_state.teacher_page = "add_hw"
     st.rerun()
-if st.sidebar.button("✏️ تعديل السجلات", use_container_width=True):
+if st.sidebar.button("✎  تعديل السجلات", use_container_width=True):
     st.session_state.teacher_page = "edit_records"
     st.rerun()
-if st.sidebar.button("📊 السجلات الشاملة", use_container_width=True):
+if st.sidebar.button("▥  السجلات الشاملة", use_container_width=True):
     st.session_state.teacher_page = "all_records"
     st.rerun()
-if st.sidebar.button("🖨️ تقرير ولي الأمر", use_container_width=True):
+if st.sidebar.button("▤  تقرير ولي الأمر", use_container_width=True):
     st.session_state.teacher_page = "parent_report"
     st.rerun()
-if st.sidebar.button("💰 حسابات ومدفوعات الطلاب", use_container_width=True):
+if st.sidebar.button("▰  حسابات ومدفوعات الطلاب", use_container_width=True):
     st.session_state.teacher_page = "payments"
     st.rerun()
-if st.sidebar.button("🎨 واجهة الطالب", use_container_width=True):
+if st.sidebar.button("◈  واجهة الطالب", use_container_width=True):
     st.session_state.teacher_page = "student_interface"
     st.rerun()
 
@@ -1970,7 +2125,7 @@ if t_page == "student_interface":
     with st.container(border=True):
         st.markdown("### 📝 نصوص الواجهة")
         si_title = st.text_input("عنوان الواجهة:", value=str(si.get("عنوان_الواجهة", "أهلاً بيكم منورين المنصة! 🚀")), key="si_title")
-        si_badge = st.text_input("الشارة تحت العنوان:", value=str(si.get("الشارة", "منصة شرح الرياضيات والإحصاء")), key="si_badge")
+        si_badge = st.text_input("الشارة تحت العنوان:", value=str(si.get("الشارة", "البشمهندس x الرياضه")), key="si_badge")
         si_desc = st.text_area("وصف الواجهة:", value=str(si.get("الوصف", "")), height=110, key="si_desc")
         a, b = st.columns(2)
         with a:
@@ -2036,7 +2191,7 @@ elif t_page == "dashboard":
     profile_b64 = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")) if not st.session_state.teacher_profile_df.empty else img_b64
     st.markdown(f"""
         <div class="modern-topbar">
-            <div class="modern-brand"><div style="width:48px;height:48px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:24px;">👨‍🏫</div><div><div style="font-size:12px;color:#64748b!important;font-weight:800;">منصة التعليم</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، م/ محمد غنيم</div></div></div>
+            <div class="modern-brand"><div style="width:48px;height:48px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:24px;">👨‍🏫</div><div><div style="font-size:12px;color:#64748b!important;font-weight:800;">البشمهندس x الرياضه</div><div style="font-size:19px;color:#0f172a!important;font-weight:900;">مرحباً، م/ محمد غنيم</div></div></div>
             <div style="font-size:22px;color:#334155!important;">🔔</div>
         </div>
         <div class="modern-hero">
@@ -2178,12 +2333,12 @@ elif t_page == "dashboard":
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-between;gap:15px;direction:rtl'><div><h3 style='margin:0;color:#059669'>💰 حسابات ومدفوعات الطلاب</h3><p style='margin:5px 0 0 0'>متابعة المستحق والمدفوع والرصيد المتبقي وتسجيل طريقة الدفع وتاريخها.</p></div><div style='font-size:22px;font-weight:900;color:#dc2626'>الرصيد المتبقي: {max(total_balance_all,0):,.0f} جنيه</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-between;gap:15px;direction:rtl'><div><h3 style='margin:0;color:#059669'>▰  حسابات ومدفوعات الطلاب</h3><p style='margin:5px 0 0 0'>متابعة المستحق والمدفوع والرصيد المتبقي وتسجيل طريقة الدفع وتاريخها.</p></div><div style='font-size:22px;font-weight:900;color:#dc2626'>الرصيد المتبقي: {max(total_balance_all,0):,.0f} جنيه</div></div>", unsafe_allow_html=True)
         if st.button("فتح الحسابات والمدفوعات", key="card_btn_payments"):
             st.session_state.teacher_page = "payments"
             st.rerun()
 elif t_page == "payments":
-    st.markdown("<div class='vertical-section-header'>💰 حسابات ومدفوعات الطلاب</div>", unsafe_allow_html=True)
+    st.markdown("<div class='vertical-section-header'>▰  حسابات ومدفوعات الطلاب</div>", unsafe_allow_html=True)
     st.caption("سجل المبالغ المستحقة من الحصص، وأكد المدفوعات عند استلامها. كل دفعة تحفظ بتاريخها وطريقة الدفع في سجل مستقل.")
 
     total_due_all, total_paid_all, total_balance_all = get_all_financial_totals()
@@ -2308,7 +2463,7 @@ elif t_page == "payments":
 
 
 elif t_page == "weekly_schedule":
-    st.markdown("<div class='vertical-section-header'>🗓️ لوحة مواعيد الطلاب الأسبوعية</div>", unsafe_allow_html=True)
+    st.markdown("<div class='vertical-section-header'>◫  لوحة مواعيد الطلاب الأسبوعية</div>", unsafe_allow_html=True)
     st.caption("لوحة مستقلة لإضافة الطلاب ومواعيدهم. كل طالب يظهر بلون مختلف، ويمكن إضافة أكثر من موعد للطالب نفسه.")
 
     ws_df = st.session_state.weekly_schedule_df
@@ -2933,7 +3088,7 @@ elif t_page == "exam_maker":
 
 elif t_page == "question_bank":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("📚 بنك الأسئلة الشامل (إضافة أسئلة اختر ومقالي بصور ومواصفات كاملة):")
+    st.subheader("▤  بنك الأسئلة الشامل (إضافة أسئلة اختر ومقالي بصور ومواصفات كاملة):")
 
     if "qb_q_img" not in st.session_state: st.session_state.qb_q_img = ""
     if "qb_ver" not in st.session_state: st.session_state.qb_ver = 0
@@ -3346,7 +3501,7 @@ elif t_page == "chat":
 
 elif t_page == "students":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
-    st.subheader("👥 بطاقات الطلاب المسجلين والتحكم الكامل:")
+    st.subheader("♙  بطاقات الطلاب المسجلين والتحكم الكامل:")
     
     bookings_df_state = st.session_state.bookings_df
     if not bookings_df_state.empty:
