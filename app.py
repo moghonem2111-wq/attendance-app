@@ -493,6 +493,14 @@ if "users_df" not in st.session_state:
     st.session_state.weekly_schedule_df = ws_df
     st.session_state.payment_records_df = pr_df
     st.session_state.teacher_profile_df = load_teacher_profile()
+    # استخدم صورة المعلم المحفوظة داخل TeacherProfile/التخزين السحابي في كل صفحات الطالب
+    # بدلاً من الاعتماد على ملف teacher.jpg الموجود محلياً فقط.
+    try:
+        _saved_teacher_photo = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")).strip() if not st.session_state.teacher_profile_df.empty else ""
+        if _saved_teacher_photo and _saved_teacher_photo.lower() != "nan":
+            img_b64 = _saved_teacher_photo
+    except Exception:
+        pass
 
 # تأكد من وجود جدول المواعيد حتى لو كانت جلسة Streamlit قديمة قبل إضافة الميزة
 if "weekly_schedule_df" not in st.session_state:
@@ -516,6 +524,14 @@ if "payment_records_df" not in st.session_state:
 
 if "teacher_profile_df" not in st.session_state:
     st.session_state.teacher_profile_df = load_teacher_profile()
+
+# مزامنة صورة المعلم من الملف السحابي مع المتغير المستخدم في الصفحة الرئيسية وبطاقات درسلي
+try:
+    _saved_teacher_photo = str(st.session_state.teacher_profile_df.iloc[0].get("الصورة_base64", "")).strip() if not st.session_state.teacher_profile_df.empty else ""
+    if _saved_teacher_photo and _saved_teacher_photo.lower() != "nan":
+        img_b64 = _saved_teacher_photo
+except Exception:
+    pass
 
 if "page_view" not in st.session_state:
     st.session_state.page_view = "home"
