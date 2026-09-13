@@ -888,52 +888,62 @@ if "teacher_notifications_open" not in st.session_state:
     st.session_state.teacher_notifications_open = False
 
 def _app_notifications(role="student", student_name=""):
-    """تجميع إشعارات حقيقية من بيانات المنصة الحالية بدون إنشاء مصدر بيانات منفصل."""
+    """إشعارات مفصولة حسب الحساب: الطالب يرى بياناته فقط، والمدفوعات للمعلم فقط."""
     items = []
     try:
-        msg_df = st.session_state.get("messages_df", pd.DataFrame())
-        if role == "student" and student_name and not msg_df.empty and "اسم الطالب" in msg_df.columns:
-            rows = msg_df[msg_df["اسم الطالب"].astype(str).str.strip() == str(student_name).strip()]
-            if "المرسل" in rows.columns:
-                rows = rows[rows["المرسل"].astype(str).str.strip().str.lower() != "الطالب"]
-            for _, r in rows.tail(5).iloc[::-1].iterrows():
-                txt = str(r.get("نص الرسالة", "رسالة جديدة")).strip() or "رسالة جديدة"
-                sender = str(r.get("المرسل", "المعلم")).strip() or "المعلم"
-                dt = str(r.get("التاريخ_والوقت", "")).strip()
-                items.append(("💬", f"رسالة من {sender}", txt, dt))
+        # ===== الطالب: بيانات هذا الطالب فقط =====
+        if role == "student":
+            name = str(student_name or "").strip()
+            if not name:
+                return []
+
+            msg_df = st.session_state.get("messages_df", pd.DataFrame())
+            if not msg_df.empty and "اسم الطالب" in msg_df.columns:
+                rows = msg_df[msg_df["اسم الطالب"].astype(str).str.strip() == name]
+                if "المرسل" in rows.columns:
+                    rows = rows[rows["المرسل"].astype(str).str.strip().str.lower() != "الطالب"]
+                for _, r in rows.tail(5).iloc[::-1].iterrows():
+                    txt = str(r.get("نص الرسالة", "رسالة جديدة")).strip() or "رسالة جديدة"
+                    sender = str(r.get("المرسل", "المعلم")).strip() or "المعلم"
+                    dt = str(r.get("التاريخ_والوقت", "")).strip()
+                    items.append(("💬", f"رسالة من {sender}", txt, dt))
 
             ws = st.session_state.get("weekly_schedule_df", pd.DataFrame())
             if not ws.empty and "اسم الطالب" in ws.columns:
-                sr = ws[ws["اسم الطالب"].astype(str).str.strip() == str(student_name).strip()].tail(5).iloc[::-1]
+                sr = ws[ws["اسم الطالب"].astype(str).str.strip() == name].tail(5).iloc[::-1]
                 for _, r in sr.iterrows():
                     day = str(r.get("اليوم", "")).strip()
                     tm = str(r.get("الموعد", "")).strip()
-                    items.append(("🗓️", "موعد حصة", f"لديك حصة {day} {tm}".strip(), ""))
+                    items.append(("🗓️", "موعد حصتك", f"لديك حصة {day} {tm}".strip(), ""))
 
             hw = st.session_state.get("assessments_df", pd.DataFrame())
             if not hw.empty and "اسم الطالب" in hw.columns:
-                hr = hw[hw["اسم الطالب"].astype(str).str.strip() == str(student_name).strip()].tail(3).iloc[::-1]
+                hr = hw[hw["اسم الطالب"].astype(str).str.strip() == name].tail(5).iloc[::-1]
                 for _, r in hr.iterrows():
                     title = str(r.get("الواجب", r.get("اسم الواجب", "واجب جديد"))).strip()
                     if title and title.lower() != "nan":
-                        items.append(("📚", "واجب", title, str(r.get("التاريخ", "")).strip()))
-        else:
-            # إشعارات المعلم: رسائل الطلاب + طلبات الحجز + تنبيه مالي مختصر.
-            if not msg_df.empty and "المرسل" in msg_df.columns:
-                rows = msg_df[msg_df["المرسل"].astype(str).str.strip().str.lower().str.contains("طالب|student", regex=True, na=False)].tail(5).iloc[::-1]
-                for _, r in rows.iterrows():
-                    stn = str(r.get("اسم الطالب", "طالب")).strip() or "طالب"
-                    txt = str(r.get("نص الرسالة", "رسالة جديدة")).strip() or "رسالة جديدة"
-                    items.append(("💬", f"رسالة من {stn}", txt, str(r.get("التاريخ_والوقت", "")).strip()))
-            bk = st.session_state.get("bookings_df", pd.DataFrame())
-            if not bk.empty:
-                for _, r in bk.tail(5).iloc[::-1].iterrows():
-                    stn = str(r.get("اسم الطالب", "طالب")).strip() or "طالب"
-                    status = str(r.get("الحالة", r.get("حالة الطلب", "طلب جديد"))).strip()
-                    items.append(("📅", "طلب حجز", f"طلب حجز من {stn} — {status}", ""))
-            p_df = st.session_state.get("payment_records_df", pd.DataFrame())
-            if not p_df.empty:
-                items.append(("💰", "الحسابات", f"سجل المدفوعات يحتوي على {len(p_df)} عملية مسجلة", ""))
+                        items.append(("📚", "واجبك", title, str(r.get("التاريخ", "")).strip()))
+
+            # مهم: لا نقرأ payment_records_df هنا نهائياً، ولا نرسل أي معلومة مالية للطالب.
+            return items[:10]
+
+        # ===== المعلم: يمكنه رؤية التنبيهات الإدارية والمالية =====
+        msg_df = st.session_state.get("messages_df", pd.DataFrame())
+        if not msg_df.empty and "المرسل" in msg_df.columns:
+            rows = msg_df[msg_df["المرسل"].astype(str).str.strip().str.lower().str.contains("طالب|student", regex=True, na=False)].tail(5).iloc[::-1]
+            for _, r in rows.iterrows():
+                stn = str(r.get("اسم الطالب", "طالب")).strip() or "طالب"
+                txt = str(r.get("نص الرسالة", "رسالة جديدة")).strip() or "رسالة جديدة"
+                items.append(("💬", f"رسالة من {stn}", txt, str(r.get("التاريخ_والوقت", "")).strip()))
+        bk = st.session_state.get("bookings_df", pd.DataFrame())
+        if not bk.empty:
+            for _, r in bk.tail(5).iloc[::-1].iterrows():
+                stn = str(r.get("اسم الطالب", "طالب")).strip() or "طالب"
+                status = str(r.get("الحالة", r.get("حالة الطلب", "طلب جديد"))).strip()
+                items.append(("📅", "طلب حجز", f"طلب حجز من {stn} — {status}", ""))
+        p_df = st.session_state.get("payment_records_df", pd.DataFrame())
+        if not p_df.empty:
+            items.append(("💰", "تنبيه مالي للمعلم", f"يوجد {len(p_df)} عملية دفع مسجلة", ""))
     except Exception:
         pass
     return items[:10]
