@@ -3,7 +3,6 @@ import os as _os
 import io
 import json
 import base64
-import hashlib
 import urllib.request
 import urllib.error
 from datetime import date, datetime, time
@@ -1742,7 +1741,20 @@ if is_student_mode:
 
     else:
         st_user = st.session_state.logged_student
-        
+
+        # تحميل إعدادات واجهة الطالب داخل صفحة الطالب المسجل أيضاً.
+        # هذا يمنع خطأ NameError ويضمن استمرار ظهور اشتراكات درسلي وصور الواجهة.
+        _student_ui_df = st.session_state.get("student_interface_df", pd.DataFrame())
+        si = _student_ui_df.iloc[0].to_dict() if not _student_ui_df.empty else {}
+        if not si:
+            try:
+                _student_ui_df = load_student_interface()
+                if _student_ui_df is not None and not _student_ui_df.empty:
+                    st.session_state.student_interface_df = _student_ui_df
+                    si = _student_ui_df.iloc[0].to_dict()
+            except Exception:
+                si = {}
+
         # فلترة ذكية ومرنة لمرحلة الطالب بصرف النظر عن أي فروق بسيطة في الأحرف أو الأقواس
         user_grade_raw = str(st_user.get("المجموعة/الصف", "")).strip()
         user_grade_clean = user_grade_raw.split("(")[0].strip().lower()
