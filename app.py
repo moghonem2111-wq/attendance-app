@@ -1,3 +1,4 @@
+import hashlib
 import os
 import os as _os
 import io
