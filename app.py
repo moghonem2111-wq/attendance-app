@@ -3,6 +3,7 @@ import os as _os
 import io
 import json
 import base64
+import hashlib
 import urllib.request
 import urllib.error
 from datetime import date, datetime, time
