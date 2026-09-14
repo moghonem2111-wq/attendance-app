@@ -838,7 +838,7 @@ def render_student_ads():
         *{{box-sizing:border-box}}
         html,body{{margin:0;padding:0;width:100%;min-height:100%;font-family:Arial,Tahoma,sans-serif;color:#102a56}}
         body{{
-          overflow:hidden;
+          overflow-x:hidden;overflow-y:auto;
           background:
             radial-gradient(circle at 8% 12%, rgba(37,99,235,.20) 0 55px, transparent 56px),
             radial-gradient(circle at 92% 78%, rgba(14,165,233,.18) 0 80px, transparent 81px),
@@ -857,7 +857,7 @@ def render_student_ads():
           background-size:28px 28px;
           mask-image:linear-gradient(to bottom,transparent,black 18%,black 82%,transparent);
         }}
-        .wrap{{position:relative;z-index:2;padding:8px 4px 4px}}
+        .wrap{{position:relative;z-index:2;padding:8px 4px 10px;min-height:100%;overflow:visible}}
         .student-ads-carousel{{
           display:flex;gap:18px;overflow-x:auto;overflow-y:hidden;padding:4px 5px 12px;
           scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:ltr;
@@ -875,18 +875,20 @@ def render_student_ads():
         .ad-title{{font-size:23px;font-weight:950;line-height:1.45;color:#0f2a56}}
         .ad-date{{font-size:12px;color:#64748b;white-space:nowrap;padding-top:7px;font-weight:800}}
         .ad-media{{width:100%;display:flex;justify-content:center;align-items:center;margin:8px 0 14px;background:rgba(226,238,255,.60);border-radius:18px;overflow:hidden;border:1px solid rgba(37,99,235,.10)}}
-        .image-media{{min-height:120px;padding:4px}}
-        .image-media img{{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border-radius:15px}}
-        .video-media{{padding:0;background:#071a36}}
-        .video-media video{{display:block;width:100%;height:auto;max-height:none;border-radius:16px}}
-        .remote-video{{aspect-ratio:16/9;background:#071a36}}
+        /* مساحة ثابتة نسبيًا للصورة: الصورة كاملة بدون قص، والزر يظل داخل الإعلان */
+        .image-media{{height:310px;min-height:170px;padding:6px}}
+        .image-media img{{display:block;width:auto;max-width:100%;height:auto;max-height:100%;object-fit:contain;border-radius:15px;margin:auto}}
+        .video-media{{height:310px;padding:0;background:#071a36}}
+        .video-media video{{display:block;width:100%;height:100%;object-fit:contain;border-radius:16px}}
+        .remote-video{{height:310px;background:#071a36}}
         .remote-video iframe{{display:block;width:100%;height:100%;border:0}}
-        .ad-text{{font-size:17px;line-height:2;font-weight:800;padding:4px 3px 8px;word-break:break-word;color:#1e3a5f}}
+        .ad-text{{font-size:17px;line-height:1.8;font-weight:800;padding:4px 3px 8px;word-break:break-word;color:#1e3a5f;max-height:125px;overflow:auto}}
         .ad-text a{{color:#075dcc!important;text-decoration:underline!important;font-weight:950}}
-        .ad-action{{display:flex;justify-content:center;align-items:center;padding:6px 0 2px}}
+        .ad-action{{display:flex;justify-content:center;align-items:center;padding:8px 0 4px;min-height:62px}}
         .ad-button{{
           display:inline-flex;align-items:center;justify-content:center;min-width:190px;
-          padding:13px 24px;border-radius:14px;text-decoration:none!important;
+          min-height:48px;padding:12px 24px;border-radius:14px;text-decoration:none!important;
+          position:relative;z-index:20;
           background:linear-gradient(135deg,#075dcc,#18a0ff);color:#fff!important;
           font-size:17px;font-weight:950;box-shadow:0 8px 18px rgba(7,93,204,.28);
           border:2px solid rgba(255,255,255,.7);transition:transform .15s ease;
@@ -900,8 +902,13 @@ def render_student_ads():
           .student-ad-card{{flex-basis:94%;padding:13px;border-radius:20px}}
           .ad-title{{font-size:18px}}
           .ad-date{{font-size:10px}}
-          .ad-text{{font-size:15px}}
-          .ad-button{{min-width:160px;padding:11px 18px;font-size:15px}}
+          .image-media,.video-media,.remote-video{{height:235px}}
+          .ad-text{{font-size:15px;max-height:105px}}
+          .ad-button{{min-width:160px;min-height:46px;padding:10px 18px;font-size:15px}}
+        }}
+        @media(max-width:430px){{
+          .image-media,.video-media,.remote-video{{height:205px}}
+          .ad-button{{min-width:145px;font-size:14px}}
         }}
       </style>
     </head>
@@ -927,7 +934,7 @@ def render_student_ads():
     </html>
     """
     # مساحة أكبر حتى لا يختفي زر الإعلان أو يُقص أسفل الصورة الطويلة.
-    st.components.v1.html(carousel_html, height=760, scrolling=False)
+    st.components.v1.html(carousel_html, height=790, scrolling=True)
 
 
 def _parse_parent_report_date(value):
