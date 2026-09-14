@@ -772,25 +772,29 @@ def render_student_ads():
         return
 
     st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>اسحب يمين وشمال لمشاهدة باقي الإعلانات</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;color:#0f2a56;font-weight:900;margin-bottom:12px;'>اسحب يمينًا أو يسارًا لمشاهدة باقي الإعلانات</div>", unsafe_allow_html=True)
 
     cards = []
-    for _, row in active.sort_values("الترتيب", ascending=False, kind="stable").iterrows() if "الترتيب" in active.columns else active.iloc[::-1].iterrows():
+    iterator = active.sort_values("الترتيب", ascending=False, kind="stable").iterrows() if "الترتيب" in active.columns else active.iloc[::-1].iterrows()
+    for _, row in iterator:
         title = html.escape(str(row.get("العنوان", "إعلان جديد") or "إعلان جديد"))
         text = str(row.get("النص", "") or "").strip()
         kind = str(row.get("نوع_الإعلان", "") or "").strip()
         media_uri = _ad_media_uri(row)
         link = str(row.get("الرابط", "") or "").strip()
-        button = html.escape(str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip())
+        raw_button = str(row.get("نص_الزر", "") or "").strip()
+        if not raw_button:
+            raw_button = "شاهد الإعلان" if kind == "فيديو" else "افتح الإعلان"
+        button = html.escape(raw_button)
         date_txt = html.escape(str(row.get("تاريخ_النشر", "") or ""))
 
         media_html = ""
         if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
-            media_html = f"<img src=\"{html.escape(media_uri, quote=True)}\" loading=\"eager\" decoding=\"async\" style=\"display:block;width:100%;max-height:420px;object-fit:contain;border-radius:16px;background:#f8fafc;\" onerror=\"this.style.display='none'\">"
+            # لا نقص الصورة: نترك المتصفح يحافظ على النسبة الأصلية بالكامل.
+            media_html = f"<div class='ad-media image-media'><img src=\"{html.escape(media_uri, quote=True)}\" loading='eager' decoding='async' alt='صورة الإعلان'></div>"
         elif media_uri and kind == "فيديو":
-            media_html = f"<video controls playsinline preload=\"metadata\" style=\"display:block;width:100%;max-height:420px;border-radius:16px;background:#000;\" src=\"{html.escape(media_uri, quote=True)}\"></video>"
+            media_html = f"<div class='ad-media video-media'><video controls playsinline preload='metadata' src=\"{html.escape(media_uri, quote=True)}\"></video></div>"
         elif kind == "فيديو" and link:
-            safe = html.escape(link, quote=True)
             embed = link
             if "youtube.com/watch?v=" in link:
                 vid = link.split("v=",1)[1].split("&",1)[0]
@@ -802,26 +806,28 @@ def render_student_ads():
                 vid = link.rstrip('/').split('/')[-1]
                 if vid.isdigit():
                     embed = f"https://player.vimeo.com/video/{vid}"
-            safe_embed = html.escape(embed, quote=True)
-            media_html = f"<iframe src=\"{safe_embed}\" style=\"width:100%;height:420px;border:0;border-radius:16px;background:#000;\" allow=\"autoplay; fullscreen; picture-in-picture\" allowfullscreen></iframe>"
+            media_html = f"<div class='ad-media remote-video'><iframe src=\"{html.escape(embed, quote=True)}\" title='فيديو الإعلان' allow='autoplay; fullscreen; picture-in-picture' allowfullscreen></iframe></div>"
 
         text_html = _ad_text_html(text) if text else ""
         link_html = ""
-        if link and kind != "فيديو":
+        if link:
             safe_link = html.escape(link, quote=True)
-            link_html = f"<div style=\"margin-top:12px;text-align:center\"><a href=\"{safe_link}\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"display:inline-block;background:#2563eb;color:#fff!important;text-decoration:none;border-radius:12px;padding:11px 20px;font-weight:900\">{button}</a></div>"
+            link_html = f"<div class='ad-action'><a href=\"{safe_link}\" target='_blank' rel='noopener noreferrer' class='ad-button'>{button}</a></div>"
 
         cards.append(f"""
         <article class='student-ad-card'>
-          <div class='ad-title'>{title}</div>
-          <div class='ad-date'>{date_txt}</div>
+          <div class='ad-card-top'>
+            <div class='ad-title'>{title}</div>
+            <div class='ad-date'>{date_txt}</div>
+          </div>
           {media_html}
           {f"<div class='ad-text'>{text_html}</div>" if text_html else ""}
           {link_html}
         </article>
         """)
 
-    # مهم: نستخدم st.components.v1.html بدل st.markdown حتى لا يظهر كود HTML للطالب كنص.
+    # نستخدم مكوّن HTML كامل داخل iframe حتى تظهر الواجهة فعليًا، وليس كود HTML كنص.
+    # الخلفية ليست بيضاء: فيها تدرجات ونقوش رياضية خفيفة مرتبطة بالرياضيات والإحصاء.
     carousel_html = f"""
     <!doctype html>
     <html lang='ar' dir='rtl'>
@@ -830,39 +836,98 @@ def render_student_ads():
       <meta name='viewport' content='width=device-width,initial-scale=1'>
       <style>
         *{{box-sizing:border-box}}
-        body{{margin:0;background:transparent;font-family:Arial,Tahoma,sans-serif;color:#0f172a}}
-        .student-ads-carousel{{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:ltr;scrollbar-width:none}}
+        html,body{{margin:0;padding:0;width:100%;min-height:100%;font-family:Arial,Tahoma,sans-serif;color:#102a56}}
+        body{{
+          overflow:hidden;
+          background:
+            radial-gradient(circle at 8% 12%, rgba(37,99,235,.20) 0 55px, transparent 56px),
+            radial-gradient(circle at 92% 78%, rgba(14,165,233,.18) 0 80px, transparent 81px),
+            linear-gradient(135deg,#eef7ff 0%,#f7fbff 42%,#eaf3ff 100%);
+          position:relative;
+        }}
+        body:before{{
+          content:'∑   π   √x   %   x²   ∫   Δ   𝜎   3.14';
+          position:absolute;inset:0;pointer-events:none;opacity:.065;
+          font-size:28px;font-weight:900;line-height:3.4;letter-spacing:24px;
+          transform:rotate(-5deg);white-space:normal;color:#174ea6;
+        }}
+        body:after{{
+          content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;
+          background-image:linear-gradient(rgba(37,99,235,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.12) 1px,transparent 1px);
+          background-size:28px 28px;
+          mask-image:linear-gradient(to bottom,transparent,black 18%,black 82%,transparent);
+        }}
+        .wrap{{position:relative;z-index:2;padding:8px 4px 4px}}
+        .student-ads-carousel{{
+          display:flex;gap:18px;overflow-x:auto;overflow-y:hidden;padding:4px 5px 12px;
+          scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:ltr;
+          scrollbar-width:none;scroll-behavior:smooth;
+        }}
         .student-ads-carousel::-webkit-scrollbar{{display:none}}
-        .student-ad-card{{direction:rtl;text-align:right;flex:0 0 92%;scroll-snap-align:center;background:#fff;border:1.5px solid #dbe5f0;border-radius:20px;padding:16px;box-shadow:0 10px 28px rgba(15,23,42,.10);overflow:hidden}}
-        .ad-title{{font-size:21px;font-weight:900;margin-bottom:4px}}
-        .ad-date{{font-size:12px;color:#64748b;margin-bottom:12px}}
-        .ad-text{{font-size:16px;line-height:2;font-weight:800;padding:10px 2px;word-break:break-word}}
-        .ad-text a{{color:#0b74ff!important;text-decoration:underline!important;font-weight:900}}
-        .nav{{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:4px}}
-        .nav button{{border:0;background:#0f2a56;color:white;width:42px;height:42px;border-radius:50%;font-size:24px;font-weight:900;cursor:pointer}}
-        .hint{{text-align:center;color:#64748b;font-size:12px;font-weight:800;margin-top:2px}}
-        @media(max-width:700px){{.student-ad-card{{flex-basis:94%;padding:12px}}.ad-title{{font-size:18px}}}}
+        .student-ad-card{{
+          direction:rtl;text-align:right;flex:0 0 94%;scroll-snap-align:center;
+          background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(240,248,255,.96));
+          border:2px solid rgba(37,99,235,.18);border-radius:24px;padding:18px;
+          box-shadow:0 14px 35px rgba(15,42,86,.16);overflow:visible;
+          min-height:180px;
+        }}
+        .ad-card-top{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}}
+        .ad-title{{font-size:23px;font-weight:950;line-height:1.45;color:#0f2a56}}
+        .ad-date{{font-size:12px;color:#64748b;white-space:nowrap;padding-top:7px;font-weight:800}}
+        .ad-media{{width:100%;display:flex;justify-content:center;align-items:center;margin:8px 0 14px;background:rgba(226,238,255,.60);border-radius:18px;overflow:hidden;border:1px solid rgba(37,99,235,.10)}}
+        .image-media{{min-height:120px;padding:4px}}
+        .image-media img{{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border-radius:15px}}
+        .video-media{{padding:0;background:#071a36}}
+        .video-media video{{display:block;width:100%;height:auto;max-height:none;border-radius:16px}}
+        .remote-video{{aspect-ratio:16/9;background:#071a36}}
+        .remote-video iframe{{display:block;width:100%;height:100%;border:0}}
+        .ad-text{{font-size:17px;line-height:2;font-weight:800;padding:4px 3px 8px;word-break:break-word;color:#1e3a5f}}
+        .ad-text a{{color:#075dcc!important;text-decoration:underline!important;font-weight:950}}
+        .ad-action{{display:flex;justify-content:center;align-items:center;padding:6px 0 2px}}
+        .ad-button{{
+          display:inline-flex;align-items:center;justify-content:center;min-width:190px;
+          padding:13px 24px;border-radius:14px;text-decoration:none!important;
+          background:linear-gradient(135deg,#075dcc,#18a0ff);color:#fff!important;
+          font-size:17px;font-weight:950;box-shadow:0 8px 18px rgba(7,93,204,.28);
+          border:2px solid rgba(255,255,255,.7);transition:transform .15s ease;
+        }}
+        .ad-button:hover{{transform:translateY(-2px)}}
+        .nav{{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:2px;position:relative;z-index:4}}
+        .nav button{{border:0;background:#0f2a56;color:white;width:44px;height:44px;border-radius:50%;font-size:25px;font-weight:900;cursor:pointer;box-shadow:0 7px 15px rgba(15,42,86,.20)}}
+        .nav button:hover{{background:#075dcc}}
+        .hint{{text-align:center;color:#4d6585;font-size:12px;font-weight:850;margin-top:5px}}
+        @media(max-width:700px){{
+          .student-ad-card{{flex-basis:94%;padding:13px;border-radius:20px}}
+          .ad-title{{font-size:18px}}
+          .ad-date{{font-size:10px}}
+          .ad-text{{font-size:15px}}
+          .ad-button{{min-width:160px;padding:11px 18px;font-size:15px}}
+        }}
       </style>
     </head>
     <body>
-      <div class='student-ads-carousel' id='adsTrack'>{''.join(cards)}</div>
-      <div class='nav'>
-        <button type='button' onclick='moveAd(1)' aria-label='الإعلان السابق'>›</button>
-        <button type='button' onclick='moveAd(-1)' aria-label='الإعلان التالي'>‹</button>
+      <div class='wrap'>
+        <div class='student-ads-carousel' id='adsTrack'>{''.join(cards)}</div>
+        <div class='nav'>
+          <button type='button' onclick='moveAd(1)' aria-label='الإعلان السابق'>›</button>
+          <button type='button' onclick='moveAd(-1)' aria-label='الإعلان التالي'>‹</button>
+        </div>
+        <div class='hint'>اسحب يمينًا أو يسارًا للتنقل بين الإعلانات</div>
       </div>
-      <div class='hint'>اسحب يمينًا أو يسارًا للتنقل بين الإعلانات</div>
       <script>
         function moveAd(direction){{
           const track=document.getElementById('adsTrack');
-          const amount=track.clientWidth*0.92;
+          const card=track.querySelector('.student-ad-card');
+          if(!card) return;
+          const amount=card.getBoundingClientRect().width + 18;
           track.scrollBy({{left: direction*amount, behavior:'smooth'}});
         }}
       </script>
     </body>
     </html>
     """
-    # ارتفاع مناسب للصور والفيديو والنصوص، مع إبقاء الكاروسيل داخل صفحة الطالب.
-    st.components.v1.html(carousel_html, height=535, scrolling=False)
+    # مساحة أكبر حتى لا يختفي زر الإعلان أو يُقص أسفل الصورة الطويلة.
+    st.components.v1.html(carousel_html, height=760, scrolling=False)
 
 
 def _parse_parent_report_date(value):
