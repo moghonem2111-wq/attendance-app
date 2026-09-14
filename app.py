@@ -716,6 +716,9 @@ def load_ads():
         if col not in ads_df.columns:
             ads_df[col] = "نشط" if col == "الحالة" else ""
     ads_df = ads_df[COL_ADS].copy()
+    # مهم مع pandas 3.x: حوّل عمود الوسائط إلى object قبل إعادة تركيب Base64 الطويل.
+    # وإلا قد يكون العمود dtype = float64/NA فيؤدي التعيين إلى TypeError.
+    ads_df["الوسائط_base64"] = ads_df["الوسائط_base64"].astype(object)
     # النسخة الجديدة: تجميع الصورة/الفيديو من أجزاء مستقلة حتى لا تُقص الصورة داخل Excel.
     if not media_df.empty and "معرف_الإعلان" in media_df.columns and "البيانات" in media_df.columns:
         media_map = {}
