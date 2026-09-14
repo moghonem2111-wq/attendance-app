@@ -349,6 +349,7 @@ COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "ا
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
 COL_STUDENT_INTERFACE = ["عنوان_الواجهة", "الشارة", "الوصف", "صورة_الواجهة_base64", "عنوان_الاشتراكات", "وصف_الاشتراكات", "عنوان_الحجز", "نص_الحجز", "نص_الفوتر", "صورة_الاشتراكات_base64", "صورة_البانر_base64"]
 COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
+COL_ADS = ["معرف_الإعلان", "تاريخ_النشر", "العنوان", "نوع_الإعلان", "النص", "الوسائط_base64", "نوع_الوسائط", "الرابط", "نص_الزر", "الحالة"]
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
@@ -695,6 +696,86 @@ def build_weekly_schedule_print_html(df, title="الجدول الأسبوعي ل
     html=make_print_html(title, ''.join(rows), headers, f"إجمالي المواعيد: {len(work)}")
     return html.replace("</head>", css+"</head>")
 
+def load_ads():
+    ads_df = pd.DataFrame(columns=COL_ADS)
+    excel_source = _get_excel_source()
+    if excel_source is not None:
+        try:
+            with pd.ExcelFile(excel_source) as xls:
+                if "Ads" in xls.sheet_names:
+                    ads_df = pd.read_excel(xls, "Ads")
+        except Exception:
+            pass
+    for col in COL_ADS:
+        if col not in ads_df.columns:
+            if col == "الحالة": ads_df[col] = "نشط"
+            else: ads_df[col] = ""
+    return ads_df[COL_ADS]
+
+def _ad_media_uri(row):
+    b64 = str(row.get("الوسائط_base64", "") or "").strip()
+    mime = str(row.get("نوع_الوسائط", "") or "").strip() or "image/jpeg"
+    if b64 and b64.lower() != "nan":
+        return f"data:{mime};base64,{b64}"
+    return ""
+
+def render_student_ads():
+    ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
+    if ads_df.empty:
+        return
+    active = ads_df[ads_df["الحالة"].astype(str).str.strip().isin(["نشط", "فعال", "مفعل", "مفعّل", "نعم"])].copy() if "الحالة" in ads_df.columns else ads_df.copy()
+    if active.empty:
+        return
+    st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>آخر الإعلانات والتنبيهات المنشورة من لوحة المعلم</div>", unsafe_allow_html=True)
+    for idx, row in active.iloc[::-1].iterrows():
+        title = str(row.get("العنوان", "إعلان جديد") or "إعلان جديد")
+        text = str(row.get("النص", "") or "").strip()
+        kind = str(row.get("نوع_الإعلان", "") or "").strip()
+        media_uri = _ad_media_uri(row)
+        link = str(row.get("الرابط", "") or "").strip()
+        button = str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip()
+        with st.container(border=True):
+            st.markdown(f"<div style='direction:rtl;text-align:right'><div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div><div style='font-size:12px;color:#64748b;margin-top:4px'>{row.get('تاريخ_النشر','')}</div></div>", unsafe_allow_html=True)
+            if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
+                st.image(media_uri, use_container_width=True)
+            elif media_uri and kind == "فيديو":
+                try:
+                    st.video(base64.b64decode(str(row.get("الوسائط_base64", ""))))
+                except Exception:
+                    if link:
+                        try: st.video(link)
+                        except Exception: pass
+            elif kind == "فيديو" and link:
+                try: st.video(link)
+                except Exception: pass
+            if text:
+                st.markdown(f"<div style='direction:rtl;text-align:right;line-height:1.9;font-weight:800;font-size:16px;padding:8px 2px'>{text}</div>", unsafe_allow_html=True)
+            if link:
+                st.link_button(button or "فتح الرابط", link, use_container_width=True)
+
+def _parse_parent_report_date(value):
+    """توحيد تواريخ التقرير حتى تعمل مع date/datetime و dd/mm/yyyy و yyyy-mm-dd بدون التباس."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return pd.NaT
+    if isinstance(value, pd.Timestamp):
+        return value
+    if isinstance(value, datetime):
+        return pd.Timestamp(value)
+    if isinstance(value, date):
+        return pd.Timestamp(value)
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return pd.NaT
+    text = text.replace("\u0660","0").replace("\u0661","1").replace("\u0662","2").replace("\u0663","3").replace("\u0664","4").replace("\u0665","5").replace("\u0666","6").replace("\u0667","7").replace("\u0668","8").replace("\u0669","9")
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d/%m/%y", "%d-%m-%y", "%Y/%m/%d", "%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return pd.Timestamp(datetime.strptime(text, fmt))
+        except Exception:
+            pass
+    return pd.to_datetime(text, errors="coerce", dayfirst=True)
+
+
 def load_all_data():
     users_df = pd.DataFrame(columns=COL_USERS)
     sessions_df = pd.DataFrame(columns=COL_SESSIONS)
@@ -771,11 +852,13 @@ def load_all_data():
 
     return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df, payment_records_df
 
-def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None, payment_records_df=None):
+def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None, payment_records_df=None, ads_df=None):
     if weekly_schedule_df is None:
         weekly_schedule_df = st.session_state.get("weekly_schedule_df", pd.DataFrame(columns=COL_WEEKLY_SCHEDULE))
     if payment_records_df is None:
         payment_records_df = st.session_state.get("payment_records_df", pd.DataFrame(columns=COL_PAYMENT_RECORDS))
+    if ads_df is None:
+        ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS))
     excel_buffer = io.BytesIO()
     with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
         users_df.to_excel(writer, sheet_name="Users", index=False)
@@ -793,6 +876,7 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
         weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
         payment_records_df.to_excel(writer, sheet_name="PaymentRecords", index=False)
+        ads_df.to_excel(writer, sheet_name="Ads", index=False)
         st.session_state.get("student_interface_df", load_student_interface()).to_excel(writer, sheet_name="StudentInterface", index=False)
         st.session_state.get("teacher_profile_df", pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])).to_excel(writer, sheet_name="TeacherProfile", index=False)
     excel_bytes = excel_buffer.getvalue()
@@ -822,6 +906,7 @@ if "users_df" not in st.session_state:
     st.session_state.online_schedule_df = os_df
     st.session_state.weekly_schedule_df = ws_df
     st.session_state.payment_records_df = pr_df
+    st.session_state.ads_df = load_ads()
     st.session_state.teacher_profile_df = load_teacher_profile()
     # استخدم صورة المعلم المحفوظة داخل TeacherProfile/التخزين السحابي في كل صفحات الطالب
     # بدلاً من الاعتماد على ملف teacher.jpg الموجود محلياً فقط.
@@ -851,6 +936,13 @@ if "payment_records_df" not in st.session_state:
     for _pc in COL_PAYMENT_RECORDS:
         if _pc not in st.session_state.payment_records_df.columns:
             st.session_state.payment_records_df[_pc] = 0.0 if _pc == "المبلغ" else ("مؤكد" if _pc == "حالة الدفع" else "")
+
+if "ads_df" not in st.session_state:
+    st.session_state.ads_df = load_ads()
+    for _ac in COL_ADS:
+        if _ac not in st.session_state.ads_df.columns:
+            st.session_state.ads_df[_ac] = "نشط" if _ac == "الحالة" else ""
+    st.session_state.ads_df = st.session_state.ads_df[COL_ADS]
 
 if "teacher_profile_df" not in st.session_state:
     st.session_state.teacher_profile_df = load_teacher_profile()
@@ -1683,6 +1775,7 @@ if is_student_mode:
                 if st.button("👥 الدخول كضيف", key="landing_guest_btn", use_container_width=True):
                     st.session_state.page_view="guest_reg"
                     st.rerun()
+            render_student_ads()
             st.markdown("### 📚 ماذا ستجد داخل المنصة؟")
             cc1,cc2,cc3,cc4=st.columns(4)
             for cc,icon,title,desc in [(cc1,"▣","المقررات والشروحات","فيديوهات منظمة حسب المرحلة"),(cc2,"✦","الاختبارات","اختبارات ونتائج وتقييم"),(cc3,"◫","الجدول والحصص","Zoom والحصص والمتابعة"),(cc4,"◈","درسلي","باقات تعليمية ومتابعة")]:
@@ -2378,6 +2471,9 @@ if st.sidebar.button("✎  تعديل السجلات", use_container_width=True)
     st.rerun()
 if st.sidebar.button("▥  السجلات", use_container_width=True):
     st.session_state.teacher_page = "all_records"
+    st.rerun()
+if st.sidebar.button("📢  الإعلانات", use_container_width=True):
+    st.session_state.teacher_page = "ads"
     st.rerun()
 if st.sidebar.button("▤  تقارير ولي الأمر", use_container_width=True):
     st.session_state.teacher_page = "parent_report"
@@ -4255,6 +4351,64 @@ elif t_page == "all_records":
                 mime="application/octet-stream"
             )
 
+elif t_page == "ads":
+    st.subheader("📢 إدارة الإعلانات")
+    st.caption("أنشئ إعلاناً من لوحة المعلم وسيظهر مباشرة في الصفحة الرئيسية للطالب. يمكنك نشر صورة + بوست، فيديو برابط، رابط مباشر أو واتساب.")
+    ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
+    with st.container(border=True):
+        with st.form("create_ad_form", clear_on_submit=True):
+            ad_title = st.text_input("عنوان الإعلان", placeholder="مثال: مراجعة ليلة الامتحان")
+            ad_type = st.selectbox("نوع الإعلان", ["صورة + بوست", "فيديو", "رابط", "واتساب", "نص"])
+            ad_text = st.text_area("نص / محتوى الإعلان", placeholder="اكتب البوست أو وصف الإعلان هنا")
+            ad_link = st.text_input("الرابط (فيديو / موقع / واتساب)", placeholder="https://...")
+            ad_button = st.text_input("نص زر الرابط", value="افتح الإعلان")
+            ad_file = None
+            if ad_type in ["صورة + بوست", "فيديو"]:
+                ad_file = st.file_uploader("ارفع الصورة أو الفيديو", type=["png","jpg","jpeg","webp","mp4","webm","mov"], key="ad_media_upload")
+            ad_active = st.checkbox("الإعلان ظاهر للطلاب", value=True)
+            ad_submit = st.form_submit_button("🚀 نشر الإعلان", use_container_width=True, type="primary")
+            if ad_submit:
+                media_b64 = ""
+                media_mime = ""
+                if ad_file is not None:
+                    raw = ad_file.getvalue()
+                    media_b64 = base64.b64encode(raw).decode("utf-8")
+                    media_mime = str(getattr(ad_file, "type", "") or "application/octet-stream")
+                final_link = ad_link.strip()
+                if ad_type == "واتساب" and final_link and not final_link.startswith("http"):
+                    final_link = "https://wa.me/" + final_link.replace("+", "").replace(" ", "")
+                new_ad = {
+                    "معرف_الإعلان": datetime.now().strftime("%Y%m%d%H%M%S%f"),
+                    "تاريخ_النشر": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "العنوان": ad_title.strip() or "إعلان جديد",
+                    "نوع_الإعلان": ad_type,
+                    "النص": ad_text.strip(),
+                    "الوسائط_base64": media_b64,
+                    "نوع_الوسائط": media_mime,
+                    "الرابط": final_link,
+                    "نص_الزر": ad_button.strip() or "افتح الإعلان",
+                    "الحالة": "نشط" if ad_active else "متوقف",
+                }
+                st.session_state.ads_df = pd.concat([ads_df, pd.DataFrame([new_ad])], ignore_index=True)
+                save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
+                st.success("✓ تم نشر الإعلان وحفظه، وسيظهر في الصفحة الرئيسية للطالب.")
+                st.rerun()
+
+    st.markdown("### 📋 الإعلانات المنشورة")
+    if ads_df.empty:
+        st.info("لا توجد إعلانات حتى الآن.")
+    else:
+        for ad_idx, row in ads_df.iloc[::-1].iterrows():
+            c1, c2 = st.columns([5,1])
+            with c1:
+                st.markdown(f"**{row.get('العنوان','إعلان')}** — {row.get('نوع_الإعلان','')} — {row.get('تاريخ_النشر','')}")
+                st.caption(str(row.get("النص", ""))[:250])
+            with c2:
+                if st.button("🗑️ حذف", key=f"delete_ad_{ad_idx}", use_container_width=True):
+                    st.session_state.ads_df = st.session_state.ads_df.drop(index=ad_idx).reset_index(drop=True)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
+                    st.rerun()
+
 elif t_page == "parent_report":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
     st.subheader("📑 إصدار وطباعة تقرير متابعة الطالب لولي الأمر")
@@ -4297,9 +4451,7 @@ elif t_page == "parent_report":
 
             last_payment_date = None
             if not payment_df_rep.empty and "التاريخ" in payment_df_rep.columns:
-                payment_df_rep["_payment_date"] = pd.to_datetime(
-                    payment_df_rep["التاريخ"], errors="coerce", dayfirst=True
-                )
+                payment_df_rep["_payment_date"] = payment_df_rep["التاريخ"].apply(_parse_parent_report_date)
                 valid_payments = payment_df_rep.dropna(subset=["_payment_date"])
                 if not valid_payments.empty:
                     last_payment_date = valid_payments["_payment_date"].max().date()
@@ -4308,18 +4460,14 @@ elif t_page == "parent_report":
             if last_payment_date is not None:
                 st.info(f"📅 بداية فترة المتابعة: بعد آخر دفعة مؤكدة بتاريخ {last_payment_date}")
 
-                all_sessions_student["_session_date"] = pd.to_datetime(
-                    all_sessions_student["التاريخ"], errors="coerce", dayfirst=True
-                )
+                all_sessions_student["_session_date"] = all_sessions_student["التاريخ"].apply(_parse_parent_report_date)
                 st_sessions = all_sessions_student[
-                    all_sessions_student["_session_date"].dt.date > last_payment_date
+                    all_sessions_student["_session_date"].apply(lambda x: x.date() if pd.notna(x) else None) > last_payment_date
                 ].copy()
 
-                all_assessments_student["_assessment_date"] = pd.to_datetime(
-                    all_assessments_student["التاريخ"], errors="coerce", dayfirst=True
-                )
+                all_assessments_student["_assessment_date"] = all_assessments_student["التاريخ"].apply(_parse_parent_report_date)
                 st_assessments = all_assessments_student[
-                    all_assessments_student["_assessment_date"].dt.date > last_payment_date
+                    all_assessments_student["_assessment_date"].apply(lambda x: x.date() if pd.notna(x) else None) > last_payment_date
                 ].copy()
             else:
                 st.info("💡 لا توجد دفعة مؤكدة مسجلة لهذا الطالب؛ سيتم عرض السجلات المتاحة من البداية.")
@@ -4327,9 +4475,9 @@ elif t_page == "parent_report":
                 st_assessments = all_assessments_student.copy()
 
             if not st_sessions.empty and "_session_date" not in st_sessions.columns:
-                st_sessions["_session_date"] = pd.to_datetime(st_sessions["التاريخ"], errors="coerce", dayfirst=True)
+                st_sessions["_session_date"] = st_sessions["التاريخ"].apply(_parse_parent_report_date)
             if not st_assessments.empty and "_assessment_date" not in st_assessments.columns:
-                st_assessments["_assessment_date"] = pd.to_datetime(st_assessments["التاريخ"], errors="coerce", dayfirst=True)
+                st_assessments["_assessment_date"] = st_assessments["التاريخ"].apply(_parse_parent_report_date)
 
             if not st_sessions.empty:
                 st_sessions = st_sessions.sort_values(by="_session_date", kind="stable")
@@ -4412,7 +4560,7 @@ elif t_page == "parent_report":
             else:
                 session_html_rows = "<tr><td colspan='4' style='padding:15px;font-weight:900;border:2px solid #000;'>لا توجد حصص مسجلة في فترة التقرير.</td></tr>"
 
-            teacher_img_tag = f'<img src="{teacher_image_data_uri(img_b64)}" style="width:100px;height:100px;border-radius:50%;border:3px solid #0052cc;object-fit:cover;">' if img_b64 else ""
+            teacher_img_tag = f'<img src="{STUDENT_FIXED_IMAGE_URI}" style="width:115px;height:115px;border-radius:50%;border:4px solid #0052cc;object-fit:cover;background:#fff;">' if STUDENT_FIXED_IMAGE_URI else ""
 
             parent_report_html = f"""<!DOCTYPE html>
             <html dir="rtl" lang="ar">
@@ -4491,13 +4639,27 @@ elif t_page == "parent_report":
             </body>
             </html>"""
 
-            st.download_button(
-                label=f"🖨️ تحميل وطباعة تقرير ولي الأمر لـ ({target_name})",
-                data=parent_report_html.encode("utf-8"),
-                file_name=f"تقرير_ولي_الأمر_{target_name}.html",
-                mime="application/octet-stream",
-                key="parent_report_download"
-            )
+            _parent_pdf_bytes = html_to_pdf_bytes(parent_report_html)
+            _pc1, _pc2 = st.columns(2)
+            with _pc1:
+                st.download_button(
+                    label=f"🖨️ تحميل تقرير ولي الأمر ({target_name})",
+                    data=parent_report_html.encode("utf-8"),
+                    file_name=f"تقرير_ولي_الأمر_{target_name}.html",
+                    mime="text/html",
+                    key="parent_report_download"
+                )
+            with _pc2:
+                if _parent_pdf_bytes:
+                    st.download_button(
+                        label=f"📄 تحميل PDF لـ ({target_name})",
+                        data=_parent_pdf_bytes,
+                        file_name=f"تقرير_ولي_الأمر_{target_name}.pdf",
+                        mime="application/pdf",
+                        key="parent_report_pdf_download"
+                    )
+                else:
+                    st.info("لطباعة PDF: حمّل التقرير وافتحه ثم اختر طباعة → حفظ كـ PDF.")
 
 # ============================================================================== 
 # الحفظ التلقائي الدائم
@@ -4534,7 +4696,7 @@ def _autosave_signature():
         "essays_df", "bookings_df", "bank_requests_df", "question_bank_df",
         "videos_df", "video_comments_df", "abqary_df", "online_schedule_df",
         "weekly_schedule_df", "payment_records_df", "student_interface_df",
-        "teacher_profile_df",
+        "teacher_profile_df", "ads_df",
     ]
     parts = []
     for key in keys:
