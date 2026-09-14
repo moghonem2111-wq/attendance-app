@@ -774,9 +774,8 @@ def render_student_ads():
     st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
     st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>اسحب يمين وشمال لمشاهدة باقي الإعلانات</div>", unsafe_allow_html=True)
 
-    # كاروسيل حقيقي يعمل باللمس على الموبايل وبالماوس على الكمبيوتر.
     cards = []
-    for _, row in active.iloc[::-1].iterrows():
+    for _, row in active.sort_values("الترتيب", ascending=False, kind="stable").iterrows() if "الترتيب" in active.columns else active.iloc[::-1].iterrows():
         title = html.escape(str(row.get("العنوان", "إعلان جديد") or "إعلان جديد"))
         text = str(row.get("النص", "") or "").strip()
         kind = str(row.get("نوع_الإعلان", "") or "").strip()
@@ -784,50 +783,86 @@ def render_student_ads():
         link = str(row.get("الرابط", "") or "").strip()
         button = html.escape(str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip())
         date_txt = html.escape(str(row.get("تاريخ_النشر", "") or ""))
+
         media_html = ""
         if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
-            media_html = f"<img src='{media_uri}' loading='eager' decoding='async' style='display:block;width:100%;height:auto;max-height:620px;object-fit:contain;border-radius:16px;background:#f8fafc;'>"
+            media_html = f"<img src=\"{html.escape(media_uri, quote=True)}\" loading=\"eager\" decoding=\"async\" style=\"display:block;width:100%;max-height:420px;object-fit:contain;border-radius:16px;background:#f8fafc;\" onerror=\"this.style.display='none'\">"
         elif media_uri and kind == "فيديو":
-            # الفيديو المرفوع يُعرض من خلال Streamlit أسفل الكاروسيل عند الحاجة؛ هنا نضع معاينة فقط.
-            media_html = f"<div style='padding:22px;text-align:center;background:#eff6ff;border-radius:16px;font-size:42px'>🎬</div>"
+            media_html = f"<video controls playsinline preload=\"metadata\" style=\"display:block;width:100%;max-height:420px;border-radius:16px;background:#000;\" src=\"{html.escape(media_uri, quote=True)}\"></video>"
         elif kind == "فيديو" and link:
-            media_html = f"<div style='padding:22px;text-align:center;background:#eff6ff;border-radius:16px;font-size:42px'>🎬</div>"
+            safe = html.escape(link, quote=True)
+            embed = link
+            if "youtube.com/watch?v=" in link:
+                vid = link.split("v=",1)[1].split("&",1)[0]
+                embed = f"https://www.youtube.com/embed/{vid}"
+            elif "youtu.be/" in link:
+                vid = link.split("youtu.be/",1)[1].split("?",1)[0]
+                embed = f"https://www.youtube.com/embed/{vid}"
+            elif "vimeo.com/" in link and "/video/" not in link:
+                vid = link.rstrip('/').split('/')[-1]
+                if vid.isdigit():
+                    embed = f"https://player.vimeo.com/video/{vid}"
+            safe_embed = html.escape(embed, quote=True)
+            media_html = f"<iframe src=\"{safe_embed}\" style=\"width:100%;height:420px;border:0;border-radius:16px;background:#000;\" allow=\"autoplay; fullscreen; picture-in-picture\" allowfullscreen></iframe>"
 
         text_html = _ad_text_html(text) if text else ""
         link_html = ""
-        if link:
+        if link and kind != "فيديو":
             safe_link = html.escape(link, quote=True)
-            link_html = f"<div style='margin-top:12px'><a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:inline-block;background:#2563eb;color:#fff!important;text-decoration:none;border-radius:12px;padding:10px 18px;font-weight:900'>{button}</a></div>"
+            link_html = f"<div style=\"margin-top:12px;text-align:center\"><a href=\"{safe_link}\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"display:inline-block;background:#2563eb;color:#fff!important;text-decoration:none;border-radius:12px;padding:11px 20px;font-weight:900\">{button}</a></div>"
 
         cards.append(f"""
         <article class='student-ad-card'>
-          <div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div>
-          <div style='font-size:12px;color:#64748b;margin:4px 0 12px'>{date_txt}</div>
+          <div class='ad-title'>{title}</div>
+          <div class='ad-date'>{date_txt}</div>
           {media_html}
-          {f"<div style='direction:rtl;text-align:right;line-height:2;font-weight:800;font-size:16px;padding:10px 2px;word-break:break-word'>{text_html}</div>" if text_html else ""}
+          {f"<div class='ad-text'>{text_html}</div>" if text_html else ""}
           {link_html}
         </article>
         """)
 
-    track = "".join(cards)
-    st.markdown(f"""
-    <style>
-      .student-ads-carousel{{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 16px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:rtl;scrollbar-width:thin;}}
-      .student-ad-card{{flex:0 0 min(88%,760px);scroll-snap-align:center;background:#fff;border:1.5px solid #dbe5f0;border-radius:20px;padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.09);direction:rtl;text-align:right;}}
-      .student-ads-carousel::-webkit-scrollbar{{height:8px}} .student-ads-carousel::-webkit-scrollbar-thumb{{background:#cbd5e1;border-radius:10px}}
-      @media(max-width:700px){{.student-ad-card{{flex-basis:92%;padding:13px}}}}
-    </style>
-    <div class='student-ads-carousel'>{track}</div>
-    """, unsafe_allow_html=True)
-
-    # الفيديوهات المرفوعة تحتاج عنصر Streamlit الأصلي لضمان تشغيلها.
-    for v_idx, (_, row) in enumerate(active.iloc[::-1].iterrows()):
-        kind = str(row.get("نوع_الإعلان", "") or "").strip()
-        if kind == "فيديو" and str(row.get("الوسائط_base64", "") or "").strip():
-            try:
-                st.video(base64.b64decode(str(row.get("الوسائط_base64", "")).strip()))
-            except Exception:
-                pass
+    # مهم: نستخدم st.components.v1.html بدل st.markdown حتى لا يظهر كود HTML للطالب كنص.
+    carousel_html = f"""
+    <!doctype html>
+    <html lang='ar' dir='rtl'>
+    <head>
+      <meta charset='utf-8'>
+      <meta name='viewport' content='width=device-width,initial-scale=1'>
+      <style>
+        *{{box-sizing:border-box}}
+        body{{margin:0;background:transparent;font-family:Arial,Tahoma,sans-serif;color:#0f172a}}
+        .student-ads-carousel{{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 14px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:ltr;scrollbar-width:none}}
+        .student-ads-carousel::-webkit-scrollbar{{display:none}}
+        .student-ad-card{{direction:rtl;text-align:right;flex:0 0 92%;scroll-snap-align:center;background:#fff;border:1.5px solid #dbe5f0;border-radius:20px;padding:16px;box-shadow:0 10px 28px rgba(15,23,42,.10);overflow:hidden}}
+        .ad-title{{font-size:21px;font-weight:900;margin-bottom:4px}}
+        .ad-date{{font-size:12px;color:#64748b;margin-bottom:12px}}
+        .ad-text{{font-size:16px;line-height:2;font-weight:800;padding:10px 2px;word-break:break-word}}
+        .ad-text a{{color:#0b74ff!important;text-decoration:underline!important;font-weight:900}}
+        .nav{{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:4px}}
+        .nav button{{border:0;background:#0f2a56;color:white;width:42px;height:42px;border-radius:50%;font-size:24px;font-weight:900;cursor:pointer}}
+        .hint{{text-align:center;color:#64748b;font-size:12px;font-weight:800;margin-top:2px}}
+        @media(max-width:700px){{.student-ad-card{{flex-basis:94%;padding:12px}}.ad-title{{font-size:18px}}}}
+      </style>
+    </head>
+    <body>
+      <div class='student-ads-carousel' id='adsTrack'>{''.join(cards)}</div>
+      <div class='nav'>
+        <button type='button' onclick='moveAd(1)' aria-label='الإعلان السابق'>›</button>
+        <button type='button' onclick='moveAd(-1)' aria-label='الإعلان التالي'>‹</button>
+      </div>
+      <div class='hint'>اسحب يمينًا أو يسارًا للتنقل بين الإعلانات</div>
+      <script>
+        function moveAd(direction){{
+          const track=document.getElementById('adsTrack');
+          const amount=track.clientWidth*0.92;
+          track.scrollBy({{left: direction*amount, behavior:'smooth'}});
+        }}
+      </script>
+    </body>
+    </html>
+    """
+    # ارتفاع مناسب للصور والفيديو والنصوص، مع إبقاء الكاروسيل داخل صفحة الطالب.
+    st.components.v1.html(carousel_html, height=535, scrolling=False)
 
 
 def _parse_parent_report_date(value):
