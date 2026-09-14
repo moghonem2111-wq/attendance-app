@@ -4,6 +4,8 @@ import os as _os
 import io
 import json
 import base64
+import re
+import html
 import urllib.request
 import urllib.error
 from datetime import date, datetime, time
@@ -697,20 +699,35 @@ def build_weekly_schedule_print_html(df, title="الجدول الأسبوعي ل
     return html.replace("</head>", css+"</head>")
 
 def load_ads():
+    """تحميل الإعلانات مع استرجاع الوسائط كاملة من AdsMedia لتجنب حد Excel البالغ 32767 حرفاً للخلية."""
     ads_df = pd.DataFrame(columns=COL_ADS)
+    media_df = pd.DataFrame()
     excel_source = _get_excel_source()
     if excel_source is not None:
         try:
             with pd.ExcelFile(excel_source) as xls:
                 if "Ads" in xls.sheet_names:
                     ads_df = pd.read_excel(xls, "Ads")
+                if "AdsMedia" in xls.sheet_names:
+                    media_df = pd.read_excel(xls, "AdsMedia")
         except Exception:
             pass
     for col in COL_ADS:
         if col not in ads_df.columns:
-            if col == "الحالة": ads_df[col] = "نشط"
-            else: ads_df[col] = ""
-    return ads_df[COL_ADS]
+            ads_df[col] = "نشط" if col == "الحالة" else ""
+    ads_df = ads_df[COL_ADS].copy()
+    # النسخة الجديدة: تجميع الصورة/الفيديو من أجزاء مستقلة حتى لا تُقص الصورة داخل Excel.
+    if not media_df.empty and "معرف_الإعلان" in media_df.columns and "البيانات" in media_df.columns:
+        media_map = {}
+        for ad_id, grp in media_df.groupby(media_df["معرف_الإعلان"].astype(str)):
+            if "جزء" in grp.columns:
+                grp = grp.sort_values("جزء")
+            media_map[str(ad_id)] = "".join(grp["البيانات"].fillna("").astype(str).tolist())
+        for i, row in ads_df.iterrows():
+            ad_id = str(row.get("معرف_الإعلان", ""))
+            if ad_id in media_map and media_map[ad_id]:
+                ads_df.at[i, "الوسائط_base64"] = media_map[ad_id]
+    return ads_df
 
 def _ad_media_uri(row):
     b64 = str(row.get("الوسائط_base64", "") or "").strip()
@@ -718,6 +735,20 @@ def _ad_media_uri(row):
     if b64 and b64.lower() != "nan":
         return f"data:{mime};base64,{b64}"
     return ""
+
+def _ad_text_html(text):
+    """يعرض نص الإعلان مع تحويل أي رابط URL داخله إلى رابط أزرق قابل للضغط."""
+    safe = html.escape(str(text or ""))
+    pattern = r"(https?://[^\s<]+|www\.[^\s<]+)"
+    def _link(match):
+        raw = match.group(1)
+        trailing = ""
+        while raw and raw[-1] in ".,،؛;:!؟?)\"']":
+            trailing = raw[-1] + trailing
+            raw = raw[:-1]
+        href = raw if raw.startswith("http") else "https://" + raw
+        return f'<a href="{html.escape(href, quote=True)}" target="_blank" rel="noopener noreferrer" style="color:#0b74ff;text-decoration:underline;font-weight:900;">{raw}</a>{trailing}'
+    return re.sub(pattern, _link, safe).replace("\n", "<br>")
 
 def render_student_ads():
     ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
@@ -729,16 +760,17 @@ def render_student_ads():
     st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
     st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>آخر الإعلانات والتنبيهات المنشورة من لوحة المعلم</div>", unsafe_allow_html=True)
     for idx, row in active.iloc[::-1].iterrows():
-        title = str(row.get("العنوان", "إعلان جديد") or "إعلان جديد")
+        title = html.escape(str(row.get("العنوان", "إعلان جديد") or "إعلان جديد"))
         text = str(row.get("النص", "") or "").strip()
         kind = str(row.get("نوع_الإعلان", "") or "").strip()
         media_uri = _ad_media_uri(row)
         link = str(row.get("الرابط", "") or "").strip()
-        button = str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip()
+        button = html.escape(str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip())
         with st.container(border=True):
-            st.markdown(f"<div style='direction:rtl;text-align:right'><div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div><div style='font-size:12px;color:#64748b;margin-top:4px'>{row.get('تاريخ_النشر','')}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='direction:rtl;text-align:right'><div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div><div style='font-size:12px;color:#64748b;margin-top:4px'>{html.escape(str(row.get('تاريخ_النشر','')))}</div></div>", unsafe_allow_html=True)
             if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
-                st.image(media_uri, use_container_width=True)
+                # عرض الصورة الأصلية مباشرة بدون إعادة ضغط أو تصغير من Streamlit.
+                st.markdown(f"<div style='width:100%;text-align:center;margin:12px 0'><img src='{media_uri}' loading='eager' decoding='auto' style='display:block;width:100%;height:auto;max-width:100%;object-fit:contain;border-radius:14px;image-rendering:auto;'></div>", unsafe_allow_html=True)
             elif media_uri and kind == "فيديو":
                 try:
                     st.video(base64.b64decode(str(row.get("الوسائط_base64", ""))))
@@ -750,9 +782,10 @@ def render_student_ads():
                 try: st.video(link)
                 except Exception: pass
             if text:
-                st.markdown(f"<div style='direction:rtl;text-align:right;line-height:1.9;font-weight:800;font-size:16px;padding:8px 2px'>{text}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='direction:rtl;text-align:right;line-height:2;font-weight:800;font-size:16px;padding:10px 2px;word-break:break-word'>{_ad_text_html(text)}</div>", unsafe_allow_html=True)
             if link:
                 st.link_button(button or "فتح الرابط", link, use_container_width=True)
+
 
 def _parse_parent_report_date(value):
     """توحيد تواريخ التقرير حتى تعمل مع date/datetime و dd/mm/yyyy و yyyy-mm-dd بدون التباس."""
@@ -876,7 +909,22 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
         online_schedule_df.to_excel(writer, sheet_name="OnlineSchedule", index=False)
         weekly_schedule_df.to_excel(writer, sheet_name="WeeklySchedule", index=False)
         payment_records_df.to_excel(writer, sheet_name="PaymentRecords", index=False)
-        ads_df.to_excel(writer, sheet_name="Ads", index=False)
+        # بيانات الإعلان النصية/الوصفية في Ads، بينما الوسائط الكبيرة تُخزن على أجزاء داخل AdsMedia
+        # حتى لا تتجاوز الصورة الأصلية حد Excel للخلية ولا يتم قصها أو فقدان جودتها.
+        ads_meta = ads_df.copy()
+        if "الوسائط_base64" in ads_meta.columns:
+            ads_meta["الوسائط_base64"] = ""
+        ads_meta.to_excel(writer, sheet_name="Ads", index=False)
+        media_rows = []
+        chunk_size = 30000
+        if not ads_df.empty:
+            for _, ad_row in ads_df.iterrows():
+                ad_id = str(ad_row.get("معرف_الإعلان", ""))
+                b64 = str(ad_row.get("الوسائط_base64", "") or "").strip()
+                if b64 and b64.lower() != "nan":
+                    for part_no, pos in enumerate(range(0, len(b64), chunk_size), start=1):
+                        media_rows.append({"معرف_الإعلان": ad_id, "جزء": part_no, "البيانات": b64[pos:pos+chunk_size]})
+        pd.DataFrame(media_rows, columns=["معرف_الإعلان", "جزء", "البيانات"]).to_excel(writer, sheet_name="AdsMedia", index=False)
         st.session_state.get("student_interface_df", load_student_interface()).to_excel(writer, sheet_name="StudentInterface", index=False)
         st.session_state.get("teacher_profile_df", pd.DataFrame([{"اسم المعلم":"م/ محمد غنيم","الصورة_base64":img_b64}])).to_excel(writer, sheet_name="TeacherProfile", index=False)
     excel_bytes = excel_buffer.getvalue()
