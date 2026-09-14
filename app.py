@@ -351,7 +351,7 @@ COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "ا
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
 COL_STUDENT_INTERFACE = ["عنوان_الواجهة", "الشارة", "الوصف", "صورة_الواجهة_base64", "عنوان_الاشتراكات", "وصف_الاشتراكات", "عنوان_الحجز", "نص_الحجز", "نص_الفوتر", "صورة_الاشتراكات_base64", "صورة_البانر_base64"]
 COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
-COL_ADS = ["معرف_الإعلان", "تاريخ_النشر", "العنوان", "نوع_الإعلان", "النص", "الوسائط_base64", "نوع_الوسائط", "الرابط", "نص_الزر", "الحالة"]
+COL_ADS = ["معرف_الإعلان", "تاريخ_النشر", "العنوان", "نوع_الإعلان", "النص", "الوسائط_base64", "نوع_الوسائط", "الرابط", "نص_الزر", "الحالة", "الترتيب"]
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
@@ -714,8 +714,18 @@ def load_ads():
             pass
     for col in COL_ADS:
         if col not in ads_df.columns:
-            ads_df[col] = "نشط" if col == "الحالة" else ""
+            ads_df[col] = "نشط" if col == "الحالة" else (0 if col == "الترتيب" else "")
     ads_df = ads_df[COL_ADS].copy()
+    # ترتيب آمن للإعلانات القديمة والجديدة. الرقم الأصغر يظهر أولاً في لوحة المعلم.
+    ads_df["الترتيب"] = pd.to_numeric(ads_df["الترتيب"], errors="coerce")
+    if ads_df["الترتيب"].isna().all():
+        ads_df["الترتيب"] = range(len(ads_df))
+    else:
+        max_order = int(ads_df["الترتيب"].max()) if pd.notna(ads_df["الترتيب"].max()) else 0
+        for _i in ads_df.index[ads_df["الترتيب"].isna()]:
+            max_order += 1
+            ads_df.at[_i, "الترتيب"] = max_order
+    ads_df["الترتيب"] = ads_df["الترتيب"].astype(int)
     # مهم مع pandas 3.x: حوّل عمود الوسائط إلى object قبل إعادة تركيب Base64 الطويل.
     # وإلا قد يكون العمود dtype = float64/NA فيؤدي التعيين إلى TypeError.
     ads_df["الوسائط_base64"] = ads_df["الوسائط_base64"].astype(object)
@@ -754,41 +764,64 @@ def _ad_text_html(text):
     return re.sub(pattern, _link, safe).replace("\n", "<br>")
 
 def render_student_ads():
+    """عرض الإعلانات للطالب في كاروسيل أفقي قابل للسحب يمين/شمال مثل بطاقات السوشيال."""
     ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
     if ads_df.empty:
         return
     active = ads_df[ads_df["الحالة"].astype(str).str.strip().isin(["نشط", "فعال", "مفعل", "مفعّل", "نعم"])].copy() if "الحالة" in ads_df.columns else ads_df.copy()
     if active.empty:
         return
-    st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>آخر الإعلانات والتنبيهات المنشورة من لوحة المعلم</div>", unsafe_allow_html=True)
-    for idx, row in active.iloc[::-1].iterrows():
+    active["الترتيب"] = pd.to_numeric(active.get("الترتيب", pd.Series(range(len(active)), index=active.index)), errors="coerce").fillna(999999)
+    active = active.sort_values(["الترتيب", "تاريخ_النشر"], ascending=[True, False])
+
+    slides = []
+    for _, row in active.iterrows():
         title = html.escape(str(row.get("العنوان", "إعلان جديد") or "إعلان جديد"))
         text = str(row.get("النص", "") or "").strip()
         kind = str(row.get("نوع_الإعلان", "") or "").strip()
         media_uri = _ad_media_uri(row)
         link = str(row.get("الرابط", "") or "").strip()
         button = html.escape(str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip())
-        with st.container(border=True):
-            st.markdown(f"<div style='direction:rtl;text-align:right'><div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div><div style='font-size:12px;color:#64748b;margin-top:4px'>{html.escape(str(row.get('تاريخ_النشر','')))}</div></div>", unsafe_allow_html=True)
-            if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
-                # عرض الصورة الأصلية مباشرة بدون إعادة ضغط أو تصغير من Streamlit.
-                st.markdown(f"<div style='width:100%;text-align:center;margin:12px 0'><img src='{media_uri}' loading='eager' decoding='auto' style='display:block;width:100%;height:auto;max-width:100%;object-fit:contain;border-radius:14px;image-rendering:auto;'></div>", unsafe_allow_html=True)
-            elif media_uri and kind == "فيديو":
-                try:
-                    st.video(base64.b64decode(str(row.get("الوسائط_base64", ""))))
-                except Exception:
-                    if link:
-                        try: st.video(link)
-                        except Exception: pass
-            elif kind == "فيديو" and link:
-                try: st.video(link)
-                except Exception: pass
-            if text:
-                st.markdown(f"<div style='direction:rtl;text-align:right;line-height:2;font-weight:800;font-size:16px;padding:10px 2px;word-break:break-word'>{_ad_text_html(text)}</div>", unsafe_allow_html=True)
-            if link:
-                st.link_button(button or "فتح الرابط", link, use_container_width=True)
+        media_html = ""
+        if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
+            media_html = f"<img src='{media_uri}' loading='eager' decoding='auto' style='width:100%;max-height:430px;object-fit:contain;border-radius:18px;display:block;background:#f8fafc;'>"
+        elif kind == "فيديو" and link:
+            safe_link = html.escape(link, quote=True)
+            media_html = f"<a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:flex;align-items:center;justify-content:center;height:220px;border-radius:18px;background:#0f172a;color:#fff;text-decoration:none;font-size:42px;'>▶️<span style='font-size:16px;margin-right:10px;'>مشاهدة الفيديو</span></a>"
+        elif kind in ["رابط", "واتساب"] and link:
+            safe_link = html.escape(link, quote=True)
+            media_html = f"<a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:flex;align-items:center;justify-content:center;height:170px;border-radius:18px;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;text-decoration:none;font-size:25px;font-weight:900;'>🔗 افتح الإعلان</a>"
+        text_html = _ad_text_html(text) if text else ""
+        btn_html = ""
+        if link:
+            safe_link = html.escape(link, quote=True)
+            btn_html = f"<a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:block;text-align:center;background:#2563eb;color:#fff;padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:900;margin-top:10px;'>{button}</a>"
+        slides.append(f"<div class='ad-slide'><div class='ad-slide-inner'><div class='ad-badge'>📢 إعلان</div><h3>{title}</h3>{media_html}<div class='ad-slide-text'>{text_html}</div>{btn_html}</div></div>")
 
+    carousel = """
+    <style>
+      .ads-carousel-wrap{direction:ltr;position:relative;margin:12px auto 22px;max-width:900px}
+      .ads-carousel{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 4px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x}
+      .ads-carousel::-webkit-scrollbar{display:none}
+      .ad-slide{flex:0 0 88%;scroll-snap-align:center}
+      .ad-slide-inner{direction:rtl;background:#fff;border:1px solid #dbe4f0;border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(15,23,42,.10);min-height:120px}
+      .ad-slide h3{margin:5px 0 12px;color:#0f172a;font-size:21px;font-weight:900;text-align:right}
+      .ad-badge{display:inline-block;background:#e8f1ff;color:#1d4ed8;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900}
+      .ad-slide-text{font-size:15px;line-height:2;text-align:right;color:#334155;font-weight:700;word-break:break-word;margin-top:9px}
+      .ads-nav{display:flex;justify-content:center;gap:9px;margin-top:8px;direction:ltr}
+      .ads-nav button{border:0;background:#e8eef8;color:#0f172a;border-radius:50%;width:40px;height:40px;font-size:20px;font-weight:900;cursor:pointer}
+      .ads-dots{display:flex;justify-content:center;gap:6px;margin-top:7px;direction:ltr}
+      .ads-dot{width:7px;height:7px;border-radius:50%;background:#cbd5e1}
+      .ads-help{text-align:center;color:#64748b;font-size:12px;font-weight:800;margin-bottom:5px}
+    </style>
+    <div class='ads-carousel-wrap'>
+      <div class='ads-help'>اسحب الإعلان يمين أو شمال للتبديل بين الإعلانات</div>
+      <div class='ads-carousel' id='ads-carousel'>__SLIDES__</div>
+      <div class='ads-nav'><button onclick="document.getElementById('ads-carousel').scrollBy({left:-document.getElementById('ads-carousel').clientWidth*.88,behavior:'smooth'})">‹</button><button onclick="document.getElementById('ads-carousel').scrollBy({left:document.getElementById('ads-carousel').clientWidth*.88,behavior:'smooth'})">›</button></div>
+    </div>
+    """.replace("__SLIDES__", "".join(slides))
+    st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
+    st.components.v1.html(carousel, height=620, scrolling=False)
 
 def _parse_parent_report_date(value):
     """توحيد تواريخ التقرير حتى تعمل مع date/datetime و dd/mm/yyyy و yyyy-mm-dd بدون التباس."""
@@ -4404,7 +4437,7 @@ elif t_page == "all_records":
 
 elif t_page == "ads":
     st.subheader("📢 إدارة الإعلانات")
-    st.caption("أنشئ إعلاناً من لوحة المعلم وسيظهر مباشرة في الصفحة الرئيسية للطالب. يمكنك نشر صورة + بوست، فيديو برابط، رابط مباشر أو واتساب.")
+    st.caption("أنشئ الإعلان، عدّله، فعّله أو أوقفه، ورتّبه بالسهم ↑ ↓ ليظهر للطالب بنفس الترتيب.")
     ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
     with st.container(border=True):
         with st.form("create_ad_form", clear_on_submit=True):
@@ -4428,6 +4461,9 @@ elif t_page == "ads":
                 final_link = ad_link.strip()
                 if ad_type == "واتساب" and final_link and not final_link.startswith("http"):
                     final_link = "https://wa.me/" + final_link.replace("+", "").replace(" ", "")
+                existing = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS))
+                numeric_orders = pd.to_numeric(existing.get("الترتيب", pd.Series(dtype=float)), errors="coerce")
+                next_order = int(numeric_orders.max()) + 1 if len(numeric_orders) and pd.notna(numeric_orders.max()) else 0
                 new_ad = {
                     "معرف_الإعلان": datetime.now().strftime("%Y%m%d%H%M%S%f"),
                     "تاريخ_النشر": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -4439,26 +4475,87 @@ elif t_page == "ads":
                     "الرابط": final_link,
                     "نص_الزر": ad_button.strip() or "افتح الإعلان",
                     "الحالة": "نشط" if ad_active else "متوقف",
+                    "الترتيب": next_order,
                 }
-                st.session_state.ads_df = pd.concat([ads_df, pd.DataFrame([new_ad])], ignore_index=True)
+                st.session_state.ads_df = pd.concat([existing, pd.DataFrame([new_ad])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
-                st.success("✓ تم نشر الإعلان وحفظه، وسيظهر في الصفحة الرئيسية للطالب.")
+                st.success("✓ تم نشر الإعلان وحفظه.")
                 st.rerun()
 
-    st.markdown("### 📋 الإعلانات المنشورة")
+    def _save_ads_and_rerun(msg=""):
+        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
+        if msg: st.success(msg)
+        st.rerun()
+
+    st.markdown("### 📋 ترتيب وتعديل الإعلانات")
+    ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
     if ads_df.empty:
         st.info("لا توجد إعلانات حتى الآن.")
     else:
-        for ad_idx, row in ads_df.iloc[::-1].iterrows():
-            c1, c2 = st.columns([5,1])
-            with c1:
-                st.markdown(f"**{row.get('العنوان','إعلان')}** — {row.get('نوع_الإعلان','')} — {row.get('تاريخ_النشر','')}")
-                st.caption(str(row.get("النص", ""))[:250])
-            with c2:
-                if st.button("🗑️ حذف", key=f"delete_ad_{ad_idx}", use_container_width=True):
+        ads_df["الترتيب"] = pd.to_numeric(ads_df.get("الترتيب", pd.Series(range(len(ads_df)))), errors="coerce").fillna(999999)
+        ads_df = ads_df.sort_values(["الترتيب", "تاريخ_النشر"], ascending=[True, False])
+        ordered_indices = list(ads_df.index)
+        for pos, ad_idx in enumerate(ordered_indices):
+            row = ads_df.loc[ad_idx]
+            with st.container(border=True):
+                c1, c2, c3, c4 = st.columns([5,1,1,1])
+                with c1:
+                    st.markdown(f"**{html.escape(str(row.get('العنوان','إعلان')))}** — {row.get('نوع_الإعلان','')} — {'🟢 ظاهر' if str(row.get('الحالة','')) in ['نشط','فعال','مفعل','مفعّل','نعم'] else '⚪ متوقف'}", unsafe_allow_html=True)
+                    st.caption(str(row.get("النص", ""))[:250])
+                with c2:
+                    if st.button("⬆️", key=f"ad_up_{ad_idx}", disabled=(pos == 0), use_container_width=True):
+                        prev_idx = ordered_indices[pos-1]
+                        a = st.session_state.ads_df.at[ad_idx, "الترتيب"]
+                        b = st.session_state.ads_df.at[prev_idx, "الترتيب"]
+                        st.session_state.ads_df.at[ad_idx, "الترتيب"] = b
+                        st.session_state.ads_df.at[prev_idx, "الترتيب"] = a
+                        _save_ads_and_rerun("✓ تم رفع الإعلان درجة واحدة.")
+                with c3:
+                    if st.button("⬇️", key=f"ad_down_{ad_idx}", disabled=(pos == len(ordered_indices)-1), use_container_width=True):
+                        next_idx = ordered_indices[pos+1]
+                        a = st.session_state.ads_df.at[ad_idx, "الترتيب"]
+                        b = st.session_state.ads_df.at[next_idx, "الترتيب"]
+                        st.session_state.ads_df.at[ad_idx, "الترتيب"] = b
+                        st.session_state.ads_df.at[next_idx, "الترتيب"] = a
+                        _save_ads_and_rerun("✓ تم خفض الإعلان درجة واحدة.")
+                with c4:
+                    if st.button("✏️", key=f"ad_edit_open_{ad_idx}", use_container_width=True):
+                        st.session_state[f"editing_ad_{ad_idx}"] = not st.session_state.get(f"editing_ad_{ad_idx}", False)
+                        st.rerun()
+
+                if st.session_state.get(f"editing_ad_{ad_idx}", False):
+                    with st.form(f"edit_ad_form_{ad_idx}"):
+                        e_title = st.text_input("العنوان", value=str(row.get("العنوان", "")))
+                        type_options = ["صورة + بوست", "فيديو", "رابط", "واتساب", "نص"]
+                        current_type = str(row.get("نوع_الإعلان", "نص"))
+                        e_type = st.selectbox("نوع الإعلان", type_options, index=type_options.index(current_type) if current_type in type_options else 0)
+                        e_text = st.text_area("النص", value=str(row.get("النص", "")))
+                        e_link = st.text_input("الرابط", value=str(row.get("الرابط", "")))
+                        e_button = st.text_input("نص الزر", value=str(row.get("نص_الزر", "افتح الإعلان")))
+                        e_active = st.checkbox("ظاهر للطلاب", value=str(row.get("الحالة", "نشط")) in ["نشط","فعال","مفعل","مفعّل","نعم"])
+                        e_file = st.file_uploader("استبدال الصورة/الفيديو (اختياري)", type=["png","jpg","jpeg","webp","mp4","webm","mov"], key=f"edit_media_{ad_idx}")
+                        e_save = st.form_submit_button("💾 حفظ التعديل", use_container_width=True, type="primary")
+                        if e_save:
+                            final_link = e_link.strip()
+                            if e_type == "واتساب" and final_link and not final_link.startswith("http"):
+                                final_link = "https://wa.me/" + final_link.replace("+", "").replace(" ", "")
+                            st.session_state.ads_df.at[ad_idx, "العنوان"] = e_title.strip() or "إعلان جديد"
+                            st.session_state.ads_df.at[ad_idx, "نوع_الإعلان"] = e_type
+                            st.session_state.ads_df.at[ad_idx, "النص"] = e_text.strip()
+                            st.session_state.ads_df.at[ad_idx, "الرابط"] = final_link
+                            st.session_state.ads_df.at[ad_idx, "نص_الزر"] = e_button.strip() or "افتح الإعلان"
+                            st.session_state.ads_df.at[ad_idx, "الحالة"] = "نشط" if e_active else "متوقف"
+                            if e_file is not None:
+                                raw = e_file.getvalue()
+                                st.session_state.ads_df.at[ad_idx, "الوسائط_base64"] = base64.b64encode(raw).decode("utf-8")
+                                st.session_state.ads_df.at[ad_idx, "نوع_الوسائط"] = str(getattr(e_file, "type", "") or "application/octet-stream")
+                            _save_ads_and_rerun("✓ تم تعديل الإعلان وحفظه.")
+
+                if st.button("🗑️ حذف الإعلان", key=f"delete_ad_{ad_idx}", use_container_width=True):
                     st.session_state.ads_df = st.session_state.ads_df.drop(index=ad_idx).reset_index(drop=True)
-                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
-                    st.rerun()
+                    # إعادة ترقيم الترتيب بعد الحذف للحفاظ على ترتيب متماسك.
+                    st.session_state.ads_df["الترتيب"] = range(len(st.session_state.ads_df))
+                    _save_ads_and_rerun("✓ تم حذف الإعلان.")
 
 elif t_page == "parent_report":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
