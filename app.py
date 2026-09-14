@@ -764,64 +764,71 @@ def _ad_text_html(text):
     return re.sub(pattern, _link, safe).replace("\n", "<br>")
 
 def render_student_ads():
-    """عرض الإعلانات للطالب في كاروسيل أفقي قابل للسحب يمين/شمال مثل بطاقات السوشيال."""
     ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
     if ads_df.empty:
         return
     active = ads_df[ads_df["الحالة"].astype(str).str.strip().isin(["نشط", "فعال", "مفعل", "مفعّل", "نعم"])].copy() if "الحالة" in ads_df.columns else ads_df.copy()
     if active.empty:
         return
-    active["الترتيب"] = pd.to_numeric(active.get("الترتيب", pd.Series(range(len(active)), index=active.index)), errors="coerce").fillna(999999)
-    active = active.sort_values(["الترتيب", "تاريخ_النشر"], ascending=[True, False])
 
-    slides = []
-    for _, row in active.iterrows():
+    st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>اسحب يمين وشمال لمشاهدة باقي الإعلانات</div>", unsafe_allow_html=True)
+
+    # كاروسيل حقيقي يعمل باللمس على الموبايل وبالماوس على الكمبيوتر.
+    cards = []
+    for _, row in active.iloc[::-1].iterrows():
         title = html.escape(str(row.get("العنوان", "إعلان جديد") or "إعلان جديد"))
         text = str(row.get("النص", "") or "").strip()
         kind = str(row.get("نوع_الإعلان", "") or "").strip()
         media_uri = _ad_media_uri(row)
         link = str(row.get("الرابط", "") or "").strip()
         button = html.escape(str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip())
+        date_txt = html.escape(str(row.get("تاريخ_النشر", "") or ""))
         media_html = ""
         if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
-            media_html = f"<img src='{media_uri}' loading='eager' decoding='auto' style='width:100%;max-height:430px;object-fit:contain;border-radius:18px;display:block;background:#f8fafc;'>"
+            media_html = f"<img src='{media_uri}' loading='eager' decoding='async' style='display:block;width:100%;height:auto;max-height:620px;object-fit:contain;border-radius:16px;background:#f8fafc;'>"
+        elif media_uri and kind == "فيديو":
+            # الفيديو المرفوع يُعرض من خلال Streamlit أسفل الكاروسيل عند الحاجة؛ هنا نضع معاينة فقط.
+            media_html = f"<div style='padding:22px;text-align:center;background:#eff6ff;border-radius:16px;font-size:42px'>🎬</div>"
         elif kind == "فيديو" and link:
-            safe_link = html.escape(link, quote=True)
-            media_html = f"<a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:flex;align-items:center;justify-content:center;height:220px;border-radius:18px;background:#0f172a;color:#fff;text-decoration:none;font-size:42px;'>▶️<span style='font-size:16px;margin-right:10px;'>مشاهدة الفيديو</span></a>"
-        elif kind in ["رابط", "واتساب"] and link:
-            safe_link = html.escape(link, quote=True)
-            media_html = f"<a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:flex;align-items:center;justify-content:center;height:170px;border-radius:18px;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;text-decoration:none;font-size:25px;font-weight:900;'>🔗 افتح الإعلان</a>"
+            media_html = f"<div style='padding:22px;text-align:center;background:#eff6ff;border-radius:16px;font-size:42px'>🎬</div>"
+
         text_html = _ad_text_html(text) if text else ""
-        btn_html = ""
+        link_html = ""
         if link:
             safe_link = html.escape(link, quote=True)
-            btn_html = f"<a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:block;text-align:center;background:#2563eb;color:#fff;padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:900;margin-top:10px;'>{button}</a>"
-        slides.append(f"<div class='ad-slide'><div class='ad-slide-inner'><div class='ad-badge'>📢 إعلان</div><h3>{title}</h3>{media_html}<div class='ad-slide-text'>{text_html}</div>{btn_html}</div></div>")
+            link_html = f"<div style='margin-top:12px'><a href='{safe_link}' target='_blank' rel='noopener noreferrer' style='display:inline-block;background:#2563eb;color:#fff!important;text-decoration:none;border-radius:12px;padding:10px 18px;font-weight:900'>{button}</a></div>"
 
-    carousel = """
+        cards.append(f"""
+        <article class='student-ad-card'>
+          <div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div>
+          <div style='font-size:12px;color:#64748b;margin:4px 0 12px'>{date_txt}</div>
+          {media_html}
+          {f"<div style='direction:rtl;text-align:right;line-height:2;font-weight:800;font-size:16px;padding:10px 2px;word-break:break-word'>{text_html}</div>" if text_html else ""}
+          {link_html}
+        </article>
+        """)
+
+    track = "".join(cards)
+    st.markdown(f"""
     <style>
-      .ads-carousel-wrap{direction:ltr;position:relative;margin:12px auto 22px;max-width:900px}
-      .ads-carousel{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 4px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x}
-      .ads-carousel::-webkit-scrollbar{display:none}
-      .ad-slide{flex:0 0 88%;scroll-snap-align:center}
-      .ad-slide-inner{direction:rtl;background:#fff;border:1px solid #dbe4f0;border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(15,23,42,.10);min-height:120px}
-      .ad-slide h3{margin:5px 0 12px;color:#0f172a;font-size:21px;font-weight:900;text-align:right}
-      .ad-badge{display:inline-block;background:#e8f1ff;color:#1d4ed8;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900}
-      .ad-slide-text{font-size:15px;line-height:2;text-align:right;color:#334155;font-weight:700;word-break:break-word;margin-top:9px}
-      .ads-nav{display:flex;justify-content:center;gap:9px;margin-top:8px;direction:ltr}
-      .ads-nav button{border:0;background:#e8eef8;color:#0f172a;border-radius:50%;width:40px;height:40px;font-size:20px;font-weight:900;cursor:pointer}
-      .ads-dots{display:flex;justify-content:center;gap:6px;margin-top:7px;direction:ltr}
-      .ads-dot{width:7px;height:7px;border-radius:50%;background:#cbd5e1}
-      .ads-help{text-align:center;color:#64748b;font-size:12px;font-weight:800;margin-bottom:5px}
+      .student-ads-carousel{{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 16px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:rtl;scrollbar-width:thin;}}
+      .student-ad-card{{flex:0 0 min(88%,760px);scroll-snap-align:center;background:#fff;border:1.5px solid #dbe5f0;border-radius:20px;padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.09);direction:rtl;text-align:right;}}
+      .student-ads-carousel::-webkit-scrollbar{{height:8px}} .student-ads-carousel::-webkit-scrollbar-thumb{{background:#cbd5e1;border-radius:10px}}
+      @media(max-width:700px){{.student-ad-card{{flex-basis:92%;padding:13px}}}}
     </style>
-    <div class='ads-carousel-wrap'>
-      <div class='ads-help'>اسحب الإعلان يمين أو شمال للتبديل بين الإعلانات</div>
-      <div class='ads-carousel' id='ads-carousel'>__SLIDES__</div>
-      <div class='ads-nav'><button onclick="document.getElementById('ads-carousel').scrollBy({left:-document.getElementById('ads-carousel').clientWidth*.88,behavior:'smooth'})">‹</button><button onclick="document.getElementById('ads-carousel').scrollBy({left:document.getElementById('ads-carousel').clientWidth*.88,behavior:'smooth'})">›</button></div>
-    </div>
-    """.replace("__SLIDES__", "".join(slides))
-    st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
-    st.components.v1.html(carousel, height=620, scrolling=False)
+    <div class='student-ads-carousel'>{track}</div>
+    """, unsafe_allow_html=True)
+
+    # الفيديوهات المرفوعة تحتاج عنصر Streamlit الأصلي لضمان تشغيلها.
+    for v_idx, (_, row) in enumerate(active.iloc[::-1].iterrows()):
+        kind = str(row.get("نوع_الإعلان", "") or "").strip()
+        if kind == "فيديو" and str(row.get("الوسائط_base64", "") or "").strip():
+            try:
+                st.video(base64.b64decode(str(row.get("الوسائط_base64", "")).strip()))
+            except Exception:
+                pass
+
 
 def _parse_parent_report_date(value):
     """توحيد تواريخ التقرير حتى تعمل مع date/datetime و dd/mm/yyyy و yyyy-mm-dd بدون التباس."""
@@ -1971,6 +1978,9 @@ if is_student_mode:
                 st.query_params.clear()
                 st.query_params["role"] = "student"
                 st.rerun()
+
+        # 📢 الإعلانات: تظهر للطالب المسجل في الصفحة الرئيسية أيضاً.
+        render_student_ads()
 
         # ===== لوحة الطالب المسجل: نفس الهوية البصرية مع إبقاء كل الأقسام القديمة =====
         st.markdown(f"""
