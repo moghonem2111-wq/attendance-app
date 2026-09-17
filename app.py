@@ -147,12 +147,17 @@ def _cloud_save_student_interface(interface_df):
         return False
 
 def _get_excel_source():
-    """يفضل التخزين الدائم، ثم يرجع للملف المحلي القديم كخطة احتياطية."""
+    """يفضل التخزين الدائم، ثم يرجع للملف المحلي القديم كخطة احتياطية.
+    يسجل مصدر البيانات حتى لا يسمح الحفظ التلقائي بمسح البيانات إذا فشل التحميل.
+    """
     cloud_bytes = _cloud_load_excel_bytes()
     if cloud_bytes:
+        st.session_state["_initial_data_source"] = "cloud"
         return io.BytesIO(cloud_bytes)
     if _os.path.exists(FILE_NAME):
+        st.session_state["_initial_data_source"] = "local"
         return FILE_NAME
+    st.session_state["_initial_data_source"] = "empty"
     return None
 
 CURRICULUM_DATA = {
@@ -838,7 +843,7 @@ def render_student_ads():
         *{{box-sizing:border-box}}
         html,body{{margin:0;padding:0;width:100%;min-height:100%;font-family:Arial,Tahoma,sans-serif;color:#102a56}}
         body{{
-          overflow-x:hidden;overflow-y:auto;
+          overflow:hidden;
           background:
             radial-gradient(circle at 8% 12%, rgba(37,99,235,.20) 0 55px, transparent 56px),
             radial-gradient(circle at 92% 78%, rgba(14,165,233,.18) 0 80px, transparent 81px),
@@ -857,7 +862,7 @@ def render_student_ads():
           background-size:28px 28px;
           mask-image:linear-gradient(to bottom,transparent,black 18%,black 82%,transparent);
         }}
-        .wrap{{position:relative;z-index:2;padding:8px 4px 10px;min-height:100%;overflow:visible}}
+        .wrap{{position:relative;z-index:2;padding:8px 4px 4px}}
         .student-ads-carousel{{
           display:flex;gap:18px;overflow-x:auto;overflow-y:hidden;padding:4px 5px 12px;
           scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:ltr;
@@ -875,20 +880,18 @@ def render_student_ads():
         .ad-title{{font-size:23px;font-weight:950;line-height:1.45;color:#0f2a56}}
         .ad-date{{font-size:12px;color:#64748b;white-space:nowrap;padding-top:7px;font-weight:800}}
         .ad-media{{width:100%;display:flex;justify-content:center;align-items:center;margin:8px 0 14px;background:rgba(226,238,255,.60);border-radius:18px;overflow:hidden;border:1px solid rgba(37,99,235,.10)}}
-        /* مساحة ثابتة نسبيًا للصورة: الصورة كاملة بدون قص، والزر يظل داخل الإعلان */
-        .image-media{{height:310px;min-height:170px;padding:6px}}
-        .image-media img{{display:block;width:auto;max-width:100%;height:auto;max-height:100%;object-fit:contain;border-radius:15px;margin:auto}}
-        .video-media{{height:310px;padding:0;background:#071a36}}
-        .video-media video{{display:block;width:100%;height:100%;object-fit:contain;border-radius:16px}}
-        .remote-video{{height:310px;background:#071a36}}
+        .image-media{{min-height:120px;padding:4px}}
+        .image-media img{{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border-radius:15px}}
+        .video-media{{padding:0;background:#071a36}}
+        .video-media video{{display:block;width:100%;height:auto;max-height:none;border-radius:16px}}
+        .remote-video{{aspect-ratio:16/9;background:#071a36}}
         .remote-video iframe{{display:block;width:100%;height:100%;border:0}}
-        .ad-text{{font-size:17px;line-height:1.8;font-weight:800;padding:4px 3px 8px;word-break:break-word;color:#1e3a5f;max-height:125px;overflow:auto}}
+        .ad-text{{font-size:17px;line-height:2;font-weight:800;padding:4px 3px 8px;word-break:break-word;color:#1e3a5f}}
         .ad-text a{{color:#075dcc!important;text-decoration:underline!important;font-weight:950}}
-        .ad-action{{display:flex;justify-content:center;align-items:center;padding:8px 0 4px;min-height:62px}}
+        .ad-action{{display:flex;justify-content:center;align-items:center;padding:6px 0 2px}}
         .ad-button{{
           display:inline-flex;align-items:center;justify-content:center;min-width:190px;
-          min-height:48px;padding:12px 24px;border-radius:14px;text-decoration:none!important;
-          position:relative;z-index:20;
+          padding:13px 24px;border-radius:14px;text-decoration:none!important;
           background:linear-gradient(135deg,#075dcc,#18a0ff);color:#fff!important;
           font-size:17px;font-weight:950;box-shadow:0 8px 18px rgba(7,93,204,.28);
           border:2px solid rgba(255,255,255,.7);transition:transform .15s ease;
@@ -902,13 +905,8 @@ def render_student_ads():
           .student-ad-card{{flex-basis:94%;padding:13px;border-radius:20px}}
           .ad-title{{font-size:18px}}
           .ad-date{{font-size:10px}}
-          .image-media,.video-media,.remote-video{{height:235px}}
-          .ad-text{{font-size:15px;max-height:105px}}
-          .ad-button{{min-width:160px;min-height:46px;padding:10px 18px;font-size:15px}}
-        }}
-        @media(max-width:430px){{
-          .image-media,.video-media,.remote-video{{height:205px}}
-          .ad-button{{min-width:145px;font-size:14px}}
+          .ad-text{{font-size:15px}}
+          .ad-button{{min-width:160px;padding:11px 18px;font-size:15px}}
         }}
       </style>
     </head>
@@ -934,7 +932,7 @@ def render_student_ads():
     </html>
     """
     # مساحة أكبر حتى لا يختفي زر الإعلان أو يُقص أسفل الصورة الطويلة.
-    st.components.v1.html(carousel_html, height=790, scrolling=True)
+    st.components.v1.html(carousel_html, height=760, scrolling=False)
 
 
 def _parse_parent_report_date(value):
@@ -1034,6 +1032,52 @@ def load_all_data():
             else: online_schedule_df[col] = ""
 
     return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df, payment_records_df
+
+def _restore_all_data_from_cloud_backup():
+    """استرجاع كامل بيانات المنصة من نسخة platform_storage/main الموجودة في Supabase."""
+    try:
+        cloud_bytes = _cloud_load_excel_bytes()
+        if not cloud_bytes:
+            return False, "لم يتم العثور على نسخة بيانات في Supabase أو تعذر قراءتها."
+
+        # نستخدم نفس محرك التحميل حتى نحافظ على جميع الجداول والخصائص القديمة.
+        u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df, pr_df = load_all_data()
+        st.session_state.users_df = u_df
+        st.session_state.sessions_df = s_df
+        st.session_state.assessments_df = a_df
+        st.session_state.messages_df = m_df
+        st.session_state.exams_df = e_df
+        st.session_state.essays_df = es_df
+        st.session_state.bookings_df = b_df
+        st.session_state.bank_requests_df = br_df
+        st.session_state.question_bank_df = qb_df
+        st.session_state.videos_df = v_df
+        st.session_state.video_comments_df = vc_df
+        st.session_state.abqary_df = ab_df
+        st.session_state.online_schedule_df = os_df
+        st.session_state.weekly_schedule_df = ws_df
+        st.session_state.payment_records_df = pr_df
+        st.session_state.ads_df = load_ads()
+        st.session_state.teacher_profile_df = load_teacher_profile()
+        st.session_state.student_interface_df = load_student_interface()
+
+        # لا نسمح للحفظ التلقائي بالعمل قبل انتهاء الاسترجاع بنجاح.
+        st.session_state["_initial_data_source"] = "cloud"
+        st.session_state["_data_restored_from_cloud"] = True
+        st.session_state["_last_autosave_signature"] = None
+
+        counts = {
+            "الطلاب": len(u_df),
+            "الحصص": len(s_df),
+            "المواعيد": len(ws_df),
+            "المدفوعات": len(pr_df),
+            "الواجبات/الاختبارات": len(a_df),
+            "الإعلانات": len(st.session_state.ads_df),
+        }
+        return True, counts
+    except Exception as exc:
+        return False, f"حدث خطأ أثناء الاسترجاع: {exc}"
+
 
 def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None, payment_records_df=None, ads_df=None):
     if weekly_schedule_df is None:
@@ -2685,6 +2729,9 @@ if st.sidebar.button("▰  المدفوعات", use_container_width=True):
 if st.sidebar.button("◈  واجهة الطالب", use_container_width=True):
     st.session_state.teacher_page = "student_interface"
     st.rerun()
+if st.sidebar.button("🛟  استرجاع البيانات", use_container_width=True):
+    st.session_state.teacher_page = "data_recovery"
+    st.rerun()
 
 st.sidebar.write("---")
 st.sidebar.code("https://engmohamedghonaim.streamlit.app/?role=student", language="text")
@@ -2699,7 +2746,62 @@ if t_page != "dashboard":
             st.session_state.teacher_page = "dashboard"
             st.rerun()
 
-if t_page == "student_interface":
+if t_page == "data_recovery":
+    st.markdown("<div class='vertical-section-header'>🛟 استرجاع بيانات المنصة</div>", unsafe_allow_html=True)
+    st.warning("⚠️ لا تقم بأي حفظ أو حذف يدوي في Supabase قبل التأكد من البيانات المستعادة.")
+    st.markdown("""
+    <div style='background:linear-gradient(135deg,#eff6ff,#ffffff);border:1px solid #bfdbfe;border-radius:18px;padding:18px;margin-bottom:14px'>
+      <h3 style='margin:0 0 8px;color:#0f172a'>النسخة الاحتياطية الموجودة في Supabase</h3>
+      <p style='margin:0;color:#475569'>سيتم استرجاع آخر نسخة محفوظة في <b>platform_storage → main</b> مع كل الجداول الموجودة داخل ملف المنصة.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    _backup_bytes = _cloud_load_excel_bytes()
+    if _backup_bytes:
+        st.success(f"✓ تم العثور على نسخة محفوظة في Supabase — حجم النسخة {len(_backup_bytes)/1024:.1f} KB")
+        st.download_button(
+            "⬇️ تحميل نسخة Supabase قبل الاسترجاع",
+            data=_backup_bytes,
+            file_name="backup_supabase_before_restore.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            key="download_supabase_backup_before_restore",
+        )
+    else:
+        st.error("❌ لم أستطع قراءة نسخة Supabase حالياً. لا تقم بالحفظ الآن.")
+
+    st.markdown("### 🔄 استرجاع البيانات")
+    st.caption("الزر التالي يستبدل البيانات الموجودة حالياً في جلسة الموقع بالنسخة المحفوظة في Supabase، ثم يحفظ النسخة المستعادة بشكل آمن.")
+    if st.button("🔄 استرجاع البيانات من Supabase الآن", type="primary", use_container_width=True, key="restore_all_from_supabase_btn"):
+        ok, result = _restore_all_data_from_cloud_backup()
+        if ok:
+            # احفظ النسخة المستعادة مرة أخرى بعد التأكد من تحميلها بالكامل.
+            try:
+                cloud_ok = save_all_data(
+                    st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df,
+                    st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df,
+                    st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df,
+                    st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df,
+                    st.session_state.online_schedule_df, st.session_state.weekly_schedule_df,
+                    st.session_state.payment_records_df, st.session_state.ads_df
+                )
+            except Exception as _restore_save_exc:
+                cloud_ok = False
+                _restore_save_exc_text = str(_restore_save_exc)
+            if cloud_ok:
+                st.session_state["_last_autosave_signature"] = _autosave_signature()
+                st.success("✅ تم استرجاع البيانات وحفظ النسخة المستعادة في Supabase بنجاح.")
+            else:
+                st.warning("⚠️ تم تحميل البيانات داخل الموقع، لكن تعذر إعادة حفظ النسخة تلقائياً. لا تحذف أي شيء من Supabase.")
+            if isinstance(result, dict):
+                rc = st.columns(len(result))
+                for _col, (_label, _value) in zip(rc, result.items()):
+                    _col.metric(_label, _value)
+            st.info("ارجع للوحة المعلم الآن وتحقق من أسماء الطلاب والحصص والمدفوعات قبل إجراء أي تعديلات.")
+        else:
+            st.error(str(result))
+
+elif t_page == "student_interface":
     st.subheader("🎨 تصميم واجهة الطالب")
     st.caption("قسم مستقل للتحكم المباشر في واجهة الطالب. أي صورة ترفعها هنا تُحفظ في بيانات واجهة الطالب وتُستخدم مباشرة في صفحة الطالب، والصورة المدمجة مجرد نسخة احتياطية.")
     sidf = st.session_state.student_interface_df
@@ -4977,6 +5079,16 @@ def _autosave_all_changes():
         "videos_df", "video_comments_df", "abqary_df", "online_schedule_df",
     ]
     if not all(k in st.session_state for k in required):
+        return
+
+    # حماية أساسية: إذا فشل تحميل Supabase والملف المحلي غير موجود، لا تسمح
+    # للحفظ التلقائي بكتابة جداول فارغة فوق النسخة السحابية القديمة.
+    if st.session_state.get("_initial_data_source") == "empty" and not st.session_state.get("_data_restored_from_cloud", False):
+        st.session_state._autosave_last_status = "تم إيقاف الحفظ التلقائي لحماية البيانات: لم يتم تحميل نسخة بيانات صالحة."
+        return
+
+    # لا تحفظ تلقائياً أثناء شاشة الاسترجاع حتى لا يتم استبدال النسخة قبل اختيار المستخدم.
+    if st.session_state.get("teacher_page") == "data_recovery":
         return
 
     current_sig = _autosave_signature()
