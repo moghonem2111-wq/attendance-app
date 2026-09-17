@@ -2,13 +2,14 @@ import hashlib
 import os
 import os as _os
 import io
-import zipfile
 import json
 import base64
 import re
 import html
 import urllib.request
 import urllib.error
+import urllib.parse
+import uuid
 from datetime import date, datetime, time
 import pandas as pd
 from PIL import Image
@@ -49,7 +50,73 @@ except Exception:
     pass
 SUPABASE_TABLE = "platform_storage"
 SUPABASE_INTERFACE_TABLE = "student_interface_storage"
+# سجل نسخ احتياطية مستقل: لا يتم استبداله مع السجل الرئيسي.
+SUPABASE_VERSIONS_TABLE = "platform_storage_versions"
 SUPABASE_RECORD_ID = "main"
+
+# Microsoft Excel Online / OneDrive (اختياري)
+MS_TENANT_ID = ""
+MS_CLIENT_ID = ""
+MS_CLIENT_SECRET = ""
+MS_ONEDRIVE_USER = ""
+MS_EXCEL_PATH = "سجل_الغياب_والحصص.xlsx"
+try:
+    MS_TENANT_ID = str(st.secrets.get("MS_TENANT_ID", "")).strip()
+    MS_CLIENT_ID = str(st.secrets.get("MS_CLIENT_ID", "")).strip()
+    MS_CLIENT_SECRET = str(st.secrets.get("MS_CLIENT_SECRET", "")).strip()
+    MS_ONEDRIVE_USER = str(st.secrets.get("MS_ONEDRIVE_USER", "")).strip()
+    MS_EXCEL_PATH = str(st.secrets.get("MS_EXCEL_PATH", MS_EXCEL_PATH)).strip() or MS_EXCEL_PATH
+except Exception:
+    pass
+
+def _onedrive_enabled():
+    return bool(MS_TENANT_ID and MS_CLIENT_ID and MS_CLIENT_SECRET and MS_ONEDRIVE_USER)
+
+def _graph_access_token():
+    if not _onedrive_enabled(): return None
+    try:
+        url = f"https://login.microsoftonline.com/{MS_TENANT_ID}/oauth2/v2.0/token"
+        body = urllib.parse.urlencode({"client_id":MS_CLIENT_ID,"client_secret":MS_CLIENT_SECRET,"scope":"https://graph.microsoft.com/.default","grant_type":"client_credentials"}).encode()
+        req = urllib.request.Request(url, data=body, headers={"Content-Type":"application/x-www-form-urlencoded"}, method="POST")
+        with urllib.request.urlopen(req, timeout=30) as resp: return json.loads(resp.read().decode()).get("access_token")
+    except Exception as exc:
+        st.session_state["onedrive_last_error"] = str(exc); return None
+
+def _onedrive_item_url():
+    user = urllib.parse.quote(MS_ONEDRIVE_USER, safe="")
+    path = urllib.parse.quote(str(MS_EXCEL_PATH).strip().lstrip("/"), safe="/")
+    return f"https://graph.microsoft.com/v1.0/users/{user}/drive/root:/{path}"
+
+def _onedrive_upload_excel(excel_bytes, reason="autosave"):
+    if not _onedrive_enabled(): return False
+    token = _graph_access_token()
+    if not token: return False
+    try:
+        req = urllib.request.Request(_onedrive_item_url()+":/content", data=excel_bytes, headers={"Authorization":f"Bearer {token}","Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, method="PUT")
+        with urllib.request.urlopen(req, timeout=60) as resp: data=json.loads(resp.read().decode())
+        st.session_state["onedrive_web_url"] = str(data.get("webUrl", "")); st.session_state["onedrive_last_status"] = f"تم تحديث Excel Online ({reason})"; st.session_state["onedrive_last_error"] = ""; return True
+    except Exception as exc:
+        st.session_state["onedrive_last_error"] = str(exc); st.session_state["onedrive_last_status"] = "تعذر تحديث Excel Online"; return False
+
+def _onedrive_download_excel():
+    if not _onedrive_enabled(): return None
+    token = _graph_access_token()
+    if not token: return None
+    try:
+        req=urllib.request.Request(_onedrive_item_url()+":/content", headers={"Authorization":f"Bearer {token}"}, method="GET")
+        with urllib.request.urlopen(req, timeout=60) as resp: return resp.read()
+    except Exception as exc:
+        st.session_state["onedrive_last_error"] = str(exc); return None
+
+def _onedrive_metadata():
+    if not _onedrive_enabled(): return None
+    token=_graph_access_token()
+    if not token: return None
+    try:
+        req=urllib.request.Request(_onedrive_item_url(), headers={"Authorization":f"Bearer {token}"}, method="GET")
+        with urllib.request.urlopen(req, timeout=30) as resp: return json.loads(resp.read().decode())
+    except Exception as exc:
+        st.session_state["onedrive_last_error"] = str(exc); return None
 
 def _cloud_storage_enabled():
     return bool(SUPABASE_URL and SUPABASE_KEY)
@@ -77,11 +144,65 @@ def _cloud_load_excel_bytes():
         pass
     return None
 
-def _cloud_save_excel_bytes(excel_bytes):
-    """حفظ نسخة Excel الكاملة في سجل واحد دائم على Supabase."""
+def _cloud_save_version_snapshot(excel_bytes, reason="autosave"):
+    """ينشئ نسخة احتياطية مستقلة قبل تحديث السجل الرئيسي. لا يحذف أي نسخة قديمة."""
     if not _cloud_storage_enabled():
         return False
     try:
+        payload = base64.b64encode(excel_bytes).decode("ascii")
+        version_id = str(uuid.uuid4())
+        body = json.dumps({
+            "version_id": version_id,
+            "storage_id": SUPABASE_RECORD_ID,
+            "payload": payload,
+            "reason": str(reason),
+        }, ensure_ascii=False).encode("utf-8")
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_VERSIONS_TABLE}"
+        headers = _supabase_headers()
+        headers["Prefer"] = "return=minimal"
+        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()
+        return True
+    except Exception as exc:
+        try:
+            st.session_state["cloud_backup_last_error"] = str(exc)
+        except Exception:
+            pass
+        return False
+
+
+def _cloud_save_excel_bytes(excel_bytes, reason="autosave"):
+    """حفظ آمن: لا يكتب فوق main إلا بعد إنشاء نسخة مستقلة ناجحة."""
+    if not _cloud_storage_enabled():
+        return False
+    try:
+        # حماية أساسية: لا نسمح أبدًا بحفظ ملف Excel فارغ فوق نسخة سحابية موجودة.
+        try:
+            with pd.ExcelFile(io.BytesIO(excel_bytes), engine="openpyxl") as _xls_check:
+                _core_counts = {}
+                for _sheet in ["Users", "Sessions", "Assessments", "WeeklySchedule", "PaymentRecords"]:
+                    if _sheet in _xls_check.sheet_names:
+                        _core_counts[_sheet] = len(pd.read_excel(_xls_check, _sheet))
+                    else:
+                        _core_counts[_sheet] = 0
+                _new_core_total = sum(_core_counts.values())
+        except Exception as _excel_check_error:
+            st.session_state["cloud_storage_last_error"] = f"ملف Excel غير صالح: {_excel_check_error}"
+            return False
+
+        # إذا كانت البيانات الحالية كلها صفر، نرفض الحفظ السحابي تمامًا.
+        # هذا يمنع سيناريو إعادة التشغيل الذي يحمّل جداول فارغة ثم يمسح البيانات القديمة.
+        if _new_core_total == 0:
+            st.session_state["cloud_storage_last_error"] = "تم منع حفظ نسخة فارغة فوق بيانات Supabase."
+            st.session_state["cloud_empty_save_blocked"] = True
+            return False
+
+        # أولًا: نسخة احتياطية مستقلة. لو فشلت، لا نلمس main.
+        if not _cloud_save_version_snapshot(excel_bytes, reason=reason):
+            st.session_state["cloud_storage_last_error"] = "فشل إنشاء النسخة الاحتياطية؛ لم يتم تحديث البيانات الرئيسية."
+            return False
+
         payload = base64.b64encode(excel_bytes).decode("ascii")
         body = json.dumps({"id": SUPABASE_RECORD_ID, "payload": payload}).encode("utf-8")
         url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_TABLE}"
@@ -90,11 +211,14 @@ def _cloud_save_excel_bytes(excel_bytes):
         req = urllib.request.Request(url, data=body, headers=headers, method="POST")
         with urllib.request.urlopen(req, timeout=30) as resp:
             resp.read()
+        st.session_state["cloud_empty_save_blocked"] = False
+        st.session_state["cloud_storage_last_saved"] = True
+        _onedrive_upload_excel(excel_bytes, reason=reason)
         return True
     except Exception as exc:
-        # لا نوقف المنصة بالكامل إذا حدث عطل مؤقت في التخزين السحابي.
         try:
             st.session_state["cloud_storage_last_error"] = str(exc)
+            st.session_state["cloud_storage_last_saved"] = False
         except Exception:
             pass
         return False
@@ -148,17 +272,12 @@ def _cloud_save_student_interface(interface_df):
         return False
 
 def _get_excel_source():
-    """يفضل التخزين الدائم، ثم يرجع للملف المحلي القديم كخطة احتياطية.
-    يسجل مصدر البيانات حتى لا يسمح الحفظ التلقائي بمسح البيانات إذا فشل التحميل.
-    """
+    """يفضل التخزين الدائم، ثم يرجع للملف المحلي القديم كخطة احتياطية."""
     cloud_bytes = _cloud_load_excel_bytes()
     if cloud_bytes:
-        st.session_state["_initial_data_source"] = "cloud"
         return io.BytesIO(cloud_bytes)
     if _os.path.exists(FILE_NAME):
-        st.session_state["_initial_data_source"] = "local"
         return FILE_NAME
-    st.session_state["_initial_data_source"] = "empty"
     return None
 
 CURRICULUM_DATA = {
@@ -357,7 +476,7 @@ COL_WEEKLY_SCHEDULE = ["اسم الطالب", "اسم الأكاديمية", "ا
 COL_TEACHER_PROFILE = ["اسم المعلم", "الصورة_base64"]
 COL_STUDENT_INTERFACE = ["عنوان_الواجهة", "الشارة", "الوصف", "صورة_الواجهة_base64", "عنوان_الاشتراكات", "وصف_الاشتراكات", "عنوان_الحجز", "نص_الحجز", "نص_الفوتر", "صورة_الاشتراكات_base64", "صورة_البانر_base64"]
 COL_PAYMENT_RECORDS = ["التاريخ", "الشهر", "اسم الطالب", "المبلغ", "طريقة الدفع", "حالة الدفع", "ملاحظات"]
-COL_ADS = ["معرف_الإعلان", "تاريخ_النشر", "العنوان", "نوع_الإعلان", "النص", "الوسائط_base64", "نوع_الوسائط", "الرابط", "نص_الزر", "الحالة", "الترتيب"]
+COL_ADS = ["معرف_الإعلان", "تاريخ_النشر", "العنوان", "نوع_الإعلان", "النص", "الوسائط_base64", "نوع_الوسائط", "الرابط", "نص_الزر", "الحالة"]
 
 def load_teacher_profile():
     profile = pd.DataFrame(columns=COL_TEACHER_PROFILE)
@@ -720,18 +839,8 @@ def load_ads():
             pass
     for col in COL_ADS:
         if col not in ads_df.columns:
-            ads_df[col] = "نشط" if col == "الحالة" else (0 if col == "الترتيب" else "")
+            ads_df[col] = "نشط" if col == "الحالة" else ""
     ads_df = ads_df[COL_ADS].copy()
-    # ترتيب آمن للإعلانات القديمة والجديدة. الرقم الأصغر يظهر أولاً في لوحة المعلم.
-    ads_df["الترتيب"] = pd.to_numeric(ads_df["الترتيب"], errors="coerce")
-    if ads_df["الترتيب"].isna().all():
-        ads_df["الترتيب"] = range(len(ads_df))
-    else:
-        max_order = int(ads_df["الترتيب"].max()) if pd.notna(ads_df["الترتيب"].max()) else 0
-        for _i in ads_df.index[ads_df["الترتيب"].isna()]:
-            max_order += 1
-            ads_df.at[_i, "الترتيب"] = max_order
-    ads_df["الترتيب"] = ads_df["الترتيب"].astype(int)
     # مهم مع pandas 3.x: حوّل عمود الوسائط إلى object قبل إعادة تركيب Base64 الطويل.
     # وإلا قد يكون العمود dtype = float64/NA فيؤدي التعيين إلى TypeError.
     ads_df["الوسائط_base64"] = ads_df["الوسائط_base64"].astype(object)
@@ -776,164 +885,34 @@ def render_student_ads():
     active = ads_df[ads_df["الحالة"].astype(str).str.strip().isin(["نشط", "فعال", "مفعل", "مفعّل", "نعم"])].copy() if "الحالة" in ads_df.columns else ads_df.copy()
     if active.empty:
         return
-
     st.markdown("<div class='vertical-section-header'>📢 الإعلانات</div>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center;color:#0f2a56;font-weight:900;margin-bottom:12px;'>اسحب يمينًا أو يسارًا لمشاهدة باقي الإعلانات</div>", unsafe_allow_html=True)
-
-    cards = []
-    iterator = active.sort_values("الترتيب", ascending=False, kind="stable").iterrows() if "الترتيب" in active.columns else active.iloc[::-1].iterrows()
-    for _, row in iterator:
+    st.markdown("<div style='text-align:center;color:#64748b;font-weight:800;margin-bottom:14px;'>آخر الإعلانات والتنبيهات المنشورة من لوحة المعلم</div>", unsafe_allow_html=True)
+    for idx, row in active.iloc[::-1].iterrows():
         title = html.escape(str(row.get("العنوان", "إعلان جديد") or "إعلان جديد"))
         text = str(row.get("النص", "") or "").strip()
         kind = str(row.get("نوع_الإعلان", "") or "").strip()
         media_uri = _ad_media_uri(row)
         link = str(row.get("الرابط", "") or "").strip()
-        raw_button = str(row.get("نص_الزر", "") or "").strip()
-        if not raw_button:
-            raw_button = "شاهد الإعلان" if kind == "فيديو" else "افتح الإعلان"
-        button = html.escape(raw_button)
-        date_txt = html.escape(str(row.get("تاريخ_النشر", "") or ""))
-
-        media_html = ""
-        if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
-            # لا نقص الصورة: نترك المتصفح يحافظ على النسبة الأصلية بالكامل.
-            media_html = f"<div class='ad-media image-media'><img src=\"{html.escape(media_uri, quote=True)}\" loading='eager' decoding='async' alt='صورة الإعلان'></div>"
-        elif media_uri and kind == "فيديو":
-            media_html = f"<div class='ad-media video-media'><video controls playsinline preload='metadata' src=\"{html.escape(media_uri, quote=True)}\"></video></div>"
-        elif kind == "فيديو" and link:
-            embed = link
-            if "youtube.com/watch?v=" in link:
-                vid = link.split("v=",1)[1].split("&",1)[0]
-                embed = f"https://www.youtube.com/embed/{vid}"
-            elif "youtu.be/" in link:
-                vid = link.split("youtu.be/",1)[1].split("?",1)[0]
-                embed = f"https://www.youtube.com/embed/{vid}"
-            elif "vimeo.com/" in link and "/video/" not in link:
-                vid = link.rstrip('/').split('/')[-1]
-                if vid.isdigit():
-                    embed = f"https://player.vimeo.com/video/{vid}"
-            media_html = f"<div class='ad-media remote-video'><iframe src=\"{html.escape(embed, quote=True)}\" title='فيديو الإعلان' allow='autoplay; fullscreen; picture-in-picture' allowfullscreen></iframe></div>"
-
-        text_html = _ad_text_html(text) if text else ""
-        link_html = ""
-        if link:
-            safe_link = html.escape(link, quote=True)
-            link_html = f"<div class='ad-action'><a href=\"{safe_link}\" target='_blank' rel='noopener noreferrer' class='ad-button'>{button}</a></div>"
-
-        cards.append(f"""
-        <article class='student-ad-card'>
-          <div class='ad-card-top'>
-            <div class='ad-title'>{title}</div>
-            <div class='ad-date'>{date_txt}</div>
-          </div>
-          {media_html}
-          {f"<div class='ad-text'>{text_html}</div>" if text_html else ""}
-          {link_html}
-        </article>
-        """)
-
-    # نستخدم مكوّن HTML كامل داخل iframe حتى تظهر الواجهة فعليًا، وليس كود HTML كنص.
-    # الخلفية ليست بيضاء: فيها تدرجات ونقوش رياضية خفيفة مرتبطة بالرياضيات والإحصاء.
-    carousel_html = f"""
-    <!doctype html>
-    <html lang='ar' dir='rtl'>
-    <head>
-      <meta charset='utf-8'>
-      <meta name='viewport' content='width=device-width,initial-scale=1'>
-      <style>
-        *{{box-sizing:border-box}}
-        html,body{{margin:0;padding:0;width:100%;min-height:100%;font-family:Arial,Tahoma,sans-serif;color:#102a56}}
-        body{{
-          overflow:hidden;
-          background:
-            radial-gradient(circle at 8% 12%, rgba(37,99,235,.20) 0 55px, transparent 56px),
-            radial-gradient(circle at 92% 78%, rgba(14,165,233,.18) 0 80px, transparent 81px),
-            linear-gradient(135deg,#eef7ff 0%,#f7fbff 42%,#eaf3ff 100%);
-          position:relative;
-        }}
-        body:before{{
-          content:'∑   π   √x   %   x²   ∫   Δ   𝜎   3.14';
-          position:absolute;inset:0;pointer-events:none;opacity:.065;
-          font-size:28px;font-weight:900;line-height:3.4;letter-spacing:24px;
-          transform:rotate(-5deg);white-space:normal;color:#174ea6;
-        }}
-        body:after{{
-          content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;
-          background-image:linear-gradient(rgba(37,99,235,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.12) 1px,transparent 1px);
-          background-size:28px 28px;
-          mask-image:linear-gradient(to bottom,transparent,black 18%,black 82%,transparent);
-        }}
-        .wrap{{position:relative;z-index:2;padding:8px 4px 4px}}
-        .student-ads-carousel{{
-          display:flex;gap:18px;overflow-x:auto;overflow-y:hidden;padding:4px 5px 12px;
-          scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;direction:ltr;
-          scrollbar-width:none;scroll-behavior:smooth;
-        }}
-        .student-ads-carousel::-webkit-scrollbar{{display:none}}
-        .student-ad-card{{
-          direction:rtl;text-align:right;flex:0 0 94%;scroll-snap-align:center;
-          background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(240,248,255,.96));
-          border:2px solid rgba(37,99,235,.18);border-radius:24px;padding:18px;
-          box-shadow:0 14px 35px rgba(15,42,86,.16);overflow:visible;
-          min-height:180px;
-        }}
-        .ad-card-top{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}}
-        .ad-title{{font-size:23px;font-weight:950;line-height:1.45;color:#0f2a56}}
-        .ad-date{{font-size:12px;color:#64748b;white-space:nowrap;padding-top:7px;font-weight:800}}
-        .ad-media{{width:100%;display:flex;justify-content:center;align-items:center;margin:8px 0 14px;background:rgba(226,238,255,.60);border-radius:18px;overflow:hidden;border:1px solid rgba(37,99,235,.10)}}
-        .image-media{{min-height:120px;padding:4px}}
-        .image-media img{{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border-radius:15px}}
-        .video-media{{padding:0;background:#071a36}}
-        .video-media video{{display:block;width:100%;height:auto;max-height:none;border-radius:16px}}
-        .remote-video{{aspect-ratio:16/9;background:#071a36}}
-        .remote-video iframe{{display:block;width:100%;height:100%;border:0}}
-        .ad-text{{font-size:17px;line-height:2;font-weight:800;padding:4px 3px 8px;word-break:break-word;color:#1e3a5f}}
-        .ad-text a{{color:#075dcc!important;text-decoration:underline!important;font-weight:950}}
-        .ad-action{{display:flex;justify-content:center;align-items:center;padding:6px 0 2px}}
-        .ad-button{{
-          display:inline-flex;align-items:center;justify-content:center;min-width:190px;
-          padding:13px 24px;border-radius:14px;text-decoration:none!important;
-          background:linear-gradient(135deg,#075dcc,#18a0ff);color:#fff!important;
-          font-size:17px;font-weight:950;box-shadow:0 8px 18px rgba(7,93,204,.28);
-          border:2px solid rgba(255,255,255,.7);transition:transform .15s ease;
-        }}
-        .ad-button:hover{{transform:translateY(-2px)}}
-        .nav{{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:2px;position:relative;z-index:4}}
-        .nav button{{border:0;background:#0f2a56;color:white;width:44px;height:44px;border-radius:50%;font-size:25px;font-weight:900;cursor:pointer;box-shadow:0 7px 15px rgba(15,42,86,.20)}}
-        .nav button:hover{{background:#075dcc}}
-        .hint{{text-align:center;color:#4d6585;font-size:12px;font-weight:850;margin-top:5px}}
-        @media(max-width:700px){{
-          .student-ad-card{{flex-basis:94%;padding:13px;border-radius:20px}}
-          .ad-title{{font-size:18px}}
-          .ad-date{{font-size:10px}}
-          .ad-text{{font-size:15px}}
-          .ad-button{{min-width:160px;padding:11px 18px;font-size:15px}}
-        }}
-      </style>
-    </head>
-    <body>
-      <div class='wrap'>
-        <div class='student-ads-carousel' id='adsTrack'>{''.join(cards)}</div>
-        <div class='nav'>
-          <button type='button' onclick='moveAd(1)' aria-label='الإعلان السابق'>›</button>
-          <button type='button' onclick='moveAd(-1)' aria-label='الإعلان التالي'>‹</button>
-        </div>
-        <div class='hint'>اسحب يمينًا أو يسارًا للتنقل بين الإعلانات</div>
-      </div>
-      <script>
-        function moveAd(direction){{
-          const track=document.getElementById('adsTrack');
-          const card=track.querySelector('.student-ad-card');
-          if(!card) return;
-          const amount=card.getBoundingClientRect().width + 18;
-          track.scrollBy({{left: direction*amount, behavior:'smooth'}});
-        }}
-      </script>
-    </body>
-    </html>
-    """
-    # مساحة أكبر حتى لا يختفي زر الإعلان أو يُقص أسفل الصورة الطويلة.
-    st.components.v1.html(carousel_html, height=760, scrolling=False)
+        button = html.escape(str(row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان").strip())
+        with st.container(border=True):
+            st.markdown(f"<div style='direction:rtl;text-align:right'><div style='font-size:21px;font-weight:900;color:#0f172a'>{title}</div><div style='font-size:12px;color:#64748b;margin-top:4px'>{html.escape(str(row.get('تاريخ_النشر','')))}</div></div>", unsafe_allow_html=True)
+            if media_uri and kind in ["صورة", "صورة + بوست", "صورة وبوست"]:
+                # عرض الصورة الأصلية مباشرة بدون إعادة ضغط أو تصغير من Streamlit.
+                st.markdown(f"<div style='width:100%;text-align:center;margin:12px 0'><img src='{media_uri}' loading='eager' decoding='auto' style='display:block;width:100%;height:auto;max-width:100%;object-fit:contain;border-radius:14px;image-rendering:auto;'></div>", unsafe_allow_html=True)
+            elif media_uri and kind == "فيديو":
+                try:
+                    st.video(base64.b64decode(str(row.get("الوسائط_base64", ""))))
+                except Exception:
+                    if link:
+                        try: st.video(link)
+                        except Exception: pass
+            elif kind == "فيديو" and link:
+                try: st.video(link)
+                except Exception: pass
+            if text:
+                st.markdown(f"<div style='direction:rtl;text-align:right;line-height:2;font-weight:800;font-size:16px;padding:10px 2px;word-break:break-word'>{_ad_text_html(text)}</div>", unsafe_allow_html=True)
+            if link:
+                st.link_button(button or "فتح الرابط", link, use_container_width=True)
 
 
 def _parse_parent_report_date(value):
@@ -1034,193 +1013,17 @@ def load_all_data():
 
     return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df, payment_records_df
 
-def _cloud_load_raw_payload():
-    """قراءة payload الخام من Supabase فقط، بدون أي كتابة."""
-    if not _cloud_storage_enabled(): return None
-    url=f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_TABLE}?id=eq.{SUPABASE_RECORD_ID}&select=payload"
-    req=urllib.request.Request(url,headers=_supabase_headers(),method="GET")
-    with urllib.request.urlopen(req,timeout=30) as resp: data=json.loads(resp.read().decode("utf-8"))
-    return data[0].get("payload") if data and data[0].get("payload") is not None else None
-
-def _decode_payload_candidates(raw):
-    out=[]; seen=set()
-    def add_bytes(b,label):
-        if not isinstance(b,(bytes,bytearray)): return
-        b=bytes(b); sig=(len(b),b[:16])
-        if sig in seen: return
-        if b[:2]==b"PK" or b[:4]==b"\xD0\xCF\x11\xE0": seen.add(sig); out.append((label,b))
-    def walk(v,label,depth=0):
-        if depth>5 or v is None: return
-        if isinstance(v,(bytes,bytearray)): add_bytes(v,label); return
-        if isinstance(v,dict):
-            for k in ("payload","data","content","backup","file","excel","value"):
-                if k in v: walk(v[k],label+'.'+k,depth+1)
-            return
-        if not isinstance(v,str): return
-        t=v.strip()
-        if t.startswith('data:') and ',' in t: walk(t.split(',',1)[1],label+'.data_uri',depth+1)
-        if t[:1] in '[{':
-            try: walk(json.loads(t),label+'.json',depth+1)
-            except Exception: pass
-        try: add_bytes(base64.b64decode(''.join(t.split()),validate=False),label+'.base64')
-        except Exception: pass
-    walk(raw,'payload'); return out
-
-def _inspect_excel_bytes(excel_bytes):
-    if not excel_bytes: return {"صالح":False,"السبب":"البيانات فارغة"}
-    try:
-        with zipfile.ZipFile(io.BytesIO(excel_bytes),'r') as z:
-            if 'xl/workbook.xml' not in z.namelist(): return {"صالح":False,"السبب":"ليس ملف XLSX صالحاً"}
-        xls=pd.ExcelFile(io.BytesIO(excel_bytes),engine='openpyxl'); counts={}
-        for sh in xls.sheet_names:
-            try: counts[sh]=int(len(pd.read_excel(xls,sheet_name=sh)))
-            except Exception as e: counts[sh]=f'خطأ: {e}'
-        core=['Users','Sessions','Assessments','WeeklySchedule','PaymentRecords','OnlineSchedule','Bookings','Messages']
-        total=sum(v for k,v in counts.items() if k in core and isinstance(v,int))
-        return {"صالح":True,"الحجم_KB":round(len(excel_bytes)/1024,1),"الأوراق":counts,"إجمالي_السجلات_الأساسية":int(total)}
-    except Exception as e: return {"صالح":False,"السبب":f"تعذر فتح Excel: {e}"}
-
-def _diagnose_cloud_payload():
-    """تشخيص قراءة فقط؛ لا يعدل Supabase."""
-    try:
-        raw=_cloud_load_raw_payload()
-        if raw is None: return False,'لم يتم العثور على payload في platform_storage/main.'
-        candidates=_decode_payload_candidates(raw)
-        result={"حجم payload":f"{(len(raw) if isinstance(raw,str) else len(bytes(raw)))/1024:.1f} KB","عدد_النسخ_المحتملة":len(candidates)}
-        valid=[]
-        for label,b in candidates:
-            info=_inspect_excel_bytes(b); valid.append((label,info,b))
-        valid=[x for x in valid if x[1].get('صالح')]
-        if not valid:
-            result['النتيجة']='لم يتم العثور على ملف Excel صالح داخل payload.'; return False,result
-        valid.sort(key=lambda x:x[1].get('إجمالي_السجلات_الأساسية',0),reverse=True)
-        label,info,b=valid[0]; result['طريقة_الفك']=label; result['فحص_Excel']=info
-        st.session_state['_diagnostic_excel_bytes']=b
-        return True,result
-    except Exception as e: return False,f'خطأ أثناء التشخيص فقط: {e}'
-
-def _restore_all_data_from_cloud_backup():
-    """استرجاع مباشر من payload الموجود في platform_storage/main بدون المرور بمصدر البيانات الحالي."""
-    try:
-        raw_payload=_cloud_load_raw_payload()
-        if raw_payload is None: return False,"لم يتمكن الموقع من قراءة payload من Supabase. راجع SUPABASE_URL وSUPABASE_KEY وسياسة RLS."
-        candidates=_decode_payload_candidates(raw_payload)
-        inspected=[(label,_inspect_excel_bytes(b),b) for label,b in candidates]
-        valid=[x for x in inspected if x[1].get("صالح")]
-        if not valid: return False,"تم العثور على payload، لكن لم يتم استخراج ملف Excel صالح منه. لم يتم تغيير أي بيانات."
-        valid.sort(key=lambda x:x[1].get("إجمالي_السجلات_الأساسية",0),reverse=True)
-        _chosen_label,_chosen_info,cloud_bytes=valid[0]
-        if int(_chosen_info.get("إجمالي_السجلات_الأساسية",0))==0: return False,"ملف Excel الموجود داخل payload صالح، لكنه يحتوي على صفر سجلات أساسية. لم يتم تغيير أي بيانات."
-        xls=pd.ExcelFile(io.BytesIO(cloud_bytes),engine="openpyxl")
-        sheet_names=list(xls.sheet_names)
-
-        def _read_sheet(name, columns):
-            if name in sheet_names:
-                df = pd.read_excel(xls, name)
-            else:
-                df = pd.DataFrame(columns=columns)
-            for col in columns:
-                if col not in df.columns:
-                    df[col] = ""
-            return df[columns].copy()
-
-        u_df = _read_sheet("Users", COL_USERS)
-        s_df = _read_sheet("Sessions", COL_SESSIONS)
-        a_df = _read_sheet("Assessments", COL_ASSESSMENTS)
-        m_df = _read_sheet("Messages", COL_MESSAGES)
-        e_df = _read_sheet("Exams", COL_EXAMS)
-        es_df = _read_sheet("Essays", COL_ESSAYS)
-        b_df = _read_sheet("Bookings", COL_BOOKINGS)
-        br_df = _read_sheet("BankRequests", COL_BANK_REQUESTS)
-        qb_df = _read_sheet("QuestionBank", COL_QUESTION_BANK)
-        v_df = _read_sheet("Videos", COL_VIDEOS)
-        vc_df = _read_sheet("VideoComments", COL_VIDEO_COMMENTS)
-        ab_df = _read_sheet("AbqaryExams", COL_ABQARY)
-        os_df = _read_sheet("OnlineSchedule", COL_ONLINE_SCHEDULE)
-        ws_df = _read_sheet("WeeklySchedule", COL_WEEKLY_SCHEDULE)
-        pr_df = _read_sheet("PaymentRecords", COL_PAYMENT_RECORDS)
-
-        # بيانات الإعلانات وواجهة الطالب والصورة لا تُفقد أثناء الاسترجاع.
-        ads_df = pd.DataFrame(columns=COL_ADS)
-        if "Ads" in sheet_names:
-            ads_df = pd.read_excel(xls, "Ads")
-            for col in COL_ADS:
-                if col not in ads_df.columns:
-                    ads_df[col] = "نشط" if col == "الحالة" else (0 if col == "الترتيب" else "")
-            ads_df = ads_df[COL_ADS].copy()
-            ads_df["الوسائط_base64"] = ads_df["الوسائط_base64"].astype(object)
-            if "AdsMedia" in sheet_names:
-                media_df = pd.read_excel(xls, "AdsMedia")
-                if not media_df.empty and "معرف_الإعلان" in media_df.columns and "البيانات" in media_df.columns:
-                    media_map = {}
-                    for ad_id, grp in media_df.groupby(media_df["معرف_الإعلان"].astype(str)):
-                        if "جزء" in grp.columns:
-                            grp = grp.sort_values("جزء")
-                        media_map[str(ad_id)] = "".join(grp["البيانات"].fillna("").astype(str).tolist())
-                    for idx in ads_df.index:
-                        ad_id = str(ads_df.at[idx, "معرف_الإعلان"])
-                        if ad_id in media_map:
-                            ads_df.at[idx, "الوسائط_base64"] = media_map[ad_id]
-
-        # تنظيف/قيم افتراضية متوافقة مع النسخ القديمة.
-        if "الحالة_حظر" in u_df.columns:
-            u_df["الحالة_حظر"] = u_df["الحالة_حظر"].replace("", "نشط")
-        if "حالة الاشتراك البنك" in u_df.columns:
-            u_df["حالة الاشتراك البنك"] = u_df["حالة الاشتراك البنك"].replace("", "غير مشترك")
-        if "حالة الموعد" in ws_df.columns:
-            ws_df["حالة الموعد"] = ws_df["حالة الموعد"].replace("", "نشط")
-        if "الحالة" in pr_df.columns:
-            pr_df["الحالة"] = pr_df["الحالة"].replace("", "مؤكد")
-        if "المبلغ" in pr_df.columns:
-            pr_df["المبلغ"] = pd.to_numeric(pr_df["المبلغ"], errors="coerce").fillna(0.0)
-
-        # حماية صارمة: لا نعتبر الاسترجاع ناجحاً إذا كانت النسخة المقروءة فارغة.
-        total_core = len(u_df) + len(s_df) + len(a_df) + len(ws_df) + len(pr_df)
-        if total_core == 0:
-            return False, "تم الوصول إلى payload، لكن ملف Excel داخله لا يحتوي على سجلات أساسية. لم أغيّر أي بيانات ولم أحفظ فوق Supabase."
-
-        st.session_state.users_df = u_df
-        st.session_state.sessions_df = s_df
-        st.session_state.assessments_df = a_df
-        st.session_state.messages_df = m_df
-        st.session_state.exams_df = e_df
-        st.session_state.essays_df = es_df
-        st.session_state.bookings_df = b_df
-        st.session_state.bank_requests_df = br_df
-        st.session_state.question_bank_df = qb_df
-        st.session_state.videos_df = v_df
-        st.session_state.video_comments_df = vc_df
-        st.session_state.abqary_df = ab_df
-        st.session_state.online_schedule_df = os_df
-        st.session_state.weekly_schedule_df = ws_df
-        st.session_state.payment_records_df = pr_df
-        st.session_state.ads_df = ads_df
-
-        # واجهة الطالب/صورة المعلم من نفس الـpayload، وليس من النسخة الحالية الفارغة.
-        if "StudentInterface" in sheet_names:
-            st.session_state.student_interface_df = pd.read_excel(xls, "StudentInterface")
-        else:
-            st.session_state.student_interface_df = load_student_interface()
-        if "TeacherProfile" in sheet_names:
-            st.session_state.teacher_profile_df = pd.read_excel(xls, "TeacherProfile")
-        else:
-            st.session_state.teacher_profile_df = load_teacher_profile()
-
-        st.session_state["_initial_data_source"] = "cloud"
-        st.session_state["_data_restored_from_cloud"] = True
-        st.session_state["_recovery_excel_bytes"] = cloud_bytes
-        st.session_state["_recovery_sheet_names"] = sheet_names
-        # مهم: لا نكتب فوق Supabase تلقائياً في نفس ضغطة الاسترجاع.
-        st.session_state["_last_autosave_signature"] = _autosave_signature()
-
-        counts = {
-            "الطلاب": len(u_df), "الحصص": len(s_df), "المواعيد": len(ws_df),
-            "المدفوعات": len(pr_df), "الواجبات/الاختبارات": len(a_df), "الإعلانات": len(ads_df)
-        }
-        return True, counts
-    except Exception as exc:
-        return False, f"حدث خطأ أثناء فك واسترجاع payload: {exc}"
-
+def load_all_data_from_excel_bytes(excel_bytes):
+    cols=[COL_USERS,COL_SESSIONS,COL_ASSESSMENTS,COL_MESSAGES,COL_EXAMS,COL_ESSAYS,COL_BOOKINGS,COL_BANK_REQUESTS,COL_QUESTION_BANK,COL_VIDEOS,COL_VIDEO_COMMENTS,COL_ABQARY,COL_ONLINE_SCHEDULE,COL_WEEKLY_SCHEDULE,COL_PAYMENT_RECORDS]
+    sheets=["Users","Sessions","Assessments","Messages","Exams","Essays","Bookings","BankRequests","QuestionBank","Videos","VideoComments","AbqaryExams","OnlineSchedule","WeeklySchedule","PaymentRecords"]
+    out=[]
+    with pd.ExcelFile(io.BytesIO(excel_bytes), engine="openpyxl") as xls:
+        for sheet, columns in zip(sheets, cols):
+            df=pd.read_excel(xls,sheet) if sheet in xls.sheet_names else pd.DataFrame(columns=columns)
+            for c in columns:
+                if c not in df.columns: df[c]=""
+            out.append(df[columns])
+    return tuple(out)
 
 def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None, payment_records_df=None, ads_df=None):
     if weekly_schedule_df is None:
@@ -1271,7 +1074,7 @@ def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, 
             _local_file.write(excel_bytes)
     except Exception:
         pass
-    _cloud_ok = _cloud_save_excel_bytes(excel_bytes)
+    _cloud_ok = _cloud_save_excel_bytes(excel_bytes, reason="manual_or_autosave")
     return bool(_cloud_ok)
 
 if "users_df" not in st.session_state:
@@ -1301,6 +1104,19 @@ if "users_df" not in st.session_state:
             img_b64 = _saved_teacher_photo
     except Exception:
         pass
+
+    # نقطة أمان: سجّل حجم البيانات التي تم تحميلها قبل السماح بالحفظ التلقائي.
+    # لو كانت البيانات موجودة عند التحميل، لا يعتبرها autosave تغييرًا جديدًا.
+    try:
+        _loaded_core_total = (
+            len(u_df) + len(s_df) + len(a_df) + len(ws_df) + len(pr_df)
+        )
+        st.session_state["_loaded_core_total"] = int(_loaded_core_total)
+        st.session_state["_data_load_verified"] = True
+        st.session_state["_initial_data_source"] = "cloud_or_local"
+        st.session_state["_last_autosave_signature"] = _autosave_signature() if "_autosave_signature" in globals() else None
+    except Exception:
+        st.session_state["_data_load_verified"] = False
 
 # تأكد من وجود جدول المواعيد حتى لو كانت جلسة Streamlit قديمة قبل إضافة الميزة
 if "weekly_schedule_df" not in st.session_state:
@@ -2273,9 +2089,6 @@ if is_student_mode:
                 st.query_params["role"] = "student"
                 st.rerun()
 
-        # 📢 الإعلانات: تظهر للطالب المسجل في الصفحة الرئيسية أيضاً.
-        render_student_ads()
-
         # ===== لوحة الطالب المسجل: نفس الهوية البصرية مع إبقاء كل الأقسام القديمة =====
         st.markdown(f"""
             <div class="modern-hero">
@@ -2869,11 +2682,11 @@ if st.sidebar.button("▤  تقارير ولي الأمر", use_container_width=
 if st.sidebar.button("▰  المدفوعات", use_container_width=True):
     st.session_state.teacher_page = "payments"
     st.rerun()
+if st.sidebar.button("💾  النسخ الاحتياطية / Excel Online", use_container_width=True):
+    st.session_state.teacher_page = "online_backup"
+    st.rerun()
 if st.sidebar.button("◈  واجهة الطالب", use_container_width=True):
     st.session_state.teacher_page = "student_interface"
-    st.rerun()
-if st.sidebar.button("🛟  استرجاع البيانات", use_container_width=True):
-    st.session_state.teacher_page = "data_recovery"
     st.rerun()
 
 st.sidebar.write("---")
@@ -2889,66 +2702,7 @@ if t_page != "dashboard":
             st.session_state.teacher_page = "dashboard"
             st.rerun()
 
-if t_page == "data_recovery":
-    st.markdown("<div class='vertical-section-header'>🛟 استرجاع بيانات المنصة</div>", unsafe_allow_html=True)
-    st.warning("⚠️ لا تقم بأي حفظ أو حذف يدوي في Supabase قبل التأكد من البيانات المستعادة.")
-    st.markdown("""
-    <div style='background:linear-gradient(135deg,#eff6ff,#ffffff);border:1px solid #bfdbfe;border-radius:18px;padding:18px;margin-bottom:14px'>
-      <h3 style='margin:0 0 8px;color:#0f172a'>النسخة الاحتياطية الموجودة في Supabase</h3>
-      <p style='margin:0;color:#475569'>سيتم استرجاع آخر نسخة محفوظة في <b>platform_storage → main</b> مع كل الجداول الموجودة داخل ملف المنصة.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    _backup_bytes = _cloud_load_excel_bytes()
-    if _backup_bytes:
-        st.success(f"✓ تم العثور على نسخة محفوظة في Supabase — حجم النسخة {len(_backup_bytes)/1024:.1f} KB")
-        st.download_button(
-            "⬇️ تحميل نسخة Supabase قبل الاسترجاع",
-            data=_backup_bytes,
-            file_name="backup_supabase_before_restore.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-            key="download_supabase_backup_before_restore",
-        )
-    else:
-        st.error("❌ لم أستطع قراءة نسخة Supabase حالياً. لا تقم بالحفظ الآن.")
-
-    st.markdown("### 🔎 فحص النسخة قبل الاسترجاع")
-    st.caption("الفحص للقراءة فقط؛ لا يحفظ ولا يحذف ولا يعدّل Supabase.")
-    if st.button("🔎 فحص محتوى payload الآن",use_container_width=True,key="diagnose_cloud_payload_btn"):
-        _dok,_dresult=_diagnose_cloud_payload()
-        if isinstance(_dresult,dict):
-            st.json(_dresult)
-            _di=_dresult.get("فحص_Excel",{})
-            if isinstance(_di,dict) and _di.get("الأوراق"):
-                st.dataframe(pd.DataFrame([{"الورقة":k,"عدد السجلات":v} for k,v in _di["الأوراق"].items()]),use_container_width=True,hide_index=True)
-            if _dok and st.session_state.get("_diagnostic_excel_bytes"):
-                st.download_button("📥 تنزيل النسخة التي تم فحصها",data=st.session_state["_diagnostic_excel_bytes"],file_name="نسخة_Supabase_بعد_الفحص.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",key="download_diagnostic_excel")
-        else: st.error(str(_dresult))
-
-    st.markdown("### 🔄 استرجاع البيانات")
-    st.caption("الاسترجاع يقرأ payload الموجود في Supabase مباشرة، ولا يكتب فوق Supabase أثناء الاسترجاع.")
-    if st.button("🔄 استرجاع البيانات من Supabase الآن", type="primary", use_container_width=True, key="restore_all_from_supabase_btn"):
-        ok, result = _restore_all_data_from_cloud_backup()
-        if ok:
-            if isinstance(result, dict):
-                rc = st.columns(len(result))
-                for _col, (_label, _value) in zip(rc, result.items()):
-                    _col.metric(_label, _value)
-            st.success("✅ تم تحميل النسخة الموجودة في Supabase داخل الموقع بنجاح. لم يتم استبدال نسخة Supabase أثناء العملية.")
-            st.info("راجع أسماء الطلاب والحصص والمدفوعات أولاً. بعد التأكد، يمكن حفظ النسخة المستعادة بأمان.")
-            if st.session_state.get("_recovery_excel_bytes"):
-                st.download_button(
-                    "📥 تنزيل نسخة البيانات المستعادة Excel",
-                    data=st.session_state["_recovery_excel_bytes"],
-                    file_name="نسخة_مستعادة_من_Supabase.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="download_recovered_supabase_excel"
-                )
-        else:
-            st.error(str(result))
-
-elif t_page == "student_interface":
+if t_page == "student_interface":
     st.subheader("🎨 تصميم واجهة الطالب")
     st.caption("قسم مستقل للتحكم المباشر في واجهة الطالب. أي صورة ترفعها هنا تُحفظ في بيانات واجهة الطالب وتُستخدم مباشرة في صفحة الطالب، والصورة المدمجة مجرد نسخة احتياطية.")
     sidf = st.session_state.student_interface_df
@@ -4801,9 +4555,55 @@ elif t_page == "all_records":
                 mime="application/octet-stream"
             )
 
+elif t_page == "online_backup":
+    st.subheader("💾 النسخ الاحتياطية و Excel Online")
+    st.caption("يتم رفع نفس ملف بيانات المنصة إلى Excel Online/OneDrive بعد كل حفظ آمن، ويمكن تنزيله أو استرجاعه.")
+    if not _onedrive_enabled():
+        st.warning("⚠️ Excel Online غير مُفعّل. أضف إعدادات Microsoft Graph في Streamlit Secrets.")
+    else:
+        meta=_onedrive_metadata()
+        if meta:
+            st.success(f"✅ ملف Excel Online متصل: {meta.get('name', MS_EXCEL_PATH)}")
+            if meta.get('webUrl'): st.link_button("📊 فتح ملف Excel Online", meta['webUrl'], use_container_width=True)
+            st.caption(f"آخر تعديل: {meta.get('lastModifiedDateTime','غير متاح')}")
+        else:
+            st.info("سيتم إنشاء ملف Excel Online تلقائياً عند أول حفظ ناجح.")
+        if st.button("🔄 تنزيل آخر نسخة من Excel Online", use_container_width=True, key="download_online_excel_btn"):
+            b=_onedrive_download_excel()
+            if b: st.session_state['online_excel_download']=b
+            else: st.error(f"تعذر التحميل: {st.session_state.get('onedrive_last_error','')}")
+        if st.session_state.get('online_excel_download'):
+            st.download_button("📥 حفظ Excel على الجهاز", st.session_state['online_excel_download'], file_name="سجل_الغياب_والحصص_Excel_Online.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, key="save_excel_device_btn")
+        st.markdown("### ♻️ استرجاع البيانات من Excel Online")
+        st.warning("لن يتم الكتابة فوق Supabase أثناء الاسترجاع. سيتم تحميل البيانات في الجلسة الحالية أولاً.")
+        if st.button("♻️ استرجاع آخر نسخة من Excel Online", use_container_width=True, type="primary", key="restore_excel_online_btn"):
+            b=_onedrive_download_excel()
+            if not b:
+                st.error(f"تعذر الاسترجاع: {st.session_state.get('onedrive_last_error','')}")
+            else:
+                try:
+                    rec=load_all_data_from_excel_bytes(b)
+                    core_total=len(rec[0])+len(rec[1])+len(rec[2])+len(rec[6])+len(rec[7])+len(rec[8])+len(rec[9])+len(rec[10])+len(rec[12])+len(rec[13])+len(rec[14])
+                    total=sum(len(x) for x in rec)
+                    if core_total == 0: st.error("❌ ملف Excel صالح لكنه لا يحتوي على بيانات أساسية للطلاب/الحصص؛ تم إلغاء الاسترجاع لحماية بيانات الموقع.")
+                    else:
+                        names=["users_df","sessions_df","assessments_df","messages_df","exams_df","essays_df","bookings_df","bank_requests_df","question_bank_df","videos_df","video_comments_df","abqary_df","online_schedule_df","weekly_schedule_df","payment_records_df"]
+                        for n,df in zip(names,rec): st.session_state[n]=df
+                        st.session_state['ads_df']=load_ads()
+                        st.session_state['_last_autosave_signature']=_autosave_signature()
+                        st.success(f"✅ تم استرجاع {total} سجل من Excel Online داخل المنصة. راجع البيانات ثم احفظها.")
+                except Exception as exc: st.error(str(exc))
+        st.markdown("### 🔐 ضع هذه القيم في Streamlit Secrets")
+        st.code('''MS_TENANT_ID = "Tenant ID"
+MS_CLIENT_ID = "App Registration Client ID"
+MS_CLIENT_SECRET = "Client Secret"
+MS_ONEDRIVE_USER = "حساب Microsoft/OneDrive"
+MS_EXCEL_PATH = "سجل_الغياب_والحصص.xlsx"''', language="toml")
+        st.info("لا تضع Client Secret داخل app.py أو GitHub. يجب منح تطبيق Microsoft Graph صلاحية الوصول إلى ملفات OneDrive للحساب المحدد.")
+
 elif t_page == "ads":
     st.subheader("📢 إدارة الإعلانات")
-    st.caption("أنشئ الإعلان، عدّله، فعّله أو أوقفه، ورتّبه بالسهم ↑ ↓ ليظهر للطالب بنفس الترتيب.")
+    st.caption("أنشئ إعلاناً من لوحة المعلم وسيظهر مباشرة في الصفحة الرئيسية للطالب. يمكنك نشر صورة + بوست، فيديو برابط، رابط مباشر أو واتساب.")
     ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
     with st.container(border=True):
         with st.form("create_ad_form", clear_on_submit=True):
@@ -4827,9 +4627,6 @@ elif t_page == "ads":
                 final_link = ad_link.strip()
                 if ad_type == "واتساب" and final_link and not final_link.startswith("http"):
                     final_link = "https://wa.me/" + final_link.replace("+", "").replace(" ", "")
-                existing = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS))
-                numeric_orders = pd.to_numeric(existing.get("الترتيب", pd.Series(dtype=float)), errors="coerce")
-                next_order = int(numeric_orders.max()) + 1 if len(numeric_orders) and pd.notna(numeric_orders.max()) else 0
                 new_ad = {
                     "معرف_الإعلان": datetime.now().strftime("%Y%m%d%H%M%S%f"),
                     "تاريخ_النشر": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -4841,87 +4638,26 @@ elif t_page == "ads":
                     "الرابط": final_link,
                     "نص_الزر": ad_button.strip() or "افتح الإعلان",
                     "الحالة": "نشط" if ad_active else "متوقف",
-                    "الترتيب": next_order,
                 }
-                st.session_state.ads_df = pd.concat([existing, pd.DataFrame([new_ad])], ignore_index=True)
+                st.session_state.ads_df = pd.concat([ads_df, pd.DataFrame([new_ad])], ignore_index=True)
                 save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
-                st.success("✓ تم نشر الإعلان وحفظه.")
+                st.success("✓ تم نشر الإعلان وحفظه، وسيظهر في الصفحة الرئيسية للطالب.")
                 st.rerun()
 
-    def _save_ads_and_rerun(msg=""):
-        save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
-        if msg: st.success(msg)
-        st.rerun()
-
-    st.markdown("### 📋 ترتيب وتعديل الإعلانات")
-    ads_df = st.session_state.get("ads_df", pd.DataFrame(columns=COL_ADS)).copy()
+    st.markdown("### 📋 الإعلانات المنشورة")
     if ads_df.empty:
         st.info("لا توجد إعلانات حتى الآن.")
     else:
-        ads_df["الترتيب"] = pd.to_numeric(ads_df.get("الترتيب", pd.Series(range(len(ads_df)))), errors="coerce").fillna(999999)
-        ads_df = ads_df.sort_values(["الترتيب", "تاريخ_النشر"], ascending=[True, False])
-        ordered_indices = list(ads_df.index)
-        for pos, ad_idx in enumerate(ordered_indices):
-            row = ads_df.loc[ad_idx]
-            with st.container(border=True):
-                c1, c2, c3, c4 = st.columns([5,1,1,1])
-                with c1:
-                    st.markdown(f"**{html.escape(str(row.get('العنوان','إعلان')))}** — {row.get('نوع_الإعلان','')} — {'🟢 ظاهر' if str(row.get('الحالة','')) in ['نشط','فعال','مفعل','مفعّل','نعم'] else '⚪ متوقف'}", unsafe_allow_html=True)
-                    st.caption(str(row.get("النص", ""))[:250])
-                with c2:
-                    if st.button("⬆️", key=f"ad_up_{ad_idx}", disabled=(pos == 0), use_container_width=True):
-                        prev_idx = ordered_indices[pos-1]
-                        a = st.session_state.ads_df.at[ad_idx, "الترتيب"]
-                        b = st.session_state.ads_df.at[prev_idx, "الترتيب"]
-                        st.session_state.ads_df.at[ad_idx, "الترتيب"] = b
-                        st.session_state.ads_df.at[prev_idx, "الترتيب"] = a
-                        _save_ads_and_rerun("✓ تم رفع الإعلان درجة واحدة.")
-                with c3:
-                    if st.button("⬇️", key=f"ad_down_{ad_idx}", disabled=(pos == len(ordered_indices)-1), use_container_width=True):
-                        next_idx = ordered_indices[pos+1]
-                        a = st.session_state.ads_df.at[ad_idx, "الترتيب"]
-                        b = st.session_state.ads_df.at[next_idx, "الترتيب"]
-                        st.session_state.ads_df.at[ad_idx, "الترتيب"] = b
-                        st.session_state.ads_df.at[next_idx, "الترتيب"] = a
-                        _save_ads_and_rerun("✓ تم خفض الإعلان درجة واحدة.")
-                with c4:
-                    if st.button("✏️", key=f"ad_edit_open_{ad_idx}", use_container_width=True):
-                        st.session_state[f"editing_ad_{ad_idx}"] = not st.session_state.get(f"editing_ad_{ad_idx}", False)
-                        st.rerun()
-
-                if st.session_state.get(f"editing_ad_{ad_idx}", False):
-                    with st.form(f"edit_ad_form_{ad_idx}"):
-                        e_title = st.text_input("العنوان", value=str(row.get("العنوان", "")))
-                        type_options = ["صورة + بوست", "فيديو", "رابط", "واتساب", "نص"]
-                        current_type = str(row.get("نوع_الإعلان", "نص"))
-                        e_type = st.selectbox("نوع الإعلان", type_options, index=type_options.index(current_type) if current_type in type_options else 0)
-                        e_text = st.text_area("النص", value=str(row.get("النص", "")))
-                        e_link = st.text_input("الرابط", value=str(row.get("الرابط", "")))
-                        e_button = st.text_input("نص الزر", value=str(row.get("نص_الزر", "افتح الإعلان")))
-                        e_active = st.checkbox("ظاهر للطلاب", value=str(row.get("الحالة", "نشط")) in ["نشط","فعال","مفعل","مفعّل","نعم"])
-                        e_file = st.file_uploader("استبدال الصورة/الفيديو (اختياري)", type=["png","jpg","jpeg","webp","mp4","webm","mov"], key=f"edit_media_{ad_idx}")
-                        e_save = st.form_submit_button("💾 حفظ التعديل", use_container_width=True, type="primary")
-                        if e_save:
-                            final_link = e_link.strip()
-                            if e_type == "واتساب" and final_link and not final_link.startswith("http"):
-                                final_link = "https://wa.me/" + final_link.replace("+", "").replace(" ", "")
-                            st.session_state.ads_df.at[ad_idx, "العنوان"] = e_title.strip() or "إعلان جديد"
-                            st.session_state.ads_df.at[ad_idx, "نوع_الإعلان"] = e_type
-                            st.session_state.ads_df.at[ad_idx, "النص"] = e_text.strip()
-                            st.session_state.ads_df.at[ad_idx, "الرابط"] = final_link
-                            st.session_state.ads_df.at[ad_idx, "نص_الزر"] = e_button.strip() or "افتح الإعلان"
-                            st.session_state.ads_df.at[ad_idx, "الحالة"] = "نشط" if e_active else "متوقف"
-                            if e_file is not None:
-                                raw = e_file.getvalue()
-                                st.session_state.ads_df.at[ad_idx, "الوسائط_base64"] = base64.b64encode(raw).decode("utf-8")
-                                st.session_state.ads_df.at[ad_idx, "نوع_الوسائط"] = str(getattr(e_file, "type", "") or "application/octet-stream")
-                            _save_ads_and_rerun("✓ تم تعديل الإعلان وحفظه.")
-
-                if st.button("🗑️ حذف الإعلان", key=f"delete_ad_{ad_idx}", use_container_width=True):
+        for ad_idx, row in ads_df.iloc[::-1].iterrows():
+            c1, c2 = st.columns([5,1])
+            with c1:
+                st.markdown(f"**{row.get('العنوان','إعلان')}** — {row.get('نوع_الإعلان','')} — {row.get('تاريخ_النشر','')}")
+                st.caption(str(row.get("النص", ""))[:250])
+            with c2:
+                if st.button("🗑️ حذف", key=f"delete_ad_{ad_idx}", use_container_width=True):
                     st.session_state.ads_df = st.session_state.ads_df.drop(index=ad_idx).reset_index(drop=True)
-                    # إعادة ترقيم الترتيب بعد الحذف للحفاظ على ترتيب متماسك.
-                    st.session_state.ads_df["الترتيب"] = range(len(st.session_state.ads_df))
-                    _save_ads_and_rerun("✓ تم حذف الإعلان.")
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
+                    st.rerun()
 
 elif t_page == "parent_report":
     if st.button("⬅️ العودة للرئيسية"): st.session_state.teacher_page = "dashboard"; st.rerun()
@@ -5228,21 +4964,27 @@ def _autosave_all_changes():
     if not all(k in st.session_state for k in required):
         return
 
-    # حماية أساسية: إذا فشل تحميل Supabase والملف المحلي غير موجود، لا تسمح
-    # للحفظ التلقائي بكتابة جداول فارغة فوق النسخة السحابية القديمة.
-    if st.session_state.get("_initial_data_source") == "empty" and not st.session_state.get("_data_restored_from_cloud", False):
-        st.session_state._autosave_last_status = "تم إيقاف الحفظ التلقائي لحماية البيانات: لم يتم تحميل نسخة بيانات صالحة."
+    # لا تحفظ قبل التأكد أن عملية التحميل اكتملت بنجاح.
+    if not st.session_state.get("_data_load_verified", False):
         return
 
-    # لا تحفظ تلقائياً أثناء شاشة الاسترجاع حتى لا يتم استبدال النسخة قبل اختيار المستخدم.
-    if st.session_state.get("teacher_page") == "data_recovery":
+    # ممنوع تمامًا أن يحول autosave جلسة فارغة إلى نسخة سحابية فارغة.
+    _core_now = sum(len(st.session_state.get(k, pd.DataFrame())) for k in [
+        "users_df", "sessions_df", "assessments_df", "weekly_schedule_df", "payment_records_df"
+    ])
+    if _core_now == 0:
+        st.session_state["_autosave_last_status"] = "تم إيقاف الحفظ التلقائي لحماية البيانات من المسح."
         return
 
     current_sig = _autosave_signature()
     previous_sig = st.session_state.get("_last_autosave_signature")
 
-    # أول تشغيل: اعتبر البيانات الحالية نقطة البداية وارفعها مرة واحدة.
-    # بعد ذلك لن يتم الرفع إلا عند وجود تغيير حقيقي.
+    # أول تشغيل: اعتبر البيانات الحالية نقطة البداية فقط، ولا ترفعها.
+    # هذا يمنع أي إعادة تشغيل من اعتبار حالة التحميل تغييرًا جديدًا.
+    if previous_sig is None:
+        st.session_state._last_autosave_signature = current_sig
+        st.session_state._autosave_last_status = "تمت تهيئة الحفظ الآمن بدون الكتابة على Supabase"
+        return
     if previous_sig == current_sig:
         return
 
