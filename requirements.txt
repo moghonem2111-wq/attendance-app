@@ -8,3 +8,4 @@ openpyxl
 Pillow
 streamlit-paste-button
 streamlit-cropper
+supabase
