@@ -2,6 +2,7 @@ import hashlib
 import os
 import os as _os
 import io
+import zipfile
 import json
 import base64
 import re
@@ -1033,15 +1034,151 @@ def load_all_data():
 
     return users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df, payment_records_df
 
-def _restore_all_data_from_cloud_backup():
-    """استرجاع كامل بيانات المنصة من نسخة platform_storage/main الموجودة في Supabase."""
-    try:
-        cloud_bytes = _cloud_load_excel_bytes()
-        if not cloud_bytes:
-            return False, "لم يتم العثور على نسخة بيانات في Supabase أو تعذر قراءتها."
+def _cloud_load_raw_payload():
+    """قراءة payload الخام من Supabase فقط، بدون أي كتابة."""
+    if not _cloud_storage_enabled(): return None
+    url=f"{SUPABASE_URL.rstrip('/')}/rest/v1/{SUPABASE_TABLE}?id=eq.{SUPABASE_RECORD_ID}&select=payload"
+    req=urllib.request.Request(url,headers=_supabase_headers(),method="GET")
+    with urllib.request.urlopen(req,timeout=30) as resp: data=json.loads(resp.read().decode("utf-8"))
+    return data[0].get("payload") if data and data[0].get("payload") is not None else None
 
-        # نستخدم نفس محرك التحميل حتى نحافظ على جميع الجداول والخصائص القديمة.
-        u_df, s_df, a_df, m_df, e_df, es_df, b_df, br_df, qb_df, v_df, vc_df, ab_df, os_df, ws_df, pr_df = load_all_data()
+def _decode_payload_candidates(raw):
+    out=[]; seen=set()
+    def add_bytes(b,label):
+        if not isinstance(b,(bytes,bytearray)): return
+        b=bytes(b); sig=(len(b),b[:16])
+        if sig in seen: return
+        if b[:2]==b"PK" or b[:4]==b"\xD0\xCF\x11\xE0": seen.add(sig); out.append((label,b))
+    def walk(v,label,depth=0):
+        if depth>5 or v is None: return
+        if isinstance(v,(bytes,bytearray)): add_bytes(v,label); return
+        if isinstance(v,dict):
+            for k in ("payload","data","content","backup","file","excel","value"):
+                if k in v: walk(v[k],label+'.'+k,depth+1)
+            return
+        if not isinstance(v,str): return
+        t=v.strip()
+        if t.startswith('data:') and ',' in t: walk(t.split(',',1)[1],label+'.data_uri',depth+1)
+        if t[:1] in '[{':
+            try: walk(json.loads(t),label+'.json',depth+1)
+            except Exception: pass
+        try: add_bytes(base64.b64decode(''.join(t.split()),validate=False),label+'.base64')
+        except Exception: pass
+    walk(raw,'payload'); return out
+
+def _inspect_excel_bytes(excel_bytes):
+    if not excel_bytes: return {"صالح":False,"السبب":"البيانات فارغة"}
+    try:
+        with zipfile.ZipFile(io.BytesIO(excel_bytes),'r') as z:
+            if 'xl/workbook.xml' not in z.namelist(): return {"صالح":False,"السبب":"ليس ملف XLSX صالحاً"}
+        xls=pd.ExcelFile(io.BytesIO(excel_bytes),engine='openpyxl'); counts={}
+        for sh in xls.sheet_names:
+            try: counts[sh]=int(len(pd.read_excel(xls,sheet_name=sh)))
+            except Exception as e: counts[sh]=f'خطأ: {e}'
+        core=['Users','Sessions','Assessments','WeeklySchedule','PaymentRecords','OnlineSchedule','Bookings','Messages']
+        total=sum(v for k,v in counts.items() if k in core and isinstance(v,int))
+        return {"صالح":True,"الحجم_KB":round(len(excel_bytes)/1024,1),"الأوراق":counts,"إجمالي_السجلات_الأساسية":int(total)}
+    except Exception as e: return {"صالح":False,"السبب":f"تعذر فتح Excel: {e}"}
+
+def _diagnose_cloud_payload():
+    """تشخيص قراءة فقط؛ لا يعدل Supabase."""
+    try:
+        raw=_cloud_load_raw_payload()
+        if raw is None: return False,'لم يتم العثور على payload في platform_storage/main.'
+        candidates=_decode_payload_candidates(raw)
+        result={"حجم payload":f"{(len(raw) if isinstance(raw,str) else len(bytes(raw)))/1024:.1f} KB","عدد_النسخ_المحتملة":len(candidates)}
+        valid=[]
+        for label,b in candidates:
+            info=_inspect_excel_bytes(b); valid.append((label,info,b))
+        valid=[x for x in valid if x[1].get('صالح')]
+        if not valid:
+            result['النتيجة']='لم يتم العثور على ملف Excel صالح داخل payload.'; return False,result
+        valid.sort(key=lambda x:x[1].get('إجمالي_السجلات_الأساسية',0),reverse=True)
+        label,info,b=valid[0]; result['طريقة_الفك']=label; result['فحص_Excel']=info
+        st.session_state['_diagnostic_excel_bytes']=b
+        return True,result
+    except Exception as e: return False,f'خطأ أثناء التشخيص فقط: {e}'
+
+def _restore_all_data_from_cloud_backup():
+    """استرجاع مباشر من payload الموجود في platform_storage/main بدون المرور بمصدر البيانات الحالي."""
+    try:
+        raw_payload=_cloud_load_raw_payload()
+        if raw_payload is None: return False,"لم يتمكن الموقع من قراءة payload من Supabase. راجع SUPABASE_URL وSUPABASE_KEY وسياسة RLS."
+        candidates=_decode_payload_candidates(raw_payload)
+        inspected=[(label,_inspect_excel_bytes(b),b) for label,b in candidates]
+        valid=[x for x in inspected if x[1].get("صالح")]
+        if not valid: return False,"تم العثور على payload، لكن لم يتم استخراج ملف Excel صالح منه. لم يتم تغيير أي بيانات."
+        valid.sort(key=lambda x:x[1].get("إجمالي_السجلات_الأساسية",0),reverse=True)
+        _chosen_label,_chosen_info,cloud_bytes=valid[0]
+        if int(_chosen_info.get("إجمالي_السجلات_الأساسية",0))==0: return False,"ملف Excel الموجود داخل payload صالح، لكنه يحتوي على صفر سجلات أساسية. لم يتم تغيير أي بيانات."
+        xls=pd.ExcelFile(io.BytesIO(cloud_bytes),engine="openpyxl")
+        sheet_names=list(xls.sheet_names)
+
+        def _read_sheet(name, columns):
+            if name in sheet_names:
+                df = pd.read_excel(xls, name)
+            else:
+                df = pd.DataFrame(columns=columns)
+            for col in columns:
+                if col not in df.columns:
+                    df[col] = ""
+            return df[columns].copy()
+
+        u_df = _read_sheet("Users", COL_USERS)
+        s_df = _read_sheet("Sessions", COL_SESSIONS)
+        a_df = _read_sheet("Assessments", COL_ASSESSMENTS)
+        m_df = _read_sheet("Messages", COL_MESSAGES)
+        e_df = _read_sheet("Exams", COL_EXAMS)
+        es_df = _read_sheet("Essays", COL_ESSAYS)
+        b_df = _read_sheet("Bookings", COL_BOOKINGS)
+        br_df = _read_sheet("BankRequests", COL_BANK_REQUESTS)
+        qb_df = _read_sheet("QuestionBank", COL_QUESTION_BANK)
+        v_df = _read_sheet("Videos", COL_VIDEOS)
+        vc_df = _read_sheet("VideoComments", COL_VIDEO_COMMENTS)
+        ab_df = _read_sheet("AbqaryExams", COL_ABQARY)
+        os_df = _read_sheet("OnlineSchedule", COL_ONLINE_SCHEDULE)
+        ws_df = _read_sheet("WeeklySchedule", COL_WEEKLY_SCHEDULE)
+        pr_df = _read_sheet("PaymentRecords", COL_PAYMENT_RECORDS)
+
+        # بيانات الإعلانات وواجهة الطالب والصورة لا تُفقد أثناء الاسترجاع.
+        ads_df = pd.DataFrame(columns=COL_ADS)
+        if "Ads" in sheet_names:
+            ads_df = pd.read_excel(xls, "Ads")
+            for col in COL_ADS:
+                if col not in ads_df.columns:
+                    ads_df[col] = "نشط" if col == "الحالة" else (0 if col == "الترتيب" else "")
+            ads_df = ads_df[COL_ADS].copy()
+            ads_df["الوسائط_base64"] = ads_df["الوسائط_base64"].astype(object)
+            if "AdsMedia" in sheet_names:
+                media_df = pd.read_excel(xls, "AdsMedia")
+                if not media_df.empty and "معرف_الإعلان" in media_df.columns and "البيانات" in media_df.columns:
+                    media_map = {}
+                    for ad_id, grp in media_df.groupby(media_df["معرف_الإعلان"].astype(str)):
+                        if "جزء" in grp.columns:
+                            grp = grp.sort_values("جزء")
+                        media_map[str(ad_id)] = "".join(grp["البيانات"].fillna("").astype(str).tolist())
+                    for idx in ads_df.index:
+                        ad_id = str(ads_df.at[idx, "معرف_الإعلان"])
+                        if ad_id in media_map:
+                            ads_df.at[idx, "الوسائط_base64"] = media_map[ad_id]
+
+        # تنظيف/قيم افتراضية متوافقة مع النسخ القديمة.
+        if "الحالة_حظر" in u_df.columns:
+            u_df["الحالة_حظر"] = u_df["الحالة_حظر"].replace("", "نشط")
+        if "حالة الاشتراك البنك" in u_df.columns:
+            u_df["حالة الاشتراك البنك"] = u_df["حالة الاشتراك البنك"].replace("", "غير مشترك")
+        if "حالة الموعد" in ws_df.columns:
+            ws_df["حالة الموعد"] = ws_df["حالة الموعد"].replace("", "نشط")
+        if "الحالة" in pr_df.columns:
+            pr_df["الحالة"] = pr_df["الحالة"].replace("", "مؤكد")
+        if "المبلغ" in pr_df.columns:
+            pr_df["المبلغ"] = pd.to_numeric(pr_df["المبلغ"], errors="coerce").fillna(0.0)
+
+        # حماية صارمة: لا نعتبر الاسترجاع ناجحاً إذا كانت النسخة المقروءة فارغة.
+        total_core = len(u_df) + len(s_df) + len(a_df) + len(ws_df) + len(pr_df)
+        if total_core == 0:
+            return False, "تم الوصول إلى payload، لكن ملف Excel داخله لا يحتوي على سجلات أساسية. لم أغيّر أي بيانات ولم أحفظ فوق Supabase."
+
         st.session_state.users_df = u_df
         st.session_state.sessions_df = s_df
         st.session_state.assessments_df = a_df
@@ -1057,26 +1194,32 @@ def _restore_all_data_from_cloud_backup():
         st.session_state.online_schedule_df = os_df
         st.session_state.weekly_schedule_df = ws_df
         st.session_state.payment_records_df = pr_df
-        st.session_state.ads_df = load_ads()
-        st.session_state.teacher_profile_df = load_teacher_profile()
-        st.session_state.student_interface_df = load_student_interface()
+        st.session_state.ads_df = ads_df
 
-        # لا نسمح للحفظ التلقائي بالعمل قبل انتهاء الاسترجاع بنجاح.
+        # واجهة الطالب/صورة المعلم من نفس الـpayload، وليس من النسخة الحالية الفارغة.
+        if "StudentInterface" in sheet_names:
+            st.session_state.student_interface_df = pd.read_excel(xls, "StudentInterface")
+        else:
+            st.session_state.student_interface_df = load_student_interface()
+        if "TeacherProfile" in sheet_names:
+            st.session_state.teacher_profile_df = pd.read_excel(xls, "TeacherProfile")
+        else:
+            st.session_state.teacher_profile_df = load_teacher_profile()
+
         st.session_state["_initial_data_source"] = "cloud"
         st.session_state["_data_restored_from_cloud"] = True
-        st.session_state["_last_autosave_signature"] = None
+        st.session_state["_recovery_excel_bytes"] = cloud_bytes
+        st.session_state["_recovery_sheet_names"] = sheet_names
+        # مهم: لا نكتب فوق Supabase تلقائياً في نفس ضغطة الاسترجاع.
+        st.session_state["_last_autosave_signature"] = _autosave_signature()
 
         counts = {
-            "الطلاب": len(u_df),
-            "الحصص": len(s_df),
-            "المواعيد": len(ws_df),
-            "المدفوعات": len(pr_df),
-            "الواجبات/الاختبارات": len(a_df),
-            "الإعلانات": len(st.session_state.ads_df),
+            "الطلاب": len(u_df), "الحصص": len(s_df), "المواعيد": len(ws_df),
+            "المدفوعات": len(pr_df), "الواجبات/الاختبارات": len(a_df), "الإعلانات": len(ads_df)
         }
         return True, counts
     except Exception as exc:
-        return False, f"حدث خطأ أثناء الاسترجاع: {exc}"
+        return False, f"حدث خطأ أثناء فك واسترجاع payload: {exc}"
 
 
 def save_all_data(users_df, sessions_df, assessments_df, messages_df, exams_df, essays_df, bookings_df, bank_requests_df, question_bank_df, videos_df, video_comments_df, abqary_df, online_schedule_df, weekly_schedule_df=None, payment_records_df=None, ads_df=None):
@@ -2770,34 +2913,38 @@ if t_page == "data_recovery":
     else:
         st.error("❌ لم أستطع قراءة نسخة Supabase حالياً. لا تقم بالحفظ الآن.")
 
+    st.markdown("### 🔎 فحص النسخة قبل الاسترجاع")
+    st.caption("الفحص للقراءة فقط؛ لا يحفظ ولا يحذف ولا يعدّل Supabase.")
+    if st.button("🔎 فحص محتوى payload الآن",use_container_width=True,key="diagnose_cloud_payload_btn"):
+        _dok,_dresult=_diagnose_cloud_payload()
+        if isinstance(_dresult,dict):
+            st.json(_dresult)
+            _di=_dresult.get("فحص_Excel",{})
+            if isinstance(_di,dict) and _di.get("الأوراق"):
+                st.dataframe(pd.DataFrame([{"الورقة":k,"عدد السجلات":v} for k,v in _di["الأوراق"].items()]),use_container_width=True,hide_index=True)
+            if _dok and st.session_state.get("_diagnostic_excel_bytes"):
+                st.download_button("📥 تنزيل النسخة التي تم فحصها",data=st.session_state["_diagnostic_excel_bytes"],file_name="نسخة_Supabase_بعد_الفحص.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",key="download_diagnostic_excel")
+        else: st.error(str(_dresult))
+
     st.markdown("### 🔄 استرجاع البيانات")
-    st.caption("الزر التالي يستبدل البيانات الموجودة حالياً في جلسة الموقع بالنسخة المحفوظة في Supabase، ثم يحفظ النسخة المستعادة بشكل آمن.")
+    st.caption("الاسترجاع يقرأ payload الموجود في Supabase مباشرة، ولا يكتب فوق Supabase أثناء الاسترجاع.")
     if st.button("🔄 استرجاع البيانات من Supabase الآن", type="primary", use_container_width=True, key="restore_all_from_supabase_btn"):
         ok, result = _restore_all_data_from_cloud_backup()
         if ok:
-            # احفظ النسخة المستعادة مرة أخرى بعد التأكد من تحميلها بالكامل.
-            try:
-                cloud_ok = save_all_data(
-                    st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df,
-                    st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df,
-                    st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df,
-                    st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df,
-                    st.session_state.online_schedule_df, st.session_state.weekly_schedule_df,
-                    st.session_state.payment_records_df, st.session_state.ads_df
-                )
-            except Exception as _restore_save_exc:
-                cloud_ok = False
-                _restore_save_exc_text = str(_restore_save_exc)
-            if cloud_ok:
-                st.session_state["_last_autosave_signature"] = _autosave_signature()
-                st.success("✅ تم استرجاع البيانات وحفظ النسخة المستعادة في Supabase بنجاح.")
-            else:
-                st.warning("⚠️ تم تحميل البيانات داخل الموقع، لكن تعذر إعادة حفظ النسخة تلقائياً. لا تحذف أي شيء من Supabase.")
             if isinstance(result, dict):
                 rc = st.columns(len(result))
                 for _col, (_label, _value) in zip(rc, result.items()):
                     _col.metric(_label, _value)
-            st.info("ارجع للوحة المعلم الآن وتحقق من أسماء الطلاب والحصص والمدفوعات قبل إجراء أي تعديلات.")
+            st.success("✅ تم تحميل النسخة الموجودة في Supabase داخل الموقع بنجاح. لم يتم استبدال نسخة Supabase أثناء العملية.")
+            st.info("راجع أسماء الطلاب والحصص والمدفوعات أولاً. بعد التأكد، يمكن حفظ النسخة المستعادة بأمان.")
+            if st.session_state.get("_recovery_excel_bytes"):
+                st.download_button(
+                    "📥 تنزيل نسخة البيانات المستعادة Excel",
+                    data=st.session_state["_recovery_excel_bytes"],
+                    file_name="نسخة_مستعادة_من_Supabase.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="download_recovered_supabase_excel"
+                )
         else:
             st.error(str(result))
 
