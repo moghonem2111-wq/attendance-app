@@ -44,10 +44,13 @@ TEACHER_PHONE = "01016361440"
 SUPABASE_URL = ""
 SUPABASE_KEY = ""
 try:
+    # الأولوية لـ Streamlit secrets، ثم متغيرات البيئة على الـ VPS.
     SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", "")).strip()
-    SUPABASE_KEY = str(st.secrets.get("SUPABASE_KEY", "")).strip()
+    SUPABASE_KEY = str(st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", st.secrets.get("SUPABASE_KEY", ""))).strip()
 except Exception:
     pass
+SUPABASE_URL = SUPABASE_URL or str(os.getenv("SUPABASE_URL", "")).strip()
+SUPABASE_KEY = SUPABASE_KEY or str(os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SUPABASE_KEY", ""))).strip()
 SUPABASE_TABLE = "platform_storage"
 SUPABASE_INTERFACE_TABLE = "student_interface_storage"
 # سجل نسخ احتياطية مستقل: لا يتم استبداله مع السجل الرئيسي.
@@ -4644,210 +4647,19 @@ elif t_page == "ads":
                 st.success("✓ تم نشر الإعلان وحفظه، وسيظهر في الصفحة الرئيسية للطالب.")
                 st.rerun()
 
-    # ------------------------------------------------------------------
-    # تعديل إعلان موجود
-    # ------------------------------------------------------------------
-    editing_ad_idx = st.session_state.get("editing_ad_idx", None)
-
-    if editing_ad_idx is not None and not ads_df.empty and editing_ad_idx in ads_df.index:
-        edit_row = ads_df.loc[editing_ad_idx].copy()
-
-        st.markdown("### ✏️ تعديل الإعلان")
-        st.info("عدّل بيانات الإعلان ثم اضغط «💾 حفظ التعديلات». إذا لم ترفع ملفًا جديدًا ستظل الصورة/الفيديو الحالي كما هو.")
-
-        with st.container(border=True):
-            with st.form(f"edit_ad_form_{editing_ad_idx}"):
-                edit_title = st.text_input(
-                    "عنوان الإعلان",
-                    value=str(edit_row.get("العنوان", "") or ""),
-                    key=f"edit_ad_title_{editing_ad_idx}"
-                )
-
-                current_type = str(edit_row.get("نوع_الإعلان", "نص") or "نص")
-                ad_types = ["صورة + بوست", "فيديو", "رابط", "واتساب", "نص"]
-                edit_type = st.selectbox(
-                    "نوع الإعلان",
-                    ad_types,
-                    index=ad_types.index(current_type) if current_type in ad_types else 0,
-                    key=f"edit_ad_type_{editing_ad_idx}"
-                )
-
-                edit_text = st.text_area(
-                    "نص / محتوى الإعلان",
-                    value=str(edit_row.get("النص", "") or ""),
-                    key=f"edit_ad_text_{editing_ad_idx}"
-                )
-
-                edit_link = st.text_input(
-                    "الرابط (فيديو / موقع / واتساب)",
-                    value=str(edit_row.get("الرابط", "") or ""),
-                    key=f"edit_ad_link_{editing_ad_idx}"
-                )
-
-                edit_button = st.text_input(
-                    "نص زر الرابط",
-                    value=str(edit_row.get("نص_الزر", "افتح الإعلان") or "افتح الإعلان"),
-                    key=f"edit_ad_button_{editing_ad_idx}"
-                )
-
-                current_media = str(edit_row.get("الوسائط_base64", "") or "").strip()
-                current_mime = str(edit_row.get("نوع_الوسائط", "") or "").strip()
-
-                if current_media:
-                    st.caption("📎 يوجد حاليًا ملف صورة/فيديو مرتبط بهذا الإعلان.")
-
-                edit_file = None
-                if edit_type in ["صورة + بوست", "فيديو"]:
-                    edit_file = st.file_uploader(
-                        "استبدال الصورة أو الفيديو (اختياري)",
-                        type=["png", "jpg", "jpeg", "webp", "mp4", "webm", "mov"],
-                        key=f"edit_ad_media_upload_{editing_ad_idx}"
-                    )
-
-                remove_media = st.checkbox(
-                    "🗑️ إزالة الصورة/الفيديو الحالي",
-                    value=False,
-                    key=f"edit_ad_remove_media_{editing_ad_idx}"
-                )
-
-                current_active = str(edit_row.get("الحالة", "نشط") or "نشط").strip() in [
-                    "نشط", "فعال", "مفعل", "مفعّل", "نعم"
-                ]
-                edit_active = st.checkbox(
-                    "الإعلان ظاهر للطلاب",
-                    value=current_active,
-                    key=f"edit_ad_active_{editing_ad_idx}"
-                )
-
-                save_edit, cancel_edit = st.columns(2)
-                with save_edit:
-                    save_edit_btn = st.form_submit_button(
-                        "💾 حفظ التعديلات",
-                        use_container_width=True,
-                        type="primary"
-                    )
-                with cancel_edit:
-                    cancel_edit_btn = st.form_submit_button(
-                        "↩️ إلغاء",
-                        use_container_width=True
-                    )
-
-                if cancel_edit_btn:
-                    st.session_state.pop("editing_ad_idx", None)
-                    st.rerun()
-
-                if save_edit_btn:
-                    final_link = edit_link.strip()
-                    if edit_type == "واتساب" and final_link and not final_link.startswith("http"):
-                        final_link = "https://wa.me/" + final_link.replace("+", "").replace(" ", "")
-
-                    # الاحتفاظ بالوسائط القديمة افتراضيًا.
-                    new_media_b64 = current_media
-                    new_media_mime = current_mime
-
-                    # إزالة الوسائط إذا اختار المعلم ذلك.
-                    if remove_media:
-                        new_media_b64 = ""
-                        new_media_mime = ""
-
-                    # إذا تم رفع ملف جديد، استبدال الوسائط القديمة.
-                    if edit_file is not None:
-                        raw = edit_file.getvalue()
-                        new_media_b64 = base64.b64encode(raw).decode("utf-8")
-                        new_media_mime = str(
-                            getattr(edit_file, "type", "") or "application/octet-stream"
-                        )
-
-                    st.session_state.ads_df.at[editing_ad_idx, "العنوان"] = edit_title.strip() or "إعلان جديد"
-                    st.session_state.ads_df.at[editing_ad_idx, "نوع_الإعلان"] = edit_type
-                    st.session_state.ads_df.at[editing_ad_idx, "النص"] = edit_text.strip()
-                    st.session_state.ads_df.at[editing_ad_idx, "الرابط"] = final_link
-                    st.session_state.ads_df.at[editing_ad_idx, "نص_الزر"] = edit_button.strip() or "افتح الإعلان"
-                    st.session_state.ads_df.at[editing_ad_idx, "الوسائط_base64"] = new_media_b64
-                    st.session_state.ads_df.at[editing_ad_idx, "نوع_الوسائط"] = new_media_mime
-                    st.session_state.ads_df.at[editing_ad_idx, "الحالة"] = "نشط" if edit_active else "متوقف"
-                    st.session_state.ads_df.at[editing_ad_idx, "تاريخ_النشر"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-                    save_all_data(
-                        st.session_state.users_df,
-                        st.session_state.sessions_df,
-                        st.session_state.assessments_df,
-                        st.session_state.messages_df,
-                        st.session_state.exams_df,
-                        st.session_state.essays_df,
-                        st.session_state.bookings_df,
-                        st.session_state.bank_requests_df,
-                        st.session_state.question_bank_df,
-                        st.session_state.videos_df,
-                        st.session_state.video_comments_df,
-                        st.session_state.abqary_df,
-                        st.session_state.online_schedule_df,
-                        st.session_state.get("weekly_schedule_df"),
-                        st.session_state.get("payment_records_df"),
-                        st.session_state.ads_df
-                    )
-
-                    st.session_state.pop("editing_ad_idx", None)
-                    st.success("✓ تم تعديل الإعلان وحفظ التغييرات بنجاح.")
-                    st.rerun()
-
     st.markdown("### 📋 الإعلانات المنشورة")
     if ads_df.empty:
         st.info("لا توجد إعلانات حتى الآن.")
     else:
         for ad_idx, row in ads_df.iloc[::-1].iterrows():
-            c1, c2, c3 = st.columns([5, 1, 1])
+            c1, c2 = st.columns([5,1])
             with c1:
-                st.markdown(
-                    f"**{row.get('العنوان','إعلان')}** — "
-                    f"{row.get('نوع_الإعلان','')} — "
-                    f"{row.get('تاريخ_النشر','')}"
-                )
+                st.markdown(f"**{row.get('العنوان','إعلان')}** — {row.get('نوع_الإعلان','')} — {row.get('تاريخ_النشر','')}")
                 st.caption(str(row.get("النص", ""))[:250])
-
             with c2:
-                if st.button(
-                    "✏️ تعديل",
-                    key=f"edit_ad_{ad_idx}",
-                    use_container_width=True
-                ):
-                    st.session_state["editing_ad_idx"] = int(ad_idx)
-                    st.rerun()
-
-            with c3:
-                if st.button(
-                    "🗑️ حذف",
-                    key=f"delete_ad_{ad_idx}",
-                    use_container_width=True
-                ):
-                    st.session_state.ads_df = (
-                        st.session_state.ads_df
-                        .drop(index=ad_idx)
-                        .reset_index(drop=True)
-                    )
-
-                    # إذا كان الإعلان الجاري تعديله هو الذي تم حذفه، أغلق نموذج التعديل.
-                    if st.session_state.get("editing_ad_idx") == ad_idx:
-                        st.session_state.pop("editing_ad_idx", None)
-
-                    save_all_data(
-                        st.session_state.users_df,
-                        st.session_state.sessions_df,
-                        st.session_state.assessments_df,
-                        st.session_state.messages_df,
-                        st.session_state.exams_df,
-                        st.session_state.essays_df,
-                        st.session_state.bookings_df,
-                        st.session_state.bank_requests_df,
-                        st.session_state.question_bank_df,
-                        st.session_state.videos_df,
-                        st.session_state.video_comments_df,
-                        st.session_state.abqary_df,
-                        st.session_state.online_schedule_df,
-                        st.session_state.get("weekly_schedule_df"),
-                        st.session_state.get("payment_records_df"),
-                        st.session_state.ads_df
-                    )
+                if st.button("🗑️ حذف", key=f"delete_ad_{ad_idx}", use_container_width=True):
+                    st.session_state.ads_df = st.session_state.ads_df.drop(index=ad_idx).reset_index(drop=True)
+                    save_all_data(st.session_state.users_df, st.session_state.sessions_df, st.session_state.assessments_df, st.session_state.messages_df, st.session_state.exams_df, st.session_state.essays_df, st.session_state.bookings_df, st.session_state.bank_requests_df, st.session_state.question_bank_df, st.session_state.videos_df, st.session_state.video_comments_df, st.session_state.abqary_df, st.session_state.online_schedule_df, st.session_state.get("weekly_schedule_df"), st.session_state.get("payment_records_df"), st.session_state.ads_df)
                     st.rerun()
 
 elif t_page == "parent_report":
